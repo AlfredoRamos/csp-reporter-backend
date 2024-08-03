@@ -1,0 +1,124 @@
+run:
+  modules-download-mode: readonly
+
+output:
+  formats: colored-line-number
+  print-issued-lines: true
+  sort-results: true
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - cyclop
+    # - dupl
+    - dupword
+    - exportloopref
+    - gocheckcompilerdirectives
+    - gosec
+    - nilerr
+    - prealloc
+    - rowserrcheck
+    - sqlclosecheck
+    - unparam
+    - depguard
+    - errorlint
+    - musttag
+    - nestif
+    - whitespace
+    - copyloopvar
+    - dogsled
+    - durationcheck
+    - errchkjson
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - gochecknoinits
+    - makezero
+    - perfsprint
+
+linters-settings:
+  unused:
+    # exported-is-used: false
+    field-writes-are-uses: false
+    exported-fields-are-used: false
+    parameters-are-used: false
+    local-variables-are-used: false
+    generated-is-used: false
+
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+      - nilness
+
+  gosec:
+    severity: medium
+    confidence: medium
+
+  cyclop:
+    max-complexity: 30
+    skip-tests: true
+
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd
+          - ema.org.mx/sicohol
+          - github.com/gofiber/fiber/v2
+          - github.com/gofiber/contrib/jwt
+          - gorm.io/gorm
+          - gorm.io/driver/postgres
+          - github.com/google/uuid
+          - github.com/aws/aws-sdk-go-v2
+          - github.com/redis/rueidis
+          - github.com/golang-jwt/jwt/v5
+          - github.com/joho/godotenv
+          - github.com/goccy/go-json
+          - github.com/casbin/casbin/v2
+          - github.com/ccojocar/zxcvbn-go
+          - github.com/xuri/excelize/v2
+          - github.com/hibiken/asynq
+          - github.com/wneessen/go-mail
+
+  prealloc:
+    for-loops: true
+
+  nestif:
+    min-complexity: 8
+
+  whitespace:
+    multi-if: true
+    multi-func: true
+
+  errchkjson:
+    check-error-free-encoding: false
+    report-no-exported: true
+
+  forbidigo:
+    forbid:
+      - p: ^(fmt\.Print(|f|ln)|print|println)$
+        msg: Do not commit print statements
+    analyze-types: true
+
+  perfsprint:
+    err-error: true
+    strconcat: false
+
+issues:
+  exclude-files:
+    - routes/dev.go
+  exclude-rules:
+    # Exclude err and ctx variables in fieldalignment analyzer from govet
+    - text: 'shadow: declaration of "(err|ctx)" shadows declaration at'
+      linters: [govet]
