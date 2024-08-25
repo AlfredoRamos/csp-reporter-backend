@@ -22,7 +22,7 @@ linters:
     - cyclop
     # - dupl
     - dupword
-    - exportloopref
+    - copyloopvar
     - gocheckcompilerdirectives
     - gosec
     - nilerr
@@ -74,7 +74,7 @@ linters-settings:
       main:
         allow:
           - $gostd
-          - ema.org.mx/sicohol
+          - alfredoramos.mx/csp-reporter
           - github.com/gofiber/fiber/v2
           - github.com/gofiber/contrib/jwt
           - gorm.io/gorm
@@ -82,7 +82,7 @@ linters-settings:
           - github.com/google/uuid
           - github.com/aws/aws-sdk-go-v2
           - github.com/redis/rueidis
-          - github.com/golang-jwt/jwt/v5
+          - github.com/go-jose/go-jose/v4
           - github.com/joho/godotenv
           - github.com/goccy/go-json
           - github.com/casbin/casbin/v2

@@ -19,3 +19,4 @@ tmp/
 *.rej
 *.orig
 *.pdf
+*.json
