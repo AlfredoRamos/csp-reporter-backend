@@ -12,7 +12,6 @@ import (
 	"alfredoramos.mx/csp-reporter/jwt"
 	"alfredoramos.mx/csp-reporter/utils"
 	"github.com/go-jose/go-jose/v4"
-	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/google/uuid"
@@ -106,30 +105,42 @@ func AuthProtected() fiber.Handler {
 
 		tokenStr := c.Get("Authorization")[7:]
 
-		token, err := jose_jwt.ParseSignedAndEncrypted(
+		jwe, err := jose.ParseEncryptedCompact(
 			tokenStr,
 			[]jose.KeyAlgorithm{jose.ECDH_ES_A256KW},
 			[]jose.ContentEncryption{jose.A256GCM},
-			[]jose.SignatureAlgorithm{jose.SignatureAlgorithm(jwt.SigningKeys().Public.Algorithm)},
 		)
 		if err != nil {
+			slog.Error(fmt.Sprintf("Error parsing JWE: %v", err))
 			return jwtError(c, err)
 		}
 
-		decrypted, err := token.Decrypt(jwt.EncryptionKeys().Private)
+		decrypted, err := jwe.Decrypt(jwt.EncryptionKeys().Private)
 		if err != nil {
+			slog.Error(fmt.Sprintf("Error decrypting JWE: %v", err))
 			return jwtError(c, err)
 		}
 
-		claims := map[string]interface{}{}
-
-		if err := decrypted.Claims(jwt.SigningKeys().Private, &claims); err != nil {
-			slog.Info(fmt.Sprintf("claims: %#v", claims))
-			c.Locals(utils.TokenContextKey(), decrypted)
-			return jwtSuccess(c)
+		parsedJWT, err := jose.ParseSigned(string(decrypted), []jose.SignatureAlgorithm{jose.SignatureAlgorithm(jwt.SigningKeys().Private.Algorithm)})
+		if err != nil {
+			slog.Error(fmt.Sprintf("Error parsing JWT: %v", err))
+			return jwtError(c, err)
 		}
 
-		return jwtError(c, fiber.ErrInternalServerError)
+		if _, err := parsedJWT.Verify(jwt.SigningKeys().Public); err != nil {
+			slog.Error(fmt.Sprintf("Error verifying JWT: %v", err))
+			return jwtError(c, err)
+		}
+
+		jweStr, err := jwe.CompactSerialize()
+		if err != nil {
+			slog.Error(fmt.Sprintf("Error generating JWE access token: %v", err))
+			return jwtError(c, err)
+		}
+
+		c.Locals(utils.TokenContextKey(), jweStr)
+
+		return jwtSuccess(c)
 	}
 }
 

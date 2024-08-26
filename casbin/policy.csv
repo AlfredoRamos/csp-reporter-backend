@@ -1,0 +1,26 @@
+# Superadministrator
+## p, superadmin, /api/v1/endpoint, GET, allow
+
+# Administrator
+p, admin, /api/v1/system/cache/purge, POST, allow
+
+# Viewer
+## p, viewer, /api/v1/endpoint, GET, allow
+
+# User
+p, user, /api/v1/auth/revoke, POST, allow
+
+# Guest
+p, guest, /api/v1/auth/login, POST, allow
+p, guest, /api/v1/auth/check, POST, allow
+p, guest, /api/v1/auth/register, POST, allow
+p, guest, /api/v1/auth/recover, POST, allow
+p, guest, /api/v1/auth/recover/validate, POST, allow
+p, guest, /api/v1/auth/recover/update, PATCH, allow
+p, guest, /api/v1/system/csrf, GET, allow
+
+# Role inheritance
+g, superadmin, admin
+g, admin, viewer
+g, viewer, user
+g, user, guest
