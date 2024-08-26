@@ -1,0 +1,10 @@
+{
+	"recommendations": [
+		"golang.Go",
+		"EditorConfig.EditorConfig",
+		"tamasfe.even-better-toml",
+		"esbenp.prettier-vscode",
+		"yzhang.markdown-all-in-one",
+		"mechatroner.rainbow-csv"
+	]
+}
