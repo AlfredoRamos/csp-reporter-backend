@@ -7,25 +7,27 @@ import (
 	"strings"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/helpers"
+	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
 type cspReport struct {
-	BlockedURI         string `json:"blocked-uri"`
-	Disposition        string `json:"disposition"`
-	DocumentURI        string `json:"document-uri"`
-	EffectiveDirective string `json:"effective-directive"`
-	OriginalPolicy     string `json:"original-policy"`
-	Referrer           string `json:"referrer"`
-	StatusCode         int    `json:"status-code"`
-	ViolatedDirective  string `json:"violated-directive"`
-	ScriptSample       string `json:"script-sample"`
-	SourceFile         string `json:"source-file"`
-	LineNumber         int64  `json:"line-number"`
-	ColumnNumber       int64  `json:"column-number"`
+	BlockedURI         string  `json:"blocked-uri"`
+	Disposition        string  `json:"disposition"`
+	DocumentURI        string  `json:"document-uri"`
+	EffectiveDirective string  `json:"effective-directive"`
+	OriginalPolicy     string  `json:"original-policy"`
+	Referrer           *string `json:"referrer"`
+	StatusCode         int     `json:"status-code"`
+	ViolatedDirective  string  `json:"violated-directive"`
+	ScriptSample       *string `json:"script-sample"`
+	SourceFile         *string `json:"source-file"`
+	LineNumber         *int64  `json:"line-number"`
+	ColumnNumber       *int64  `json:"column-number"`
 }
 
 type cspReportInput struct {
@@ -38,17 +40,6 @@ func PostCSPReport(c *fiber.Ctx) error {
 	allowedMimeTypes := []string{"application/csp-report", "application/json"}
 	accept := c.Accepts(allowedMimeTypes...)
 	defaultErr := c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"errors": []string{"Invalid Content Security Policy Report."}})
-
-	issuer, err := utils.GetJwtIssuer()
-	if err != nil || len(issuer) < 1 {
-		slog.Error(fmt.Sprintf("Error getting application domain: %v", err))
-		return defaultErr
-	}
-
-	if !c.IsFromLocal() && !strings.EqualFold(c.Hostname(), issuer) {
-		slog.Error(fmt.Sprintf("The host '%s' does not match the one from the '%s'.", c.Hostname(), issuer))
-		return defaultErr
-	}
 
 	if !slices.Contains(allowedMimeTypes, accept) {
 		slog.Error(fmt.Sprintf("The MIME type '%s' for the 'Accept' header is invalid.", accept))
@@ -73,26 +64,26 @@ func PostCSPReport(c *fiber.Ctx) error {
 	}
 
 	blockedUri, err := utils.GetDomainHostname(input.Report.BlockedURI)
-	if err != nil || !strings.EqualFold(issuer, blockedUri) {
+	if err != nil || !helpers.IsAllowedDomain(blockedUri) {
 		if err != nil {
 			slog.Error(fmt.Sprintf("Could not get the hostname from the bloqued URI: %v", err))
 		}
 
-		if !strings.EqualFold(issuer, blockedUri) {
-			slog.Error(fmt.Sprintf("The bloqued URI '%s' does not match the current domain '%s'.", blockedUri, issuer))
+		if !helpers.IsAllowedDomain(blockedUri) {
+			slog.Error(fmt.Sprintf("The bloqued URI '%s' is not within the allowed domains.", blockedUri))
 		}
 
 		return defaultErr
 	}
 
 	documentUri, err := utils.GetDomainHostname(input.Report.DocumentURI)
-	if err != nil || len(documentUri) < 1 || !strings.EqualFold(issuer, documentUri) {
+	if err != nil || len(documentUri) < 1 || !helpers.IsAllowedDomain(documentUri) {
 		if err != nil {
 			slog.Error(fmt.Sprintf("Could not get the document URI hostname: %v", err))
 		}
 
-		if !strings.EqualFold(issuer, documentUri) {
-			slog.Error(fmt.Sprintf("The document URI '%s' does not match the current domain '%s'.", documentUri, issuer))
+		if !helpers.IsAllowedDomain(documentUri) {
+			slog.Error(fmt.Sprintf("The document URI '%s' is not within the allowed domains.", documentUri))
 		}
 
 		return defaultErr
@@ -102,9 +93,26 @@ func PostCSPReport(c *fiber.Ctx) error {
 
 	now := time.Now().In(utils.DefaultLocation())
 
-	// TODO: Save to database
+	report := &models.Report{
+		BlockedURI:         input.Report.BlockedURI,
+		Disposition:        input.Report.Disposition,
+		DocumentURI:        input.Report.DocumentURI,
+		EffectiveDirective: input.Report.EffectiveDirective,
+		OriginalPolicy:     input.Report.OriginalPolicy,
+		Referrer:           input.Report.Referrer,
+		StatusCode:         input.Report.StatusCode,
+		ViolatedDirective:  input.Report.ViolatedDirective,
+		ScriptSample:       input.Report.ScriptSample,
+		SourceFile:         input.Report.SourceFile,
+		LineNumber:         input.Report.LineNumber,
+		ColumnNumber:       input.Report.ColumnNumber,
+	}
 
-	// TODO: Send after saving to database
+	if err := app.DB().Where(&report).FirstOrCreate(&report).Error; err != nil {
+		slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"Could not regisger CSP report."}})
+	}
+
 	if err := tasks.NewEmail(
 		helpers.EmailOpts{
 			Subject:      "Content Security Policy violation report",

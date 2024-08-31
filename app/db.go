@@ -62,6 +62,7 @@ func DB() *gorm.DB {
 			&models.UserActivation{},
 			&models.AccountRecovery{},
 			&models.Report{},
+			&models.Site{},
 		); err != nil {
 			slog.Error(fmt.Sprintf("Could not migrate models: %v", err))
 			os.Exit(1)
