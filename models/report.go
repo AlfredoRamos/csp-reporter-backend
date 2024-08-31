@@ -21,7 +21,7 @@ type Report struct {
 	SourceFile         *string        `gorm:"type:text" json:"source_file"`
 	LineNumber         *int64         `gorm:"check:line_number >= 0" json:"line_number"`
 	ColumnNumber       *int64         `gorm:"check:column_number >= 0" json:"column_number"`
-	CreatedAt          time.Time      `gorm:"not null;default:clock_timestamp()" json:"-"`
+	CreatedAt          time.Time      `gorm:"not null;default:clock_timestamp()" json:"created_at"`
 	UpdatedAt          time.Time      `gorm:"not null;default:clock_timestamp()" json:"-"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
