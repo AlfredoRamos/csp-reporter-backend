@@ -5,7 +5,7 @@
 p, admin, /api/v1/system/cache/purge, POST, allow
 
 # Viewer
-## p, viewer, /api/v1/endpoint, GET, allow
+p, viewer, /api/v1/csp/reports/all, GET, allow
 
 # User
 p, user, /api/v1/auth/revoke, POST, allow
@@ -18,6 +18,7 @@ p, guest, /api/v1/auth/recover, POST, allow
 p, guest, /api/v1/auth/recover/validate, POST, allow
 p, guest, /api/v1/auth/recover/update, PATCH, allow
 p, guest, /api/v1/system/csrf, GET, allow
+p, guest, /api/v1/csp/reports/add, POST, allow
 
 # Role inheritance
 g, superadmin, admin

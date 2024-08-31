@@ -305,7 +305,13 @@ func RandomPassword(n int) (string, error) {
 }
 
 func GetJwtIssuer() (string, error) {
-	return GetDomainHostname(os.Getenv("APP_DOMAIN"))
+	d := os.Getenv("APP_DOMAIN")
+
+	if IsDebug() {
+		return GetDomainHostname(d)
+	}
+
+	return GetApexDomain(d)
 }
 
 func IsValidIssuer(iss string) bool {

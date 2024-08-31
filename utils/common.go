@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/net/publicsuffix"
 )
 
 const SplitChars string = "/,;"
@@ -285,4 +286,13 @@ func GetDomainHostname(d string) (string, error) {
 	}
 
 	return u.Hostname(), nil
+}
+
+func GetApexDomain(d string) (string, error) {
+	h, err := GetDomainHostname(d)
+	if err != nil {
+		return "", err
+	}
+
+	return publicsuffix.EffectiveTLDPlusOne(h)
 }

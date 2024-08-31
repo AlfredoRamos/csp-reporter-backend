@@ -15,7 +15,7 @@ type Report struct {
 	EffectiveDirective string         `gorm:"size:100;not null" json:"effective_directive"`
 	OriginalPolicy     string         `gorm:"type:text;not null" json:"original_policy"`
 	Referrer           *string        `gorm:"type:text" json:"referrer"`
-	StatusCode         int            `gorm:"not null;check:status_code > 0" json:"status_code"`
+	StatusCode         int            `gorm:"not null;check:status_code >= 0" json:"status_code"`
 	ViolatedDirective  string         `gorm:"size:100;not null" json:"violated_directive"`
 	ScriptSample       *string        `gorm:"size:50" json:"script_sample"`
 	SourceFile         *string        `gorm:"type:text" json:"source_file"`

@@ -35,8 +35,6 @@ type cspReportInput struct {
 }
 
 func PostCSPReport(c *fiber.Ctx) error {
-	slog.Warn(fmt.Sprintf("CSP violation raw data: %#v", c.Body()))
-
 	allowedMimeTypes := []string{"application/csp-report", "application/json"}
 	accept := c.Accepts(allowedMimeTypes...)
 	defaultErr := c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"errors": []string{"Invalid Content Security Policy Report."}})
@@ -63,20 +61,7 @@ func PostCSPReport(c *fiber.Ctx) error {
 		return defaultErr
 	}
 
-	blockedUri, err := utils.GetDomainHostname(input.Report.BlockedURI)
-	if err != nil || !helpers.IsAllowedDomain(blockedUri) {
-		if err != nil {
-			slog.Error(fmt.Sprintf("Could not get the hostname from the bloqued URI: %v", err))
-		}
-
-		if !helpers.IsAllowedDomain(blockedUri) {
-			slog.Error(fmt.Sprintf("The bloqued URI '%s' is not within the allowed domains.", blockedUri))
-		}
-
-		return defaultErr
-	}
-
-	documentUri, err := utils.GetDomainHostname(input.Report.DocumentURI)
+	documentUri, err := utils.GetApexDomain(input.Report.DocumentURI)
 	if err != nil || len(documentUri) < 1 || !helpers.IsAllowedDomain(documentUri) {
 		if err != nil {
 			slog.Error(fmt.Sprintf("Could not get the document URI hostname: %v", err))
@@ -140,4 +125,12 @@ func PostCSPReport(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
+}
+
+func GetAllCSPReports(c *fiber.Ctx) error {
+	reports := []models.Report{}
+	query := app.DB().Model(&models.Report{})
+	opts := helpers.PaginatedItemOpts{RouteName: "api.csp.reports.index"}
+
+	return helpers.PaginateQuery(reports, query, c, opts)
 }
