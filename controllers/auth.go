@@ -494,16 +494,9 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 }
 
 func AuthCheck(c *fiber.Ctx) error {
-	claims, err := utils.ParseJWEClaims(c.Locals(utils.TokenContextKey()).(string))
-	if err != nil {
-		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
-
-		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-			"error": []string{"Invalid access token"},
-		})
-	}
-
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"data": claims.User})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": []string{"Successful authentication."},
+	})
 }
 
 func RevokeAccessToken(c *fiber.Ctx) error {
