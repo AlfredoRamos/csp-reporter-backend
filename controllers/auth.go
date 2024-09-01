@@ -140,6 +140,10 @@ func AuthLogin(c *fiber.Ctx) error {
 }
 
 func AuthRegister(c *fiber.Ctx) error {
+	if !utils.CanRegisterUsers() {
+		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{"error": []string{"User registration is disabled."}})
+	}
+
 	input := &userRegisterInput{}
 	if err := c.BodyParser(&input); err != nil {
 		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
@@ -155,7 +159,6 @@ func AuthRegister(c *fiber.Ctx) error {
 		errs = utils.AddError(errs, "email", "Please, enter a valid email address.")
 	}
 
-	// TODO: Validate the apex domain
 	if !utils.IsRealEmail(input.Email) {
 		errs = utils.AddError(errs, "email", "Please, enter a real email address.")
 	}
@@ -276,7 +279,6 @@ func AuthRecover(c *fiber.Ctx) error {
 		errs = utils.AddError(errs, "email", "Please, enter a valid email address.")
 	}
 
-	// TODO: Validate the apex domain
 	if !utils.IsRealEmail(input.Email) {
 		errs = utils.AddError(errs, "email", "Please, enter a real email address.")
 	}

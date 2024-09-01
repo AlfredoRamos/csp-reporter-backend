@@ -229,20 +229,26 @@ func IsValidEmail(e string) bool {
 	return true
 }
 
-// TODO: Extract only the apex domain to validate the MX records
 func IsRealEmail(e string) bool {
 	if !IsValidEmail(e) {
 		return false
 	}
 
 	el := strings.Split(e, "@")
-	mx, err := net.LookupMX(el[1])
+
+	d, err := GetApexDomain(el[1])
+	if err != nil {
+		slog.Error(fmt.Sprintf("Could not get apex domain: %v", err))
+		return false
+	}
+
+	mx, err := net.LookupMX(d)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Could not read domain MX records: %v", err))
 		return false
 	}
 
-	return err == nil && len(mx) > 0
+	return len(mx) > 0
 }
 
 func MinimumPasswordLength() int {
@@ -328,4 +334,13 @@ func IsValidIssuer(iss string) bool {
 	}
 
 	return d == iss
+}
+
+func CanRegisterUsers() bool {
+	canRegister, err := strconv.ParseBool(os.Getenv("ENABLE_USER_REGISTER"))
+	if err != nil {
+		canRegister = true
+	}
+
+	return canRegister
 }
