@@ -37,6 +37,7 @@ go install golang.org/x/tools/cmd/deadcode@latest
 
 ```shell
 mkdir -p keys
+go install github.com/go-jose/go-jose/v4/jose-util@latest
 ```
 
 ### Sign (JWS)
