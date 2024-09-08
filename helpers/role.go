@@ -16,65 +16,41 @@ import (
 	"github.com/redis/rueidis"
 )
 
-// TODO: Store both UUID and role name
-func GetUserRoles(id uuid.UUID) ([]uuid.UUID, error) {
-	if !utils.IsValidUuid(id) {
-		return []uuid.UUID{}, errors.New("Invalid user ID.")
-	}
-
-	roleIDs := []uuid.UUID{}
-
-	// Try to load from cache
-	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("role:ids:%s", id.String())).Cache(), 5*time.Minute).ToString()
-	if err != nil && !errors.Is(err, rueidis.Nil) {
-		slog.Warn(fmt.Sprintf("Could not get cached roles: %v", err))
-	}
-
-	if len(cachedRoles) > 0 {
-		if err := json.Unmarshal([]byte(cachedRoles), &roleIDs); err != nil {
-			slog.Error(fmt.Sprintf("Could not decode cached roles: %v", err))
-		}
-
-		return roleIDs, nil
-	}
-
-	if err := app.DB().
-		Where("active = @active", sql.Named("active", true)).
-		First(&models.User{ID: id}).Error; err != nil {
-		return []uuid.UUID{}, errors.New("The requested user does not exist.")
-	}
-
-	limit := 10
-
-	if err := app.DB().Model(&models.UserRole{}).
-		Where(&models.UserRole{UserID: id}).
-		Limit(limit).Pluck("RoleID", &roleIDs).Error; err != nil || len(roleIDs) < 1 {
-		return []uuid.UUID{}, errors.New("The user does not have roles assigned.")
-	}
-
-	// Save roles to cache
-	rawRoles, err := json.Marshal(roleIDs)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Could not serialize roles for cache: %v", err))
-	}
-
-	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("role:ids:%s", id.String())).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
-		slog.Error(fmt.Sprintf("Could not save roles to cache: %v", err))
-	}
-
-	return roleIDs, nil
+type userRole struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
-// TODO: Remove
-func GetUserRoleNames(id uuid.UUID) ([]string, error) {
-	if !utils.IsValidUuid(id) {
-		return []string{}, errors.New("Invalid user ID.")
+type userRoleList []userRole
+
+func (l userRoleList) Names() []string {
+	names := []string{}
+
+	for _, r := range l {
+		names = append(names, r.Name)
 	}
 
-	roles := []string{}
+	return names
+}
 
-	// Try to load from cache
-	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("role:names:%s", id.String())).Cache(), 5*time.Minute).ToString()
+func (l userRoleList) IDs() []uuid.UUID {
+	ids := []uuid.UUID{}
+
+	for _, r := range l {
+		ids = append(ids, r.ID)
+	}
+
+	return ids
+}
+
+func GetUserRoles(id uuid.UUID) (userRoleList, error) {
+	if !utils.IsValidUuid(id) {
+		return []userRole{}, errors.New("Invalid user ID.")
+	}
+
+	roles := []userRole{}
+
+	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("roles:%s", id.String())).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, rueidis.Nil) {
 		slog.Warn(fmt.Sprintf("Could not get cached roles: %v", err))
 	}
@@ -87,35 +63,22 @@ func GetUserRoleNames(id uuid.UUID) ([]string, error) {
 		return roles, nil
 	}
 
-	if err := app.DB().
-		Where("active = @active", sql.Named("active", true)).
-		First(&models.User{ID: id}).Error; err != nil {
-		return []string{}, errors.New("The requested user does not exist.")
-	}
-
 	limit := 10
 
-	roleIDs := []uuid.UUID{}
-	if err := app.DB().Model(&models.UserRole{}).
-		Where(&models.UserRole{UserID: id}).
-		Preload("Role").
-		Limit(limit).Pluck("RoleID", &roleIDs).Error; err != nil || len(roleIDs) < 1 {
-		return []string{}, errors.New("Could not get user roles.")
-	}
-
 	if err := app.DB().Model(&models.Role{}).
-		Where("id IN @role_list", sql.Named("role_list", roleIDs)).
-		Limit(limit).Pluck("Name", &roles).Error; err != nil || len(roles) < 1 {
-		return []string{}, errors.New("Could not get user role list.")
+		Joins("INNER JOIN user_roles ur ON roles.id = ur.role_id").
+		Joins("INNER JOIN users u ON ur.user_id = u.id").
+		Where("ur.deleted_at IS NULL AND u.deleted_at IS NULL AND u.id = @user_id AND u.active = @active", sql.Named("user_id", id), sql.Named("active", true)).
+		Limit(limit).Find(&roles).Error; err != nil {
+		return []userRole{}, err
 	}
 
-	// Save roles to cache
 	rawRoles, err := json.Marshal(roles)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Could not serialize roles for cache: %v", err))
 	}
 
-	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("role:names:%s", id.String())).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
+	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("roles:%s", id.String())).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
 		slog.Error(fmt.Sprintf("Could not save roles to cache: %v", err))
 	}
 
@@ -127,10 +90,10 @@ func HasPermission(id uuid.UUID, p string, m string) bool {
 		return false
 	}
 
-	r, err := GetUserRoleNames(id)
+	r, err := GetUserRoles(id)
 	if err != nil {
 		slog.Error(fmt.Sprintf("User roles error: %v", err))
-		r = []string{}
+		r = []userRole{}
 	}
 
 	if len(r) < 1 {
@@ -139,7 +102,7 @@ func HasPermission(id uuid.UUID, p string, m string) bool {
 
 	ps := [][]interface{}{}
 
-	for _, val := range r {
+	for _, val := range r.Names() {
 		ps = append(ps, []interface{}{val, p, m})
 	}
 

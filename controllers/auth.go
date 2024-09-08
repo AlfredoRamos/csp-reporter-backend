@@ -76,7 +76,7 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	roles, err := helpers.GetUserRoleNames(user.ID)
+	roles, err := helpers.GetUserRoles(user.ID)
 	if err != nil {
 		slog.Error(fmt.Sprintf("User roles error: %v", err))
 	}
@@ -105,7 +105,7 @@ func AuthLogin(c *fiber.Ctx) error {
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
 			Email:     user.Email,
-			Roles:     roles,
+			Roles:     roles.Names(),
 		},
 	}
 
