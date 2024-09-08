@@ -276,6 +276,10 @@ func GetDomainHostname(d string) (string, error) {
 		return "", errors.New("Invalid domain.")
 	}
 
+	if !strings.HasPrefix(d, "http") {
+		d = "https://" + d
+	}
+
 	u, err := url.Parse(d)
 	if err != nil {
 		return "", fmt.Errorf("Could not parse URL: %w", err)
