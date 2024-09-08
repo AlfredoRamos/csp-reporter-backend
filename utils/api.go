@@ -6,13 +6,12 @@ import (
 	"mime/multipart"
 	"net/url"
 	"os"
-	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gorm.io/gorm/utils"
 )
 
 type PaginationInfo struct {
@@ -112,7 +111,7 @@ func HasValidMimeType(fh *multipart.FileHeader, mtl []string) bool {
 
 	mt := fh.Header.Get("Content-Type")
 
-	return utils.Contains(mtl, mt)
+	return slices.Contains(mtl, mt)
 }
 
 func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c *fiber.Ctx) *string {
@@ -161,10 +160,4 @@ func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c *fiber.Ctx) *string
 
 func IsValidUuid(id uuid.UUID) bool {
 	return id.Version() == 4 && id != uuid.Nil
-}
-
-func IsValidSearch(s string) bool {
-	regex := regexp.MustCompile(`(?i)[\w]+`)
-
-	return regex.MatchString(s)
 }

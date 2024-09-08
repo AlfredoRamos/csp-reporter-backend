@@ -16,6 +16,7 @@ import (
 	"github.com/redis/rueidis"
 )
 
+// TODO: Store both UUID and role name
 func GetUserRoles(id uuid.UUID) ([]uuid.UUID, error) {
 	if !utils.IsValidUuid(id) {
 		return []uuid.UUID{}, errors.New("Invalid user ID.")
@@ -64,6 +65,7 @@ func GetUserRoles(id uuid.UUID) ([]uuid.UUID, error) {
 	return roleIDs, nil
 }
 
+// TODO: Remove
 func GetUserRoleNames(id uuid.UUID) ([]string, error) {
 	if !utils.IsValidUuid(id) {
 		return []string{}, errors.New("Invalid user ID.")

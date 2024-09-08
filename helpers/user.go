@@ -48,8 +48,13 @@ func UserExists(id uuid.UUID, email string) bool {
 }
 
 func GetUserID(c *fiber.Ctx) uuid.UUID {
-	jwe := c.Locals(utils.TokenContextKey()).(string)
-	claims, err := utils.ParseJWEClaims(jwe)
+	jwe := c.Locals(utils.TokenContextKey())
+
+	if jwe == nil {
+		panic("Invalid access token.")
+	}
+
+	claims, err := utils.ParseJWEClaims(jwe.(string))
 	if err != nil {
 		panic(err)
 	}
