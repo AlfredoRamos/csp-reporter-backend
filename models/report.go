@@ -9,6 +9,8 @@ import (
 
 type Report struct {
 	ID                 uuid.UUID      `gorm:"primaryKey;type:uuid;not null;unique;default:gen_random_uuid()" json:"id"`
+	SiteID             uuid.UUID      `gorm:"not null" json:"site_id"`
+	Site               Site           `json:"site"`
 	BlockedURI         string         `gorm:"type:text;not null" json:"blocked_uri"`
 	Disposition        string         `gorm:"size:100;not null" json:"disposition"`
 	DocumentURI        string         `gorm:"type:text;not null" json:"document_uri"`

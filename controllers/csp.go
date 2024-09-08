@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -13,6 +14,7 @@ import (
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type cspReport struct {
@@ -32,6 +34,14 @@ type cspReport struct {
 
 type cspReportInput struct {
 	Report cspReport `json:"csp-report"`
+}
+
+func GetAllCSPReports(c *fiber.Ctx) error {
+	reports := []models.Report{}
+	query := app.DB().Model(&models.Report{}).Preload("Site")
+	opts := helpers.PaginatedItemOpts{RouteName: "api.csp.reports.index"}
+
+	return helpers.PaginateQuery(reports, query, c, opts)
 }
 
 func PostCSPReport(c *fiber.Ctx) error {
@@ -61,14 +71,14 @@ func PostCSPReport(c *fiber.Ctx) error {
 		return defaultErr
 	}
 
-	documentUri, err := utils.GetApexDomain(input.Report.DocumentURI)
-	if err != nil || len(documentUri) < 1 || !helpers.IsAllowedDomain(documentUri) {
+	domain, err := utils.GetApexDomain(input.Report.DocumentURI)
+	if err != nil || len(domain) < 1 || !helpers.IsAllowedDomain(domain) {
 		if err != nil {
 			slog.Error(fmt.Sprintf("Could not get the document URI hostname: %v", err))
 		}
 
-		if !helpers.IsAllowedDomain(documentUri) {
-			slog.Error(fmt.Sprintf("The document URI '%s' is not within the allowed domains.", documentUri))
+		if !helpers.IsAllowedDomain(domain) {
+			slog.Error(fmt.Sprintf("The document URI '%s' is not within the allowed domains.", domain))
 		}
 
 		return defaultErr
@@ -78,59 +88,66 @@ func PostCSPReport(c *fiber.Ctx) error {
 
 	now := time.Now().In(utils.DefaultLocation())
 
-	report := &models.Report{
-		BlockedURI:         input.Report.BlockedURI,
-		Disposition:        input.Report.Disposition,
-		DocumentURI:        input.Report.DocumentURI,
-		EffectiveDirective: input.Report.EffectiveDirective,
-		OriginalPolicy:     input.Report.OriginalPolicy,
-		Referrer:           input.Report.Referrer,
-		StatusCode:         input.Report.StatusCode,
-		ViolatedDirective:  input.Report.ViolatedDirective,
-		ScriptSample:       input.Report.ScriptSample,
-		SourceFile:         input.Report.SourceFile,
-		LineNumber:         input.Report.LineNumber,
-		ColumnNumber:       input.Report.ColumnNumber,
-	}
+	if err := app.DB().Transaction(func(tx *gorm.DB) error {
+		site := &models.Site{}
+		if err := tx.Model(&models.Site{}).
+			Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", domain)).
+			First(&site).Error; err != nil {
+			slog.Error(fmt.Sprintf("Error getting site: %v", err))
+			return err
+		}
 
-	if err := app.DB().Where(&report).FirstOrCreate(&report).Error; err != nil {
+		report := &models.Report{
+			SiteID:             site.ID,
+			BlockedURI:         input.Report.BlockedURI,
+			Disposition:        input.Report.Disposition,
+			DocumentURI:        input.Report.DocumentURI,
+			EffectiveDirective: input.Report.EffectiveDirective,
+			OriginalPolicy:     input.Report.OriginalPolicy,
+			Referrer:           input.Report.Referrer,
+			StatusCode:         input.Report.StatusCode,
+			ViolatedDirective:  input.Report.ViolatedDirective,
+			ScriptSample:       input.Report.ScriptSample,
+			SourceFile:         input.Report.SourceFile,
+			LineNumber:         input.Report.LineNumber,
+			ColumnNumber:       input.Report.ColumnNumber,
+		}
+		if err := tx.Where(&report).FirstOrCreate(&report).Error; err != nil {
+			slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"Could not regisger CSP report."}})
+		}
+
+		if err := tasks.NewEmail(
+			helpers.EmailOpts{
+				Subject:      "Content Security Policy violation report",
+				TemplateName: "csp_report",
+				IsInternal:   true,
+				ToList:       []string{utils.InternalStaffEmail()},
+			},
+			map[string]interface{}{
+				"ReportDateTime":     now.Format("2006-01-02 15:04:05 -07:00"),
+				"BlockedURI":         report.BlockedURI,
+				"Disposition":        report.Disposition,
+				"DocumentURI":        report.DocumentURI,
+				"EffectiveDirective": report.EffectiveDirective,
+				"OriginalPolicy":     report.OriginalPolicy,
+				"Referrer":           report.Referrer,
+				"StatusCode":         report.StatusCode,
+				"ViolatedDirective":  report.ViolatedDirective,
+				"ScriptSample":       report.ScriptSample,
+				"SourceFile":         report.SourceFile,
+				"LineNumber":         report.LineNumber,
+				"ColumnNumber":       report.ColumnNumber,
+			},
+		); err != nil {
+			slog.Error(fmt.Sprintf("Error sending email: %v", err))
+		}
+
+		return nil
+	}); err != nil {
 		slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"Could not regisger CSP report."}})
 	}
 
-	if err := tasks.NewEmail(
-		helpers.EmailOpts{
-			Subject:      "Content Security Policy violation report",
-			TemplateName: "csp_report",
-			IsInternal:   true,
-			ToList:       []string{utils.InternalStaffEmail()},
-		},
-		map[string]interface{}{
-			"ReportDateTime":     now.Format("2006-01-02 15:04:05 -07:00"),
-			"BlockedURI":         input.Report.BlockedURI,
-			"Disposition":        input.Report.Disposition,
-			"DocumentURI":        input.Report.DocumentURI,
-			"EffectiveDirective": input.Report.EffectiveDirective,
-			"OriginalPolicy":     input.Report.OriginalPolicy,
-			"Referrer":           input.Report.Referrer,
-			"StatusCode":         input.Report.StatusCode,
-			"ViolatedDirective":  input.Report.ViolatedDirective,
-			"ScriptSample":       input.Report.ScriptSample,
-			"SourceFile":         input.Report.SourceFile,
-			"LineNumber":         input.Report.LineNumber,
-			"ColumnNumber":       input.Report.ColumnNumber,
-		},
-	); err != nil {
-		slog.Error(fmt.Sprintf("Error sending email: %v", err))
-	}
-
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
-}
-
-func GetAllCSPReports(c *fiber.Ctx) error {
-	reports := []models.Report{}
-	query := app.DB().Model(&models.Report{})
-	opts := helpers.PaginatedItemOpts{RouteName: "api.csp.reports.index"}
-
-	return helpers.PaginateQuery(reports, query, c, opts)
 }
