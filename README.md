@@ -6,7 +6,7 @@ Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GO
 
 ## Requirements
 
-- [Go](https://go.dev/dl/) >= 1.23.0
+- [Go](https://go.dev/dl/) >= 1.23.1
 - [PostgreSQL](https://www.postgresql.org/download/) >= 16.3
 - [Redis](https://redis.io/download/) >= 7.2
 
