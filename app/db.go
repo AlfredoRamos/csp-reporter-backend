@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
@@ -93,6 +94,29 @@ func setupRoles() {
 	}
 }
 
+func setupSites() {
+	domain, err := utils.GetApexDomain(os.Getenv("APP_DOMAIN"))
+	if err != nil && !utils.IsDebug() {
+		slog.Error(fmt.Sprintf("Could not get app domain: %v", err))
+		return
+	}
+
+	if len(domain) < 1 && utils.IsDebug() {
+		domain = "localhost"
+	}
+
+	defaultSite := &models.Site{
+		Title:  utils.ToStringPtr(os.Getenv("APP_NAME")),
+		Domain: domain,
+	}
+	if err := DB().Model(&models.Site{}).
+		Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", domain)).
+		FirstOrCreate(&defaultSite).Error; err != nil {
+		slog.Error(fmt.Sprintf("Could not create default site: %v", err))
+	}
+}
+
 func SetupDefaultData() {
 	setupRoles()
+	setupSites()
 }

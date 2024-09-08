@@ -12,8 +12,6 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-const SplitChars string = "/,;"
-
 func AddError(m fiber.Map, k string, v string) fiber.Map {
 	if _, ok := m[k]; !ok {
 		m[k] = []string{v}
@@ -76,4 +74,14 @@ func GetApexDomain(d string) (string, error) {
 	}
 
 	return publicsuffix.EffectiveTLDPlusOne(h)
+}
+
+func ToStringPtr(s string) *string {
+	s = strings.TrimSpace(s)
+
+	if len(s) < 1 {
+		return nil
+	}
+
+	return &s
 }
