@@ -349,8 +349,8 @@ func AuthRecover(c *fiber.Ctx) error {
 
 		if err := tasks.NewEmail(
 			helpers.EmailOpts{
-				Subject:      "Account recovery",
-				TemplateName: "account_recovery",
+				Subject:      "Password change request",
+				TemplateName: "user_password_change_request",
 				ToList:       []string{user.Email},
 			},
 			map[string]interface{}{
