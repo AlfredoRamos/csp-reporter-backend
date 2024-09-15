@@ -249,7 +249,7 @@ func AuthRegister(c *fiber.Ctx) error {
 
 	if err := tasks.NewEmail(
 		helpers.EmailOpts{
-			Subject:      "Solicitud de registro de cuenta",
+			Subject:      "User account registration request",
 			TemplateName: "signup_user",
 			ToList:       []string{user.Email},
 		},

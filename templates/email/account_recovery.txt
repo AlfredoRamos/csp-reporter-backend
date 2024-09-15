@@ -1,0 +1,22 @@
+Hello {{.UserName}},
+
+We have received your request to recover your user account.
+
+Please copy and paste the following link into your web browser to reset your password.
+
+{{.RecoveryUrl}}
+
+Some security recommendations:
+
+- Do not share your password with third parties.
+- Create passwords that are difficult to guess and do not use personal information.
+- Create passwords with more than 12 characters that include uppercase, lowercase, numbers and symbols.
+- Use different passwords for each website or account.
+- Use a password manager to securely store your login credentials.
+
+If you have any problems resetting your password, please do not hesitate to contact us.
+
+Hoping you are having a nice day, we remain at your service.
+
+Sincerely,
+The team of {{.AppName}}.

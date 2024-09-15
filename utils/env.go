@@ -91,3 +91,14 @@ func InternalStaffEmail() string {
 
 	return e
 }
+
+func EmailLang() string {
+	l := os.Getenv("EMAIL_LANG")
+
+	if len(l) < 1 {
+		slog.Warn("")
+		return "Empty email language. Falling back to 'en'."
+	}
+
+	return l
+}

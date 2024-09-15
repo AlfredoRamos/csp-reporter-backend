@@ -6,10 +6,12 @@ import (
 	"log/slog"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 const (
@@ -151,4 +153,14 @@ func CalculatePagination[T PaginatedItem](isFirstPage bool, hasPagination bool, 
 	}
 
 	return pagination
+}
+
+func GetModelSchema(model any) *schema.Schema {
+	stmt := &gorm.Statement{DB: app.DB()}
+	if err := stmt.Parse(model); err != nil {
+		slog.Error(fmt.Sprintf("Could not parse model: %v", err))
+		return nil
+	}
+
+	return stmt.Schema
 }

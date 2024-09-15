@@ -82,10 +82,15 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 	}
 
 	// Default values
+	data["Lang"] = utils.EmailLang()
 	data["AppName"] = os.Getenv("APP_NAME")
+	data["AppDescription"] = os.Getenv("APP_DESCRIPTION")
+	data["AppLogo"] = os.Getenv("APP_LOGO")
 	data["AppDomain"] = os.Getenv("APP_DOMAIN")
 	data["CompanyName"] = os.Getenv("COMPANY_NAME")
+	data["CompanyUrl"] = os.Getenv("COMPANY_URL")
 	data["Subject"] = opts.Subject
+	data["Now"] = time.Now().In(utils.DefaultLocation())
 
 	if err := msg.SetBodyHTMLTemplate(htmlTpl, data); err != nil {
 		return fmt.Errorf("Error setting HTML template: %w", err)

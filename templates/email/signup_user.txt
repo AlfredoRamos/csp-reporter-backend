@@ -1,0 +1,12 @@
+Hello {{.UserName}},
+
+We have received your account creating request and are currently validating it.
+
+If approved, you will receive a confirmation from us indicating that your account is ready to be used.
+
+We appreciate your patience in advance.
+
+Hoping you are having a nice day, we remain at your service.
+
+Sincerely,
+The team of {{.AppName}}.

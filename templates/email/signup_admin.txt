@@ -1,0 +1,13 @@
+Hello,
+
+A new user account creation request has been submitted and is awaiting approval. A summary is shared below.
+
+User name: {{.UserName}}
+Email: {{.UserEmail}}
+
+To approve or decline this request, please access the platform through the following link.
+
+Best regards.
+
+Sincerely,
+The team of {{.AppName}}.
