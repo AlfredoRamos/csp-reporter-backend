@@ -88,7 +88,7 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 	data["AppLogo"] = os.Getenv("APP_LOGO")
 	data["AppDomain"] = os.Getenv("APP_DOMAIN")
 	data["CompanyName"] = os.Getenv("COMPANY_NAME")
-	data["CompanyUrl"] = os.Getenv("COMPANY_URL")
+	data["CompanyURL"] = os.Getenv("COMPANY_URL")
 	data["Subject"] = opts.Subject
 	data["Now"] = time.Now().In(utils.DefaultLocation())
 

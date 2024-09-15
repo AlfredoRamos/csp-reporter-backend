@@ -227,11 +227,10 @@
 													>
 														<p>Hello,</p>
 														<p>
-															A new user account
-															creation request has
-															been submitted and
-															is awaiting
-															approval. A summary
+															A new Content
+															Security Policy
+															violation has been
+															reported. A summary
 															is shared below.
 														</p>
 														<table
@@ -243,41 +242,52 @@
 															<tbody>
 																<tr>
 																	<th>
-																		User
-																		name
+																		Site
 																	</th>
 																	<td>
-																		{{.UserName}}
+																		{{.SiteTitle}}
+																		{{.SiteDomain}}
 																	</td>
 																</tr>
 																<tr>
 																	<th>
-																		Email
+																		Report
+																		date
 																	</th>
 																	<td>
-																		{{.UserEmail}}
+																		{{.ReportDateTime}}
+																	</td>
+																</tr>
+																<tr>
+																	<th>
+																		Blocked
+																		URI
+																	</th>
+																	<td>
+																		{{.BlockedURI}}
+																	</td>
+																</tr>
+																<tr>
+																	<th>
+																		Violated
+																		directive
+																	</th>
+																	<td>
+																		{{.ViolatedDirective}}
 																	</td>
 																</tr>
 															</tbody>
 														</table>
-														<p>
-															To approve or
-															decline this
-															request, please
-															access the platform
-															through the
-															following link.
-														</p>
 														<p
 															style="
 																text-align: center;
 															"
 														>
 															<a
-																href="{{.AppDomain}}/admin/users/review"
+																href="{{.AppDomain}}"
 																class="btn"
-																>Review user
-																accounts</a
+																>See all
+																reports</a
 															>
 														</p>
 														<p>Best regards.</p>

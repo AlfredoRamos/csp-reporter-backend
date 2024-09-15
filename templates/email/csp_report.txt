@@ -1,0 +1,15 @@
+Hello,
+
+A new Content Security Policy violation has been reported. A summary is shared below.
+
+Site: {{.SiteTitle}} {{.SiteDomain}}
+Report date: {{.ReportDateTime.Format "2006-01-02 03:04:05 PM"}}
+Blocked URI: {{.BlockedURI}}
+Violated directive: {{.ViolatedDirective}}
+
+See all reports: {{.AppDomain}}
+
+Best regards.
+
+Sincerely,
+The team of {{.AppName}}.

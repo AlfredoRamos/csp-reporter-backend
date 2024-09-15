@@ -112,7 +112,7 @@ func PostCSPReport(c *fiber.Ctx) error {
 			LineNumber:         input.Report.LineNumber,
 			ColumnNumber:       input.Report.ColumnNumber,
 		}
-		if err := tx.Where(&report).FirstOrCreate(&report).Error; err != nil {
+		if err := tx.Where(&report).Preload("Site").FirstOrCreate(&report).Error; err != nil {
 			slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
 			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"Could not regisger CSP report."}})
 		}
@@ -125,6 +125,8 @@ func PostCSPReport(c *fiber.Ctx) error {
 				ToList:       []string{utils.InternalStaffEmail()},
 			},
 			map[string]interface{}{
+				"SiteTitle":          report.Site.Title,
+				"SiteDomain":         report.Site.Domain,
 				"ReportDateTime":     now.Format("2006-01-02 15:04:05 -07:00"),
 				"BlockedURI":         report.BlockedURI,
 				"Disposition":        report.Disposition,
