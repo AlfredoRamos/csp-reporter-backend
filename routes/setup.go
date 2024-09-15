@@ -5,8 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"time"
 
 	"alfredoramos.mx/csp-reporter/utils"
+	sentryfiber "github.com/getsentry/sentry-go/fiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -22,6 +24,8 @@ import (
 
 func SetupRoutes(app *fiber.App) {
 	isDebug := utils.IsDebug()
+
+	sentryConfig := sentryfiber.Options{Timeout: 3 * time.Second}
 
 	recoverConfig := recover.Config{
 		EnableStackTrace: isDebug,
@@ -91,6 +95,7 @@ func SetupRoutes(app *fiber.App) {
 		limiterConfig.Max = 25
 	}
 
+	app.Use(sentryfiber.New(sentryConfig))
 	app.Use(recover.New(recoverConfig))
 	app.Use(cors.New(corsConfig))
 	app.Use(encryptcookie.New(encryptedCookieConfig))

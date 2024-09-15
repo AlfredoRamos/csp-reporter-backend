@@ -13,6 +13,7 @@ import (
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -74,6 +75,7 @@ func PostCSPReport(c *fiber.Ctx) error {
 	domain, err := utils.GetApexDomain(input.Report.DocumentURI)
 	if err != nil || len(domain) < 1 || !helpers.IsAllowedDomain(domain) {
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not get the document URI hostname: %v", err))
 		}
 
@@ -142,6 +144,7 @@ func PostCSPReport(c *fiber.Ctx) error {
 				"ColumnNumber":       report.ColumnNumber,
 			},
 		); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error sending email: %v", err))
 		}
 

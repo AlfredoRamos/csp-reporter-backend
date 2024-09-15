@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/wneessen/go-mail"
 )
 
@@ -45,6 +46,7 @@ func SMTP() *mail.Client {
 			mail.WithPassword(os.Getenv("EMAIL_PASSWORD")),
 		)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not create email client: %v", err))
 			os.Exit(1)
 		}

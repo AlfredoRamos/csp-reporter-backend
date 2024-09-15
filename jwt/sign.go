@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
 )
 
@@ -60,6 +61,7 @@ func Signer() jose.Signer {
 			(&jose.SignerOptions{}).WithType("JWT"),
 		)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not create signer: %v", err))
 			os.Exit(1)
 		}

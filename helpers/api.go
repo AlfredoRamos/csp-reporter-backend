@@ -8,6 +8,7 @@ import (
 
 	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -41,6 +42,7 @@ func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opt
 
 	query, pointsNext, err := GetPaginationQuery(query, pointsNext, cursor, sortOrder, opts.TableAlias)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error paginating results: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not paginate results."},
@@ -83,6 +85,7 @@ func GetPaginationQuery(query *gorm.DB, pointsNext bool, cursor string, sortOrde
 	if len(cursor) > 0 {
 		decodedCursor, err := utils.DecodeCursor(cursor)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error decoding cursor: %v", err))
 			return nil, pointsNext, err
 		}
@@ -158,6 +161,7 @@ func CalculatePagination[T PaginatedItem](isFirstPage bool, hasPagination bool, 
 func GetModelSchema(model any) *schema.Schema {
 	stmt := &gorm.Statement{DB: app.DB()}
 	if err := stmt.Parse(model); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not parse model: %v", err))
 		return nil
 	}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/hibiken/asynq"
 )
 
@@ -98,6 +99,7 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 			SyncInterval: 5 * time.Minute,
 		})
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not create periodic task manager: %v", err))
 			os.Exit(1)
 		}

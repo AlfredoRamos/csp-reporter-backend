@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/casbin/casbin/v2"
+	"github.com/getsentry/sentry-go"
 )
 
 var (
@@ -33,11 +34,13 @@ func Auth() *casbin.SyncedEnforcer {
 
 		e, err := casbin.NewSyncedEnforcer(modelFile, policyFile)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not create enforcer: %v", err))
 			os.Exit(1)
 		}
 
 		if err := e.LoadPolicy(); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not load policy: %v", err))
 			os.Exit(1)
 		}

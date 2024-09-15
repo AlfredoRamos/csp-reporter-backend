@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -58,6 +59,7 @@ func encodeCursor(cursor Cursor) *string {
 
 	serializedCursor, err := json.Marshal(cursor)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil
 	}
 
@@ -69,6 +71,7 @@ func encodeCursor(cursor Cursor) *string {
 func DecodeCursor(cursor string) (Cursor, error) {
 	decodedCursor, err := base64.RawStdEncoding.DecodeString(cursor)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, err
 	}
 

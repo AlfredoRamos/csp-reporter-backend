@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/net/publicsuffix"
 )
@@ -33,11 +34,15 @@ func Reverse[T any](s []T) []T {
 func RandomString(n int) (string, error) {
 	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	ret := make([]byte, n)
+
 	for i := 0; i < n; i++ {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+
 		if err != nil {
+			sentry.CaptureException(err)
 			return "", err
 		}
+
 		ret[i] = letters[num.Int64()]
 	}
 
@@ -57,6 +62,7 @@ func GetDomainHostname(d string) (string, error) {
 
 	u, err := url.Parse(d)
 	if err != nil {
+		sentry.CaptureException(err)
 		return "", fmt.Errorf("Could not parse URL: %w", err)
 	}
 
@@ -70,6 +76,7 @@ func GetDomainHostname(d string) (string, error) {
 func GetApexDomain(d string) (string, error) {
 	h, err := GetDomainHostname(d)
 	if err != nil {
+		sentry.CaptureException(err)
 		return "", err
 	}
 

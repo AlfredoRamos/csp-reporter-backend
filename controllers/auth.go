@@ -15,6 +15,7 @@ import (
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -111,6 +112,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	jwtStr, err := jose_jwt.Signed(jwt.Signer()).Claims(claims).Serialize()
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating JWT: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -120,6 +122,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	jwe, err := jwt.Encrypter().Encrypt([]byte(jwtStr))
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating JWE: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -129,6 +132,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	jweStr, err := jwe.CompactSerialize()
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -187,6 +191,7 @@ func AuthRegister(c *fiber.Ctx) error {
 	}
 
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); !utils.IsDebug() && !strong && err != nil {
+		sentry.CaptureException(err)
 		errs = utils.AddError(errs, "password", err.Error())
 	}
 
@@ -243,6 +248,7 @@ func AuthRegister(c *fiber.Ctx) error {
 				"UserEmail": user.Email,
 			},
 		); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error sending email: %v", err))
 		}
 	})
@@ -257,6 +263,7 @@ func AuthRegister(c *fiber.Ctx) error {
 			"UserName": userName,
 		},
 	); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error sending email: %v", err))
 	}
 
@@ -358,6 +365,7 @@ func AuthRecover(c *fiber.Ctx) error {
 				"RecoveryURL": recovery.URL(),
 			},
 		); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error sending email: %v", err))
 		}
 
@@ -489,6 +497,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 			"UserName": recovery.User.GetFullName(),
 		},
 	); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error sending email: %v", err))
 	}
 
@@ -512,6 +521,7 @@ func RevokeAccessToken(c *fiber.Ctx) error {
 
 	claims, err := utils.ParseJWEClaims(tokenStr)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{

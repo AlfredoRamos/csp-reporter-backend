@@ -11,6 +11,7 @@ import (
 	"alfredoramos.mx/csp-reporter/helpers"
 	"alfredoramos.mx/csp-reporter/jwt"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -38,6 +39,7 @@ func ValidateJWT() fiber.Handler {
 
 		claims, err := utils.ParseJWEClaims(savedJWE)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -73,7 +75,7 @@ func ValidateJWT() fiber.Handler {
 		now := time.Now().In(utils.DefaultLocation())
 
 		if now.Before(claims.IssuedAt.Time()) {
-			slog.Error(fmt.Sprintf("Invalid issued at date: %v", err))
+			slog.Error(fmt.Sprintf("Invalid issued at date: %v", claims.IssuedAt.Time()))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is not valid yet."},
@@ -81,7 +83,7 @@ func ValidateJWT() fiber.Handler {
 		}
 
 		if now.Before(claims.NotBefore.Time()) {
-			slog.Error(fmt.Sprintf("Invalid not before date: %v", err))
+			slog.Error(fmt.Sprintf("Invalid not before date: %v", claims.NotBefore.Time()))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is not valid yet."},
@@ -89,7 +91,7 @@ func ValidateJWT() fiber.Handler {
 		}
 
 		if now.After(claims.Expiry.Time()) {
-			slog.Error(fmt.Sprintf("Invalid expiration date: %v", err))
+			slog.Error(fmt.Sprintf("Invalid expiration date: %v", claims.Expiry.Time()))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is no longer valid."},
@@ -115,6 +117,7 @@ func ValidateJWT() fiber.Handler {
 }
 
 func jwtError(c *fiber.Ctx, err error) error {
+	sentry.CaptureException(err)
 	slog.Error(fmt.Sprintf("Access token error: %v", err))
 	return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"Invalid or expired access token."}})
 }
@@ -139,29 +142,34 @@ func AuthProtected() fiber.Handler {
 			[]jose.ContentEncryption{jose.A256GCM},
 		)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error parsing JWE: %v", err))
 			return jwtError(c, err)
 		}
 
 		decrypted, err := jwe.Decrypt(jwt.EncryptionKeys().Private)
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error decrypting JWE: %v", err))
 			return jwtError(c, err)
 		}
 
 		parsedJWT, err := jose.ParseSigned(string(decrypted), []jose.SignatureAlgorithm{jose.SignatureAlgorithm(jwt.SigningKeys().Private.Algorithm)})
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error parsing JWT: %v", err))
 			return jwtError(c, err)
 		}
 
 		if _, err := parsedJWT.Verify(jwt.SigningKeys().Public); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error verifying JWT: %v", err))
 			return jwtError(c, err)
 		}
 
 		jweStr, err := jwe.CompactSerialize()
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Error generating JWE access token: %v", err))
 			return jwtError(c, err)
 		}

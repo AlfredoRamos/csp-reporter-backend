@@ -10,6 +10,7 @@ import (
 	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/redis/rueidis"
@@ -56,6 +57,7 @@ func GetUserID(c *fiber.Ctx) uuid.UUID {
 
 	claims, err := utils.ParseJWEClaims(jwe.(string))
 	if err != nil {
+		sentry.CaptureException(err)
 		panic(err)
 	}
 

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 	_ "time/tzdata"
+
+	"github.com/getsentry/sentry-go"
 )
 
 const (
@@ -70,6 +72,7 @@ func DefaultLocation() *time.Location {
 
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
+		sentry.CaptureException(err)
 		return time.Now().Location()
 	}
 

@@ -12,6 +12,7 @@ import (
 	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/redis/rueidis"
 )
@@ -108,6 +109,7 @@ func HasPermission(id uuid.UUID, p string, m string) bool {
 
 	result, err := app.Auth().BatchEnforce(ps)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Enforce error: %v", err))
 		return false
 	}

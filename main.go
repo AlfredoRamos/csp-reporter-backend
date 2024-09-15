@@ -12,6 +12,7 @@ import (
 	"alfredoramos.mx/csp-reporter/routes"
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -26,13 +27,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Sentry
+	app.SetupSentry()
+	defer sentry.Flush(3 * time.Second)
+
 	// Application initialization
 	app.SetupDefaultData()
+	defer func() {
+		db, err := app.DB().DB()
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not get database interface: %v", err))
+		}
+
+		if err := db.Close(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Error closing database connection: %v", err))
+		}
+	}()
 
 	// Setup app
 	app := fiber.New(fiber.Config{
 		StrictRouting: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Application error handler: %v", err))
 
 			code := fiber.StatusInternalServerError
@@ -60,8 +78,15 @@ func main() {
 		mux := tasks.AsynqServeMux()
 
 		if err := queue.Run(mux); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not run queue server: %v", err))
 			os.Exit(1)
+		}
+	}()
+	defer func() {
+		if err := tasks.AsynqClient().Close(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not close Asynq client: %v", err))
 		}
 	}()
 
@@ -70,12 +95,14 @@ func main() {
 		manager := tasks.AsynqPeriodicTaskManager()
 
 		if err := manager.Run(); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not run periodic tasks manager: %v", err))
 		}
 	}()
 
 	// Setup server
 	if err := app.Listen(os.Getenv("APP_ADDRESS")); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not setup server: %v", err))
 		os.Exit(1)
 	}

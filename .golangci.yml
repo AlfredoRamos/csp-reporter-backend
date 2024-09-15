@@ -90,6 +90,7 @@ linters-settings:
           - github.com/xuri/excelize/v2
           - github.com/hibiken/asynq
           - github.com/wneessen/go-mail
+          - github.com/getsentry/sentry-go
 
   prealloc:
     for-loops: true

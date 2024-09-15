@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/redis/rueidis"
 )
 
@@ -29,6 +30,7 @@ func Cache() rueidis.Client {
 			SelectDB:    0,
 		})
 		if err != nil && !errors.Is(err, rueidis.Nil) {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not connect to Redis: %v", err))
 			os.Exit(1)
 		}

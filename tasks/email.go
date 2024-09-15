@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/helpers"
+	"github.com/getsentry/sentry-go"
 	"github.com/hibiken/asynq"
 )
 
@@ -37,6 +38,7 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 
 	//nolint:contextcheck
 	if err := helpers.SendEmail(p.Source, p.Data); err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("Could not deliver email: %w: %w", err, asynq.SkipRetry)
 	}
 
@@ -46,12 +48,14 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 func NewEmail(s helpers.EmailOpts, d map[string]interface{}) error {
 	task, err := NewEmailDeliveryTask(s, d)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not create task: %v", err))
 		return err
 	}
 
 	info, err := AsynqClient().Enqueue(task, asynq.MaxRetry(3), asynq.ProcessIn(3*time.Second), asynq.Retention(1*time.Hour))
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not enqueue task: %v", err))
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -48,11 +49,13 @@ func DB() *gorm.DB {
 			Logger:                 logger.Default.LogMode(logLevel),
 		})
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not connect to PostgreSQL: %v", err))
 			os.Exit(1)
 		}
 
 		if err := database.Exec("CREATE EXTENSION IF NOT EXISTS unaccent").Error; err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not load unaccent extension: %v", err))
 		}
 
@@ -65,6 +68,7 @@ func DB() *gorm.DB {
 			&models.Report{},
 			&models.Site{},
 		); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not migrate models: %v", err))
 			os.Exit(1)
 		}
@@ -97,6 +101,7 @@ func setupRoles() {
 func setupSites() {
 	domain, err := utils.GetApexDomain(os.Getenv("APP_DOMAIN"))
 	if err != nil && !utils.IsDebug() {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not get app domain: %v", err))
 		return
 	}

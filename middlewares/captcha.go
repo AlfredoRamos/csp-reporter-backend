@@ -2,12 +2,14 @@ package middlewares
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
 
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -70,6 +72,7 @@ func CaptchaProtected() fiber.Handler {
 		agent.Request().Header.SetUserAgent(c.Get("User-Agent"))
 
 		if err := agent.Parse(); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not parse agent: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -88,6 +91,7 @@ func CaptchaProtected() fiber.Handler {
 
 		status, body, errList := agent.Bytes()
 		if len(errList) > 0 {
+			sentry.CaptureException(errors.Join(errList...))
 			slog.Error(fmt.Sprintf("Could not read response body and got HTTP '%d' status code.", status))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": errList,

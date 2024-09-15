@@ -17,6 +17,7 @@ import (
 
 	"alfredoramos.mx/csp-reporter/jwt"
 	"github.com/ccojocar/zxcvbn-go"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
 	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
@@ -92,24 +93,28 @@ func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
 	// Parse JWE
 	jwe, err := jose.ParseEncryptedCompact(token, []jose.KeyAlgorithm{jose.ECDH_ES_A256KW}, []jose.ContentEncryption{jose.A256GCM})
 	if err != nil {
+		sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Decrypt JWE
 	decrypted, err := jwe.Decrypt(jwt.EncryptionKeys().Private)
 	if err != nil {
+		sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Verify and parse JWT
 	parsedJWT, err := jose.ParseSigned(string(decrypted), []jose.SignatureAlgorithm{jose.SignatureAlgorithm(jwt.SigningKeys().Private.Algorithm)})
 	if err != nil {
+		sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Access the payload
 	payload, err := parsedJWT.Verify(jwt.SigningKeys().Public)
 	if err != nil {
+		sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
@@ -137,6 +142,7 @@ func HashString(p string) string {
 
 	s, err := generateRandomBytes(a.SaltLength)
 	if err != nil {
+		sentry.CaptureException(err)
 		panic(fmt.Sprintf("Could not generate secure salt: %v", err))
 	}
 
@@ -151,6 +157,7 @@ func HashPassword(p string) string {
 	a := NewArgon2Config()
 	s, err := generateRandomBytes(a.SaltLength)
 	if err != nil {
+		sentry.CaptureException(err)
 		panic(fmt.Sprintf("Could not generate secure salt: %v", err))
 	}
 
@@ -164,6 +171,7 @@ func HashPassword(p string) string {
 func ComparePasswordHash(p string, h string) bool {
 	config, salt, hash, err := decodeHash(h)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not decode hash: %v", err))
 
 		return false
@@ -182,16 +190,19 @@ func decodeHash(h string) (Argon2Config, []byte, []byte, error) {
 
 	var av int
 	if _, err := fmt.Sscanf(vals[2], "v=%d", &av); err != nil {
+		sentry.CaptureException(err)
 		return Argon2Config{}, nil, nil, errors.New("The version of the Argon2 algorithm is not compatible.")
 	}
 
 	config := Argon2Config{}
 	if _, err := fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &config.Memory, &config.Iterations, &config.Parallelism); err != nil {
+		sentry.CaptureException(err)
 		return Argon2Config{}, nil, nil, err
 	}
 
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(vals[4])
 	if err != nil {
+		sentry.CaptureException(err)
 		return Argon2Config{}, nil, nil, err
 	}
 
@@ -199,6 +210,7 @@ func decodeHash(h string) (Argon2Config, []byte, []byte, error) {
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(vals[5])
 	if err != nil {
+		sentry.CaptureException(err)
 		return Argon2Config{}, nil, nil, err
 	}
 
@@ -210,6 +222,7 @@ func decodeHash(h string) (Argon2Config, []byte, []byte, error) {
 func generateRandomBytes(n uint32) ([]byte, error) {
 	b := make([]byte, n)
 	if _, err := rand.Read(b); err != nil {
+		sentry.CaptureException(err)
 		return nil, err
 	}
 
@@ -222,6 +235,7 @@ func IsValidEmail(e string) bool {
 	}
 
 	if _, err := mail.ParseAddress(e); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not parse email: %v", err))
 		return false
 	}
@@ -238,12 +252,14 @@ func IsRealEmail(e string) bool {
 
 	d, err := GetApexDomain(el[1])
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not get apex domain: %v", err))
 		return false
 	}
 
 	mx, err := net.LookupMX(d)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not read domain MX records: %v", err))
 		return false
 	}
@@ -301,6 +317,7 @@ func RandomPassword(n int) (string, error) {
 	for i := 0; i < n; i++ {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
 		if err != nil {
+			sentry.CaptureException(err)
 			return "", err
 		}
 

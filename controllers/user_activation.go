@@ -10,6 +10,7 @@ import (
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -145,6 +146,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	}
 
 	if err := tasks.NewEmail(opts, data); err != nil {
+		sentry.CaptureException(err)
 		return err
 	}
 

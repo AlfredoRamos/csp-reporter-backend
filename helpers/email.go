@@ -18,6 +18,7 @@ import (
 	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/redis/rueidis"
 	"github.com/wneessen/go-mail"
 )
@@ -55,12 +56,14 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 	htmlTplFile := filepath.Clean(tplBase + ".html")
 	htmlTpl, err := html_tpl.New(filepath.Base(htmlTplFile)).ParseFiles(htmlTplFile)
 	if err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("Error loading the HTML template: %w", err)
 	}
 
 	textTplFile := filepath.Clean(tplBase + ".txt")
 	textTpl, err := text_tpl.New(filepath.Base(textTplFile)).ParseFiles(textTplFile)
 	if err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("Error loading the TEXT template: %w", err)
 	}
 
@@ -72,11 +75,13 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 	msg.Subject(opts.Subject + " • " + os.Getenv("APP_NAME"))
 
 	if err := msg.FromFormat(os.Getenv("APP_NAME"), os.Getenv("EMAIL_FROM")); err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("Could not set the from email address: %w", err)
 	}
 
 	if !opts.IsInternal && len(utils.SupportEmail()) > 0 {
 		if err := msg.ReplyTo(utils.SupportEmail()); err != nil {
+			sentry.CaptureException(err)
 			return fmt.Errorf("Could not set the reply-to email address: %w", err)
 		}
 	}
@@ -93,10 +98,12 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 	data["Now"] = time.Now().In(utils.DefaultLocation())
 
 	if err := msg.SetBodyHTMLTemplate(htmlTpl, data); err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("Error setting HTML template: %w", err)
 	}
 
 	if err := msg.AddAlternativeTextTemplate(textTpl, data); err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("Error setting TEXT template: %w", err)
 	}
 

@@ -1,6 +1,6 @@
 # About
 
-Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GORM](https://gorm.io) and [Asynq](https://github.com/hibiken/asynq	).
+Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GORM](https://gorm.io), [Asynq](https://github.com/hibiken/asynq) and [Sentry](https://github.com/getsentry/sentry-go).
 
 # Setup
 
