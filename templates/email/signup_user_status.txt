@@ -1,0 +1,20 @@
+Hello {{.UserName}},
+
+{{if .Approved}}
+Your user account on {{.AppName}} has been approved by our team and is now active.
+{{else}}
+Your request to create a user account on {{.AppName}} has been rejected by our team.
+
+Below is the reason:
+
+"{{.DenialReason}}"
+
+If any action is required on your part, please make the changes needed in order to make a new request to create a user account.
+{{end}}
+
+If you have any questions or comments, please do not hesitate to contact us.
+
+Hoping you are having a nice day, we remain at your service.
+
+Sincerely,
+The team of {{.AppName}}.
