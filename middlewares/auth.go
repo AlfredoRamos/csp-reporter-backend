@@ -70,7 +70,35 @@ func ValidateJWT() fiber.Handler {
 			})
 		}
 
+		now := time.Now().In(utils.DefaultLocation())
+
+		if now.Before(claims.IssuedAt.Time()) {
+			slog.Error(fmt.Sprintf("Invalid issued at date: %v", err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The access token is not valid yet."},
+			})
+		}
+
+		if now.Before(claims.NotBefore.Time()) {
+			slog.Error(fmt.Sprintf("Invalid not before date: %v", err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The access token is not valid yet."},
+			})
+		}
+
+		if now.After(claims.Expiry.Time()) {
+			slog.Error(fmt.Sprintf("Invalid expiration date: %v", err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The access token is no longer valid."},
+			})
+		}
+
 		if sub, err := uuid.Parse(claims.Subject); err != nil || !utils.IsValidUuid(sub) || claims.User.ID != sub {
+			slog.Error(fmt.Sprintf("Invalid subject: %v", err))
+
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The subject is not valid."},
 			})

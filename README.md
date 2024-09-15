@@ -25,6 +25,12 @@ Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GO
 go mod tidy
 ```
 
+## Setup live-reload
+
+```shell
+go install github.com/air-verse/air@latest
+```
+
 ## Setup linters
 
 ```shell
