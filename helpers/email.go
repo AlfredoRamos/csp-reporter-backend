@@ -50,7 +50,7 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 		return errors.New("Missing information to send email.")
 	}
 
-	tplBase := filepath.Clean(filepath.Join("templates", opts.TemplateName))
+	tplBase := filepath.Clean(filepath.Join("templates", "email", opts.TemplateName))
 
 	htmlTplFile := filepath.Clean(tplBase + ".html")
 	htmlTpl, err := html_tpl.New(filepath.Base(htmlTplFile)).ParseFiles(htmlTplFile)
@@ -75,7 +75,7 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 		return fmt.Errorf("Could not set the from email address: %w", err)
 	}
 
-	if !opts.IsInternal {
+	if !opts.IsInternal && len(utils.SupportEmail()) > 0 {
 		if err := msg.ReplyTo(utils.SupportEmail()); err != nil {
 			return fmt.Errorf("Could not set the reply-to email address: %w", err)
 		}
