@@ -19,6 +19,7 @@ import (
 	"github.com/redis/rueidis"
 )
 
+//nolint:cyclop
 func ValidateJWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
@@ -55,7 +56,7 @@ func ValidateJWT() fiber.Handler {
 			})
 		}
 
-		isRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
+		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, rueidis.Nil) {
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
 
@@ -64,7 +65,7 @@ func ValidateJWT() fiber.Handler {
 			})
 		}
 
-		if len(accessClaims.ID) < 1 || isRevoked {
+		if len(accessClaims.ID) < 1 || isAccessRevoked {
 			slog.Error(fmt.Sprintf("The access token is invalid or revoked '%s': %v", accessClaims.ID, err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -134,6 +135,23 @@ func ValidateJWT() fiber.Handler {
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The issuer is not valid."},
+			})
+		}
+
+		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
+		if err != nil && !errors.Is(err, rueidis.Nil) {
+			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshClaims.ID, err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Could not validate refresh token."},
+			})
+		}
+
+		if len(refreshClaims.ID) < 1 || isRefreshRevoked {
+			slog.Error(fmt.Sprintf("The refresh token is invalid or revoked '%s': %v", refreshClaims.ID, err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Revoked refresh token."},
 			})
 		}
 

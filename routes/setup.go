@@ -89,6 +89,10 @@ func SetupRoutes(app *fiber.App) {
 		TimeZone:   utils.DefaultTimeZone(),
 	}
 
+	compressConfig := compress.Config{
+		Level: compress.LevelBestSpeed,
+	}
+
 	// Overwrite configuration when in DEBUG mode
 	if isDebug {
 		corsConfig.AllowOrigins = "*"
@@ -108,9 +112,7 @@ func SetupRoutes(app *fiber.App) {
 	app.Use(idempotency.New())
 	app.Use(requestid.New())
 	app.Use(logger.New(loggerConfig))
-	app.Use(compress.New(compress.Config{
-		Level: compress.LevelBestSpeed,
-	}))
+	app.Use(compress.New(compressConfig))
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")

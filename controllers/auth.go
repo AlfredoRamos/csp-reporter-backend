@@ -118,26 +118,47 @@ func AuthLogin(c *fiber.Ctx) error {
 }
 
 func AuthCheck(c *fiber.Ctx) error {
+	// Real validation is handled with middlewares
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": []string{"Successful authentication."},
 	})
 }
 
-// TODO: Invalidate refresh token after use
 func AuthRefresh(c *fiber.Ctx) error {
-	oldRefreshToken := c.Cookies(utils.RefreshTokenContextKey())
+	refreshToken := c.Cookies(utils.RefreshTokenContextKey())
 
-	if len(oldRefreshToken) < 1 {
+	if len(refreshToken) < 1 {
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"The refresh token is invalid."}})
 	}
 
-	refreshClaims, err := utils.ParseJWEClaims(oldRefreshToken)
+	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 			"error": []string{"The refresh token is invalid."},
+		})
+	}
+
+	now := time.Now().In(utils.DefaultLocation())
+
+	if now.Before(refreshClaims.IssuedAt.Time()) || now.Before(refreshClaims.NotBefore.Time()) || now.After(refreshClaims.Expiry.Time()) {
+		defer c.Locals(utils.AccessTokenContextKey(), nil)
+		c.ClearCookie(utils.RefreshTokenContextKey())
+		c.Cookie(&fiber.Cookie{
+			Name:        utils.RefreshTokenContextKey(),
+			Path:        "/",
+			Domain:      os.Getenv("COOKIE_DOMAIN"),
+			Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
+			Secure:      !utils.IsDebug(),
+			HTTPOnly:    true,
+			SameSite:    "Strict",
+			SessionOnly: true,
+		})
+
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The refresh token is no longer valid."},
 		})
 	}
 
@@ -162,14 +183,6 @@ func AuthRefresh(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not generate access token."},
-		})
-	}
-
-	refreshToken, err := helpers.NewRefreshToken(user)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate refresh token."},
 		})
 	}
 
