@@ -1,5 +1,6 @@
 # Superadministrator
-## p, superadmin, /api/v1/endpoint, GET, allow
+p, superadmin, /api/v1/activations/users/all, GET, allow
+p, superadmin, /api/v1/activations/review/:id, PATCH, allow
 
 # Administrator
 p, admin, /api/v1/system/cache/purge, POST, allow

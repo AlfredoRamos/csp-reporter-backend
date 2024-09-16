@@ -7,7 +7,7 @@ Your request to create a user account on {{.AppName}} has been rejected by our t
 
 Below is the reason:
 
-"{{.DenialReason}}"
+"{{.RejectionReason}}"
 
 If any action is required on your part, please make the changes needed in order to make a new request to create a user account.
 {{end}}

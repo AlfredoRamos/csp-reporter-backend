@@ -22,11 +22,14 @@ type userActivationInput struct {
 }
 
 func GetAllInactiveUsers(c *fiber.Ctx) error {
-	acreditacionUsers := []models.User{}
-	query := app.DB().Model(&models.User{}).Joins("LEFT JOIN user_activations ua ON users.id = ua.user_id")
-	opts := helpers.PaginatedItemOpts{RouteName: "api.user-activations.index", TableAlias: helpers.GetModelSchema(&models.User{}).Table}
+	users := []models.UserActivation{}
+	query := app.DB().Model(&models.UserActivation{}).
+		Joins("INNER JOIN users u ON user_activations.user_id = u.id").
+		Where("u.deleted_at IS NULL").
+		Preload("User").Preload("ReviewedBy")
+	opts := helpers.PaginatedItemOpts{RouteName: "api.activations.users.index", TableAlias: helpers.GetModelSchema(&models.UserActivation{}).Table}
 
-	return helpers.PaginateQuery(acreditacionUsers, query, c, opts)
+	return helpers.PaginateQuery(users, query, c, opts)
 }
 
 func UpdateUserActivation(c *fiber.Ctx) error {
@@ -64,7 +67,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	errs := fiber.Map{}
 
 	if !approved && input.Reason != nil && len(*input.Reason) < 1 {
-		errs = utils.AddError(errs, "reason", "Please, provide a denial reason.")
+		errs = utils.AddError(errs, "reason", "Please, provide a reason for rejection.")
 	}
 
 	if len(errs) > 0 {
@@ -142,7 +145,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	}
 
 	if !approved {
-		data["DenialReason"] = userActivation.Reason
+		data["RejectionReason"] = userActivation.Reason
 	}
 
 	if err := tasks.NewEmail(opts, data); err != nil {

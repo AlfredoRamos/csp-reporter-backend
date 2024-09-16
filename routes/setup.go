@@ -126,6 +126,9 @@ func SetupRoutes(app *fiber.App) {
 	// CSP Report
 	RegisterCSPReportRoutes(v1.Group("/csp"))
 
+	// User activations
+	RegisterUserActivationRoutes(v1.Group("/activations"))
+
 	// Health check
 	RegisterHealthCheckRoutes(api)
 
