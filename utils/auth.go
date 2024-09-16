@@ -78,12 +78,23 @@ func (c CustomJwtClaims) Validate() error {
 	return nil
 }
 
-func TokenContextKey() string {
-	ctxKey := os.Getenv("JWT_CONTEXT_KEY")
+func AccessTokenContextKey() string {
+	ctxKey := os.Getenv("JWT_ACCESS_TOKEN_CONTEXT_KEY")
 	ctxKey = strings.TrimSpace(ctxKey)
 
 	if len(ctxKey) < 1 {
 		ctxKey = "access_token"
+	}
+
+	return ctxKey
+}
+
+func RefreshTokenContextKey() string {
+	ctxKey := os.Getenv("JWT_REFRESH_TOKEN_CONTEXT_KEY")
+	ctxKey = strings.TrimSpace(ctxKey)
+
+	if len(ctxKey) < 1 {
+		ctxKey = "refresh_token"
 	}
 
 	return ctxKey

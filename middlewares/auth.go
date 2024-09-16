@@ -21,7 +21,7 @@ import (
 
 func ValidateJWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		savedJWE := c.Locals(utils.TokenContextKey()).(string)
+		savedJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 
 		if len(savedJWE) < 1 || len(c.Get("Authorization")) < 7 {
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -43,7 +43,7 @@ func ValidateJWT() fiber.Handler {
 			slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": []string{"Invalid access token"},
+				"error": []string{"Invalid access token."},
 			})
 		}
 
@@ -174,7 +174,7 @@ func AuthProtected() fiber.Handler {
 			return jwtError(c, err)
 		}
 
-		c.Locals(utils.TokenContextKey(), jweStr)
+		c.Locals(utils.AccessTokenContextKey(), jweStr)
 
 		return jwtSuccess(c)
 	}

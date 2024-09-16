@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -75,7 +76,7 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	jweStr, err := helpers.NewAccessToken(user)
+	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -83,7 +84,37 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": jweStr})
+	refreshToken, err := helpers.NewRefreshToken(user)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Could not generate refresh token."},
+		})
+	}
+
+	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Invalid refresh token."},
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:        utils.RefreshTokenContextKey(),
+		Value:       refreshToken,
+		Path:        "/",
+		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Expires:     refreshClaims.Expiry.Time(),
+		Secure:      !utils.IsDebug(),
+		HTTPOnly:    true,
+		SameSite:    "Strict",
+		SessionOnly: true,
+	})
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
 }
 
 func AuthRegister(c *fiber.Ctx) error {
@@ -468,11 +499,22 @@ func RevokeAccessToken(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token"},
+			"error": []string{"Invalid access token."},
 		})
 	}
 
-	defer c.Locals(utils.TokenContextKey(), nil)
+	defer c.Locals(utils.AccessTokenContextKey(), nil)
+	c.ClearCookie(utils.RefreshTokenContextKey())
+	c.Cookie(&fiber.Cookie{
+		Name:        utils.RefreshTokenContextKey(),
+		Path:        "/",
+		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
+		Secure:      !utils.IsDebug(),
+		HTTPOnly:    true,
+		SameSite:    "Strict",
+		SessionOnly: true,
+	})
 
 	if len(claims.ID) < 1 {
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
