@@ -11,12 +11,10 @@ import (
 
 	"alfredoramos.mx/csp-reporter/app"
 	"alfredoramos.mx/csp-reporter/helpers"
-	"alfredoramos.mx/csp-reporter/jwt"
 	"alfredoramos.mx/csp-reporter/models"
 	"alfredoramos.mx/csp-reporter/tasks"
 	"alfredoramos.mx/csp-reporter/utils"
 	"github.com/getsentry/sentry-go"
-	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -77,64 +75,9 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	roles, err := helpers.GetUserRoles(user.ID)
+	jweStr, err := helpers.NewAccessToken(user)
 	if err != nil {
-		slog.Error(fmt.Sprintf("User roles error: %v", err))
-	}
-
-	issuer, err := utils.GetJwtIssuer()
-	if err != nil {
-		slog.Error(fmt.Sprintf("Invalid access token issuer '%s': %v", issuer, err))
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate access token."},
-		})
-	}
-
-	now := time.Now().In(utils.DefaultLocation())
-
-	claims := &utils.CustomJwtClaims{
-		Claims: jose_jwt.Claims{
-			ID:        utils.HashString(user.ID.String()),
-			Issuer:    issuer,
-			Subject:   user.ID.String(),
-			IssuedAt:  jose_jwt.NewNumericDate(now),
-			NotBefore: jose_jwt.NewNumericDate(now),
-			Expiry:    jose_jwt.NewNumericDate(now.Add(utils.JwtExpiration())),
-		},
-		User: utils.UserClaimData{
-			ID:        user.ID,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Email:     user.Email,
-			Roles:     roles.Names(),
-		},
-	}
-
-	jwtStr, err := jose_jwt.Signed(jwt.Signer()).Claims(claims).Serialize()
-	if err != nil {
-		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error generating JWT: %v", err))
-
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate access token."},
-		})
-	}
-
-	jwe, err := jwt.Encrypter().Encrypt([]byte(jwtStr))
-	if err != nil {
-		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error generating JWE: %v", err))
-
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate access token."},
-		})
-	}
-
-	jweStr, err := jwe.CompactSerialize()
-	if err != nil {
-		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
-
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not generate access token."},
 		})
