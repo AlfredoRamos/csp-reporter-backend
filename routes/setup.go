@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	sentryfiber "github.com/getsentry/sentry-go/fiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -62,6 +63,7 @@ func SetupRoutes(app *fiber.App) {
 		SessionKey:        "csrf.token",
 		CookieSameSite:    "Strict",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("CSRF error: %v", err))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"You do not have permission to access this resource."}})
 		},
@@ -75,6 +77,8 @@ func SetupRoutes(app *fiber.App) {
 	limiterConfig := limiter.Config{
 		Max: maxRequests,
 		LimitReached: func(c *fiber.Ctx) error {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Limiter error: %v", err))
 			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{"Too many requests received within a short amount of time."}})
 		},
 	}
