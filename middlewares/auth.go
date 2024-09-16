@@ -19,8 +19,7 @@ import (
 	"github.com/redis/rueidis"
 )
 
-//nolint:cyclop
-func ValidateJWT() fiber.Handler {
+func ValidateAccessToken() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 
@@ -113,6 +112,63 @@ func ValidateJWT() fiber.Handler {
 			})
 		}
 
+		return c.Next()
+	}
+}
+
+func ValidateRefreshToken() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
+
+		if len(accessJWE) < 1 || len(c.Get("Authorization")) <= 7 {
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Invalid access token."},
+			})
+		}
+
+		jwe := c.Get("Authorization")[7:]
+
+		if accessJWE != jwe {
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Invalid provided access token."},
+			})
+		}
+
+		accessClaims, err := utils.ParseJWEClaims(accessJWE)
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Invalid access token."},
+			})
+		}
+
+		if !utils.IsValidIssuer(accessClaims.Issuer) {
+			slog.Error(fmt.Sprintf("Invalid access token issuer: %v", accessClaims.Issuer))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The issuer is not valid."},
+			})
+		}
+
+		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
+		if err != nil && !errors.Is(err, rueidis.Nil) {
+			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Could not validate access token."},
+			})
+		}
+
+		if len(accessClaims.ID) < 1 || isAccessRevoked {
+			slog.Error(fmt.Sprintf("The access token is invalid or revoked '%s': %v", accessClaims.ID, err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Revoked access token."},
+			})
+		}
+
 		refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
 		if len(refreshJWE) < 1 {
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -154,6 +210,8 @@ func ValidateJWT() fiber.Handler {
 				"error": []string{"Revoked refresh token."},
 			})
 		}
+
+		now := time.Now().In(utils.DefaultLocation())
 
 		if now.Before(refreshClaims.IssuedAt.Time()) || refreshClaims.IssuedAt.Time().Before(accessClaims.IssuedAt.Time()) {
 			slog.Error(fmt.Sprintf("Invalid issued at date: %v", refreshClaims.IssuedAt.Time()))

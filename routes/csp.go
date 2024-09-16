@@ -11,6 +11,6 @@ func RegisterCSPReportRoutes(g fiber.Router) {
 	g.Post("/reports/add", controllers.PostCSPReport).Name("api.csp.reports.add")
 
 	// Private
-	g.Use(middlewares.AuthProtected(), middlewares.ValidateJWT(), middlewares.CheckPermissions())
+	g.Use(middlewares.AuthProtected(), middlewares.ValidateAccessToken(), middlewares.CheckPermissions())
 	g.Get("/reports/all", controllers.GetAllCSPReports).Name("api.csp.reports.index")
 }

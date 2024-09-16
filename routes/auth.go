@@ -18,8 +18,8 @@ func RegisterAuthRoutes(g fiber.Router) {
 	g.Patch("/recover/update", middlewares.CaptchaProtected(), controllers.AuthRecoverUpdate)
 
 	// Private
-	g.Use(middlewares.AuthProtected(), middlewares.ValidateJWT(), middlewares.CheckPermissions())
+	g.Use(middlewares.AuthProtected(), middlewares.ValidateAccessToken(), middlewares.CheckPermissions())
 	g.Post("/check", controllers.AuthCheck)
 	g.Post("/logout", controllers.AuthLogout)
-	g.Patch("/refresh", controllers.AuthRefresh)
+	g.Patch("/refresh", middlewares.ValidateRefreshToken(), controllers.AuthRefresh)
 }

@@ -11,6 +11,6 @@ func RegisterSystemRoutes(g fiber.Router) {
 	g.Get("/csrf", controllers.GetCsrf).Name("api.system.csrf")
 
 	// Private
-	g.Use(middlewares.AuthProtected(), middlewares.ValidateJWT(), middlewares.CheckPermissions())
+	g.Use(middlewares.AuthProtected(), middlewares.ValidateAccessToken(), middlewares.CheckPermissions())
 	g.Post("/cache/purge", controllers.PurgeCache).Name("api.system.cache.purge")
 }
