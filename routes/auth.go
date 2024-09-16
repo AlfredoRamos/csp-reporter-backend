@@ -6,7 +6,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// TODO: Add route to refresh JWT token
 func RegisterAuthRoutes(g fiber.Router) {
 	// Public
 	g.Post("/login", middlewares.AuthLimiter(), middlewares.CaptchaProtected(), controllers.AuthLogin)
@@ -18,5 +17,6 @@ func RegisterAuthRoutes(g fiber.Router) {
 	// Private
 	g.Use(middlewares.AuthProtected(), middlewares.ValidateJWT(), middlewares.CheckPermissions())
 	g.Post("/check", controllers.AuthCheck)
-	g.Post("/revoke", controllers.RevokeAccessToken)
+	g.Post("/logout", controllers.AuthLogout)
+	g.Patch("/refresh", middlewares.AuthLimiter(), controllers.AuthRefresh)
 }
