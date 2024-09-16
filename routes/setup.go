@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	sentryfiber "github.com/getsentry/sentry-go/fiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -62,6 +63,7 @@ func SetupRoutes(app *fiber.App) {
 		SessionKey:        "csrf.token",
 		CookieSameSite:    "Strict",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("CSRF error: %v", err))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"You do not have permission to access this resource."}})
 		},
@@ -75,6 +77,8 @@ func SetupRoutes(app *fiber.App) {
 	limiterConfig := limiter.Config{
 		Max: maxRequests,
 		LimitReached: func(c *fiber.Ctx) error {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Limiter error: %v", err))
 			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{"Too many requests received within a short amount of time."}})
 		},
 	}
@@ -83,6 +87,10 @@ func SetupRoutes(app *fiber.App) {
 		Format:     "[${time}] ${locals:requestid} ${status} ${method} ${path}\n",
 		TimeFormat: "2006-01-02 15:04:05 -07:00",
 		TimeZone:   utils.DefaultTimeZone(),
+	}
+
+	compressConfig := compress.Config{
+		Level: compress.LevelBestSpeed,
 	}
 
 	// Overwrite configuration when in DEBUG mode
@@ -104,9 +112,7 @@ func SetupRoutes(app *fiber.App) {
 	app.Use(idempotency.New())
 	app.Use(requestid.New())
 	app.Use(logger.New(loggerConfig))
-	app.Use(compress.New(compress.Config{
-		Level: compress.LevelBestSpeed,
-	}))
+	app.Use(compress.New(compressConfig))
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")

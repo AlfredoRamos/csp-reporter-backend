@@ -8,7 +8,8 @@ p, admin, /api/v1/system/cache/purge, POST, allow
 p, viewer, /api/v1/csp/reports/all, GET, allow
 
 # User
-p, user, /api/v1/auth/revoke, POST, allow
+p, user, /api/v1/auth/logout, POST, allow
+p, user, /api/v1/auth/refresh, PATCH, allow
 
 # Guest
 p, guest, /api/v1/auth/login, POST, allow

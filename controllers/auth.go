@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -75,7 +76,7 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	jweStr, err := helpers.NewAccessToken(user)
+	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -83,7 +84,121 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": jweStr})
+	refreshToken, err := helpers.NewRefreshToken(user)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Could not generate refresh token."},
+		})
+	}
+
+	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Invalid refresh token."},
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:        utils.RefreshTokenContextKey(),
+		Value:       refreshToken,
+		Path:        "/",
+		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Expires:     refreshClaims.Expiry.Time(),
+		Secure:      !utils.IsDebug(),
+		HTTPOnly:    true,
+		SameSite:    "Strict",
+		SessionOnly: true,
+	})
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
+}
+
+func AuthCheck(c *fiber.Ctx) error {
+	// Real validation is handled with middlewares
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": []string{"Successful authentication."},
+	})
+}
+
+func AuthRefresh(c *fiber.Ctx) error {
+	refreshToken := c.Cookies(utils.RefreshTokenContextKey())
+
+	if len(refreshToken) < 1 {
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"The refresh token is invalid."}})
+	}
+
+	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The refresh token is invalid."},
+		})
+	}
+
+	now := time.Now().In(utils.DefaultLocation())
+
+	if now.Before(refreshClaims.IssuedAt.Time()) || now.Before(refreshClaims.NotBefore.Time()) || now.After(refreshClaims.Expiry.Time()) {
+		defer c.Locals(utils.AccessTokenContextKey(), nil)
+		c.ClearCookie(utils.RefreshTokenContextKey())
+		c.Cookie(&fiber.Cookie{
+			Name:        utils.RefreshTokenContextKey(),
+			Path:        "/",
+			Domain:      os.Getenv("COOKIE_DOMAIN"),
+			Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
+			Secure:      !utils.IsDebug(),
+			HTTPOnly:    true,
+			SameSite:    "Strict",
+			SessionOnly: true,
+		})
+
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The refresh token is no longer valid."},
+		})
+	}
+
+	userID := helpers.GetUserID(c)
+	active := true
+	user := &models.User{ID: userID, Active: &active}
+	if err := app.DB().Where(&user).First(&user).Error; err != nil {
+		slog.Error(fmt.Sprintf("Error getting user information: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"The user information is invalid."},
+		})
+	}
+
+	if !utils.IsValidUuid(refreshClaims.User.ID) || refreshClaims.User.ID != userID || refreshClaims.User.ID != user.ID {
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The user information is invalid."},
+		})
+	}
+
+	accessToken, err := helpers.NewAccessToken(user)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Could not generate access token."},
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:        utils.RefreshTokenContextKey(),
+		Value:       refreshToken,
+		Path:        "/",
+		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Expires:     refreshClaims.Expiry.Time(),
+		Secure:      !utils.IsDebug(),
+		HTTPOnly:    true,
+		SameSite:    "Strict",
+		SessionOnly: true,
+	})
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
 }
 
 func AuthRegister(c *fiber.Ctx) error {
@@ -208,6 +323,53 @@ func AuthRegister(c *fiber.Ctx) error {
 	); err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error sending email: %v", err))
+	}
+
+	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
+}
+
+func AuthLogout(c *fiber.Ctx) error {
+	if len(c.Get("Authorization")) <= 7 {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Invalid access token."},
+		})
+	}
+
+	tokenStr := c.Get("Authorization")[7:]
+
+	claims, err := utils.ParseJWEClaims(tokenStr)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
+
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Invalid access token."},
+		})
+	}
+
+	defer c.Locals(utils.AccessTokenContextKey(), nil)
+	c.ClearCookie(utils.RefreshTokenContextKey())
+	c.Cookie(&fiber.Cookie{
+		Name:        utils.RefreshTokenContextKey(),
+		Path:        "/",
+		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
+		Secure:      !utils.IsDebug(),
+		HTTPOnly:    true,
+		SameSite:    "Strict",
+		SessionOnly: true,
+	})
+
+	if len(claims.ID) < 1 {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Invalid access token."},
+		})
+	}
+
+	if err := app.Cache().Do(context.Background(), app.Cache().B().Sadd().Key("access-tokens:revoked").Member(claims.ID).Build()).Error(); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Could not revoke access token."},
+		})
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
@@ -442,48 +604,6 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 	); err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error sending email: %v", err))
-	}
-
-	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
-}
-
-func AuthCheck(c *fiber.Ctx) error {
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": []string{"Successful authentication."},
-	})
-}
-
-func RevokeAccessToken(c *fiber.Ctx) error {
-	if len(c.Get("Authorization")) <= 7 {
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token."},
-		})
-	}
-
-	tokenStr := c.Get("Authorization")[7:]
-
-	claims, err := utils.ParseJWEClaims(tokenStr)
-	if err != nil {
-		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
-
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token"},
-		})
-	}
-
-	defer c.Locals(utils.TokenContextKey(), nil)
-
-	if len(claims.ID) < 1 {
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token."},
-		})
-	}
-
-	if err := app.Cache().Do(context.Background(), app.Cache().B().Sadd().Key("access-tokens:revoked").Member(claims.ID).Build()).Error(); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not revoke access token."},
-		})
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})

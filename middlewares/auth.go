@@ -19,11 +19,12 @@ import (
 	"github.com/redis/rueidis"
 )
 
+//nolint:cyclop
 func ValidateJWT() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		savedJWE := c.Locals(utils.TokenContextKey()).(string)
+		accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 
-		if len(savedJWE) < 1 || len(c.Get("Authorization")) < 7 {
+		if len(accessJWE) < 1 || len(c.Get("Authorization")) <= 7 {
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"Invalid access token."},
 			})
@@ -31,41 +32,41 @@ func ValidateJWT() fiber.Handler {
 
 		jwe := c.Get("Authorization")[7:]
 
-		if savedJWE != jwe {
+		if accessJWE != jwe {
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"Invalid provided access token."},
 			})
 		}
 
-		claims, err := utils.ParseJWEClaims(savedJWE)
+		accessClaims, err := utils.ParseJWEClaims(accessJWE)
 		if err != nil {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": []string{"Invalid access token"},
+				"error": []string{"Invalid access token."},
 			})
 		}
 
-		if !utils.IsValidIssuer(claims.Issuer) {
-			slog.Error(fmt.Sprintf("Invalid access token issuer: %v", claims.Issuer))
+		if !utils.IsValidIssuer(accessClaims.Issuer) {
+			slog.Error(fmt.Sprintf("Invalid access token issuer: %v", accessClaims.Issuer))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The issuer is not valid."},
 			})
 		}
 
-		isRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(claims.ID).Cache(), 5*time.Minute).AsBool()
+		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, rueidis.Nil) {
-			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", claims.ID, err))
+			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"Could not validate access token."},
 			})
 		}
 
-		if len(claims.ID) < 1 || isRevoked {
-			slog.Error(fmt.Sprintf("The access token is invalid or revoked '%s': %v", claims.ID, err))
+		if len(accessClaims.ID) < 1 || isAccessRevoked {
+			slog.Error(fmt.Sprintf("The access token is invalid or revoked '%s': %v", accessClaims.ID, err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"Revoked access token."},
@@ -74,31 +75,31 @@ func ValidateJWT() fiber.Handler {
 
 		now := time.Now().In(utils.DefaultLocation())
 
-		if now.Before(claims.IssuedAt.Time()) {
-			slog.Error(fmt.Sprintf("Invalid issued at date: %v", claims.IssuedAt.Time()))
+		if now.Before(accessClaims.IssuedAt.Time()) {
+			slog.Error(fmt.Sprintf("Invalid issued at date: %v", accessClaims.IssuedAt.Time()))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is not valid yet."},
 			})
 		}
 
-		if now.Before(claims.NotBefore.Time()) {
-			slog.Error(fmt.Sprintf("Invalid not before date: %v", claims.NotBefore.Time()))
+		if now.Before(accessClaims.NotBefore.Time()) {
+			slog.Error(fmt.Sprintf("Invalid not before date: %v", accessClaims.NotBefore.Time()))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is not valid yet."},
 			})
 		}
 
-		if now.After(claims.Expiry.Time()) {
-			slog.Error(fmt.Sprintf("Invalid expiration date: %v", claims.Expiry.Time()))
+		if now.After(accessClaims.Expiry.Time()) {
+			slog.Error(fmt.Sprintf("Invalid expiration date: %v", accessClaims.Expiry.Time()))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is no longer valid."},
 			})
 		}
 
-		if sub, err := uuid.Parse(claims.Subject); err != nil || !utils.IsValidUuid(sub) || claims.User.ID != sub {
+		if sub, err := uuid.Parse(accessClaims.Subject); err != nil || !utils.IsValidUuid(sub) || accessClaims.User.ID != sub {
 			slog.Error(fmt.Sprintf("Invalid subject: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -106,9 +107,83 @@ func ValidateJWT() fiber.Handler {
 			})
 		}
 
-		if !helpers.UserExists(claims.User.ID, claims.User.Email) {
+		if !helpers.UserExists(accessClaims.User.ID, accessClaims.User.Email) {
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The access token is not valid."},
+			})
+		}
+
+		refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
+		if len(refreshJWE) < 1 {
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The refresh token is not valid."},
+			})
+		}
+
+		refreshClaims, err := utils.ParseJWEClaims(refreshJWE)
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Invalid refresh token."},
+			})
+		}
+
+		if !utils.IsValidIssuer(refreshClaims.Issuer) {
+			slog.Error(fmt.Sprintf("Invalid refresh token issuer: %v", refreshClaims.Issuer))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The issuer is not valid."},
+			})
+		}
+
+		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
+		if err != nil && !errors.Is(err, rueidis.Nil) {
+			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshClaims.ID, err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Could not validate refresh token."},
+			})
+		}
+
+		if len(refreshClaims.ID) < 1 || isRefreshRevoked {
+			slog.Error(fmt.Sprintf("The refresh token is invalid or revoked '%s': %v", refreshClaims.ID, err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"Revoked refresh token."},
+			})
+		}
+
+		if now.Before(refreshClaims.IssuedAt.Time()) || refreshClaims.IssuedAt.Time().Before(accessClaims.IssuedAt.Time()) {
+			slog.Error(fmt.Sprintf("Invalid issued at date: %v", refreshClaims.IssuedAt.Time()))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The refresh token is not valid yet."},
+			})
+		}
+
+		if now.Before(refreshClaims.NotBefore.Time()) || refreshClaims.NotBefore.Time().Before(accessClaims.NotBefore.Time()) {
+			slog.Error(fmt.Sprintf("Invalid not before date: %v", refreshClaims.NotBefore.Time()))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The refresh token is not valid yet."},
+			})
+		}
+
+		if now.After(refreshClaims.Expiry.Time()) || refreshClaims.Expiry.Time().Before(accessClaims.Expiry.Time()) {
+			slog.Error(fmt.Sprintf("Invalid expiration date: %v", refreshClaims.Expiry.Time()))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The refresh token is no longer valid."},
+			})
+		}
+
+		if refreshSub, err := uuid.Parse(refreshClaims.Subject); err != nil || !utils.IsValidUuid(refreshSub) || refreshClaims.User.ID != refreshSub || accessClaims.User.ID != refreshClaims.User.ID {
+			slog.Error(fmt.Sprintf("Invalid subject: %v", err))
+
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+				"error": []string{"The subject is not valid."},
 			})
 		}
 
@@ -174,7 +249,7 @@ func AuthProtected() fiber.Handler {
 			return jwtError(c, err)
 		}
 
-		c.Locals(utils.TokenContextKey(), jweStr)
+		c.Locals(utils.AccessTokenContextKey(), jweStr)
 
 		return jwtSuccess(c)
 	}

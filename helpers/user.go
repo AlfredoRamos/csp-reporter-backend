@@ -49,7 +49,7 @@ func UserExists(id uuid.UUID, email string) bool {
 }
 
 func GetUserID(c *fiber.Ctx) uuid.UUID {
-	jwe := c.Locals(utils.TokenContextKey())
+	jwe := c.Locals(utils.AccessTokenContextKey())
 
 	if jwe == nil {
 		panic("Invalid access token.")

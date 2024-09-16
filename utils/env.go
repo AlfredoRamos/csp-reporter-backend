@@ -11,9 +11,12 @@ import (
 )
 
 const (
-	minJwtExpiration     int64 = 1
-	defaultJwtExpiration int64 = 6
-	maxJwtExpiration     int64 = 12
+	minAccessTokenExpiration      int64 = 1
+	defaultAccessTokenExpiration  int64 = 1
+	maxAccessTokenExpiration      int64 = 2
+	minRefreshTokenExpiration     int64 = 1
+	defaultRefreshTokenExpiration int64 = 6
+	maxRefreshTokenExpiration     int64 = 12
 )
 
 func IsDebug() bool {
@@ -41,18 +44,35 @@ func SupportEmail() string {
 	return e
 }
 
-func JwtExpiration() time.Duration {
-	exp, err := strconv.ParseInt(os.Getenv("JWT_TOKEN_EXPIRATION"), 10, 64)
+func AccessTokenExpiration() time.Duration {
+	exp, err := strconv.ParseInt(os.Getenv("JWT_ACCESS_TOKEN_EXPIRATION"), 10, 64)
 	if err != nil {
-		exp = defaultJwtExpiration
+		exp = defaultAccessTokenExpiration
 	}
 
-	if exp < minJwtExpiration {
-		exp = minJwtExpiration
+	if exp < minAccessTokenExpiration {
+		exp = minAccessTokenExpiration
 	}
 
-	if exp > maxJwtExpiration {
-		exp = maxJwtExpiration
+	if exp > maxAccessTokenExpiration {
+		exp = maxAccessTokenExpiration
+	}
+
+	return time.Duration(exp) * time.Hour
+}
+
+func RefreshTokenExpiration() time.Duration {
+	exp, err := strconv.ParseInt(os.Getenv("JWT_REFRESH_TOKEN_EXPIRATION"), 10, 64)
+	if err != nil {
+		exp = defaultRefreshTokenExpiration
+	}
+
+	if exp < minRefreshTokenExpiration {
+		exp = minRefreshTokenExpiration
+	}
+
+	if exp > maxRefreshTokenExpiration {
+		exp = maxRefreshTokenExpiration
 	}
 
 	return time.Duration(exp) * time.Hour
