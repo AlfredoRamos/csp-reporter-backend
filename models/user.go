@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/utils"
+	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -27,6 +28,7 @@ type User struct {
 func (u *User) BeforeDelete(tx *gorm.DB) error {
 	password, err := utils.RandomPassword(35)
 	if err != nil {
+		sentry.CaptureException(err)
 		return err
 	}
 

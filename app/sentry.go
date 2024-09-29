@@ -26,6 +26,7 @@ func SetupSentry() {
 		ServerName:         os.Getenv("APP_NAME"),
 		Environment:        env,
 	}); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Sentry initialization failed: %v", err))
 	}
 }

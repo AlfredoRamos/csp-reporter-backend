@@ -21,15 +21,16 @@ func main() {
 	// Set default timezone
 	time.Local = utils.DefaultLocation()
 
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		slog.Error(fmt.Sprintf("Could not load .env file: %v", err))
-		os.Exit(1)
-	}
-
 	// Sentry
 	app.SetupSentry()
 	defer sentry.Flush(3 * time.Second)
+
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not load .env file: %v", err))
+		os.Exit(1)
+	}
 
 	// Application initialization
 	app.SetupDefaultData()

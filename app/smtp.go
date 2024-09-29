@@ -20,6 +20,7 @@ func SMTP() *mail.Client {
 	onceEmail.Do(func() {
 		port, err := strconv.Atoi(os.Getenv("EMAIL_PORT"))
 		if err != nil {
+			sentry.CaptureException(err)
 			port = mail.DefaultPortTLS
 			slog.Warn(fmt.Sprintf("The SMTP port '%s' is invalid. The port %d will be used instead.", os.Getenv("EMAIL_PORT"), port))
 		}
@@ -29,6 +30,7 @@ func SMTP() *mail.Client {
 
 		useTls, err := strconv.ParseBool(os.Getenv("EMAIL_TLS"))
 		if err != nil {
+			sentry.CaptureException(err)
 			useTls = true
 		}
 

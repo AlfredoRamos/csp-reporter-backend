@@ -53,11 +53,13 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 
 	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("roles:%s", id.String())).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, rueidis.Nil) {
+		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached roles: %v", err))
 	}
 
 	if len(cachedRoles) > 0 {
 		if err := json.Unmarshal([]byte(cachedRoles), &roles); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not decode cached roles: %v", err))
 		}
 
@@ -80,6 +82,7 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	}
 
 	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("roles:%s", id.String())).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not save roles to cache: %v", err))
 	}
 

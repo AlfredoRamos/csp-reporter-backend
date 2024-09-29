@@ -57,6 +57,7 @@ func ValidateAccessToken() fiber.Handler {
 
 		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, rueidis.Nil) {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -154,6 +155,7 @@ func ValidateRefreshToken() fiber.Handler {
 
 		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, rueidis.Nil) {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -196,6 +198,7 @@ func ValidateRefreshToken() fiber.Handler {
 
 		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, rueidis.Nil) {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshClaims.ID, err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -238,7 +241,10 @@ func ValidateRefreshToken() fiber.Handler {
 		}
 
 		if refreshSub, err := uuid.Parse(refreshClaims.Subject); err != nil || !utils.IsValidUuid(refreshSub) || refreshClaims.User.ID != refreshSub || accessClaims.User.ID != refreshClaims.User.ID {
-			slog.Error(fmt.Sprintf("Invalid subject: %v", err))
+			if err != nil {
+				sentry.CaptureException(err)
+				slog.Error(fmt.Sprintf("Invalid subject: %v", err))
+			}
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{"The subject is not valid."},

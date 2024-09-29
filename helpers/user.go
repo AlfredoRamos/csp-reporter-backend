@@ -23,6 +23,7 @@ func UserExists(id uuid.UUID, email string) bool {
 
 	cachedUser, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("user:%s", id.String())).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, rueidis.Nil) {
+		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached user: %v", err))
 	}
 
@@ -41,6 +42,7 @@ func UserExists(id uuid.UUID, email string) bool {
 
 	if exists {
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("user:%s", id.String())).Value(user.Email).Ex(time.Hour).Build()).Error(); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not save user to cache: %v", err))
 		}
 	}

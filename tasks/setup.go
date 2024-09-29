@@ -28,6 +28,7 @@ func AsynqClient() *asynq.Client {
 	onceTasks.Do(func() {
 		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 		if err != nil {
+			sentry.CaptureException(err)
 			port = 6379
 		}
 
@@ -47,6 +48,7 @@ func AsynqServer() *asynq.Server {
 	onceServer.Do(func() {
 		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 		if err != nil {
+			sentry.CaptureException(err)
 			port = 6379
 		}
 
@@ -83,6 +85,7 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 	onceTaskManager.Do(func() {
 		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 		if err != nil {
+			sentry.CaptureException(err)
 			port = 6379
 		}
 

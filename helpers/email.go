@@ -146,6 +146,7 @@ func GetSuperAdminEmails() []string {
 	// Try to load from cache
 	ce, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key("email:superadmin:list").Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, rueidis.Nil) {
+		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached superadministrator email list: %v", err))
 	}
 
@@ -172,6 +173,7 @@ func GetSuperAdminEmails() []string {
 	}
 
 	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key("email:superadmin:list").Value(string(re)).Ex(15*time.Minute).Build()).Error(); err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not save superadministrator email list to cache: %v", err))
 	}
 

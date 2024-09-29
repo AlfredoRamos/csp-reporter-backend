@@ -25,11 +25,13 @@ func EncryptionKeys() *KeyPair {
 		jwkpub := jose.JSONWebKey{}
 		pubBuffer, err := os.ReadFile(filepath.Clean(filepath.Join(keyBasePath, "encryption-public.json")))
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not read encription public key: %v", err))
 			os.Exit(1)
 		}
 
 		if err := json.Unmarshal(pubBuffer, &jwkpub); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not decode encription public key: %v", err))
 			os.Exit(1)
 		}
@@ -38,11 +40,13 @@ func EncryptionKeys() *KeyPair {
 		jwkkey := jose.JSONWebKey{}
 		keyBuffer, err := os.ReadFile(filepath.Clean(filepath.Join(keyBasePath, "encryption-private.json")))
 		if err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not read encription private key: %v", err))
 			os.Exit(1)
 		}
 
 		if err := json.Unmarshal(keyBuffer, &jwkkey); err != nil {
+			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not decode encription private key: %v", err))
 			os.Exit(1)
 		}

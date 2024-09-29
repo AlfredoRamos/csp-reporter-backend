@@ -78,6 +78,7 @@ func DecodeCursor(cursor string) (Cursor, error) {
 	cur := Cursor{}
 
 	if err := json.Unmarshal(decodedCursor, &cur); err != nil {
+		sentry.CaptureException(err)
 		return nil, err
 	}
 
@@ -93,6 +94,7 @@ func GetPaginationSize(p string) int {
 
 	limit, err := strconv.Atoi(perPage)
 	if err != nil {
+		sentry.CaptureException(err)
 		limit = defaultPageSize
 	}
 
@@ -125,18 +127,21 @@ func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c *fiber.Ctx) *string
 	// Base URL
 	u, err := url.Parse(c.BaseURL())
 	if err != nil {
+		sentry.CaptureException(err)
 		return cur
 	}
 
 	// Route URL
 	route, err := c.GetRouteURL(n, p)
 	if err != nil {
+		sentry.CaptureException(err)
 		return cur
 	}
 
 	// Parse route URL
 	ru, err := url.ParseRequestURI(route)
 	if err != nil {
+		sentry.CaptureException(err)
 		return cur
 	}
 

@@ -25,6 +25,7 @@ func DB() *gorm.DB {
 	onceDB.Do(func() {
 		port, err := strconv.Atoi(os.Getenv("DB_PORT"))
 		if err != nil {
+			sentry.CaptureException(err)
 			port = 5432
 		}
 

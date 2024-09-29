@@ -22,6 +22,7 @@ const (
 func IsDebug() bool {
 	isDebug, err := strconv.ParseBool(os.Getenv("APP_DEBUG"))
 	if err != nil {
+		sentry.CaptureException(err)
 		isDebug = false
 	}
 
@@ -47,6 +48,7 @@ func SupportEmail() string {
 func AccessTokenExpiration() time.Duration {
 	exp, err := strconv.ParseInt(os.Getenv("JWT_ACCESS_TOKEN_EXPIRATION"), 10, 64)
 	if err != nil {
+		sentry.CaptureException(err)
 		exp = defaultAccessTokenExpiration
 	}
 
@@ -64,6 +66,7 @@ func AccessTokenExpiration() time.Duration {
 func RefreshTokenExpiration() time.Duration {
 	exp, err := strconv.ParseInt(os.Getenv("JWT_REFRESH_TOKEN_EXPIRATION"), 10, 64)
 	if err != nil {
+		sentry.CaptureException(err)
 		exp = defaultRefreshTokenExpiration
 	}
 
@@ -119,8 +122,8 @@ func EmailLang() string {
 	l := os.Getenv("EMAIL_LANG")
 
 	if len(l) < 1 {
-		slog.Warn("")
-		return "Empty email language. Falling back to 'en'."
+		slog.Warn("Empty email language. Falling back to 'en'.")
+		l = "en"
 	}
 
 	return l

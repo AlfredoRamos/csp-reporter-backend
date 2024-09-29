@@ -78,6 +78,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not generate access token."},
@@ -86,6 +87,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	refreshToken, err := helpers.NewRefreshToken(user)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not generate refresh token."},
@@ -180,6 +182,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not generate access token."},
@@ -367,6 +370,7 @@ func AuthLogout(c *fiber.Ctx) error {
 	}
 
 	if err := app.Cache().Do(context.Background(), app.Cache().B().Sadd().Key("access-tokens:revoked").Member(claims.ID).Build()).Error(); err != nil {
+		sentry.CaptureException(err)
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not revoke access token."},
 		})
@@ -562,6 +566,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 	}
 
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); !utils.IsDebug() && !strong && err != nil {
+		sentry.CaptureException(err)
 		errs = utils.AddError(errs, "password", err.Error())
 	}
 

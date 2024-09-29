@@ -60,6 +60,10 @@ func (c CustomJwtClaims) Validate() error {
 
 	sub, err := uuid.Parse(c.Subject)
 	if err != nil || !IsValidUuid(sub) {
+		if err != nil {
+			sentry.CaptureException(err)
+		}
+
 		return errors.New("The subject is invalid.")
 	}
 
@@ -131,6 +135,7 @@ func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
 
 	claims := &CustomJwtClaims{}
 	if err := json.Unmarshal(payload, &claims); err != nil {
+		sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
@@ -281,6 +286,7 @@ func IsRealEmail(e string) bool {
 func MinimumPasswordLength() int {
 	passLen, err := strconv.Atoi(os.Getenv("MIN_PASSWORD_LENGTH"))
 	if err != nil {
+		sentry.CaptureException(err)
 		passLen = defaultPassLen
 	}
 
@@ -358,6 +364,10 @@ func IsValidIssuer(iss string) bool {
 
 	d, err := GetJwtIssuer()
 	if err != nil || len(d) < 1 {
+		if err != nil {
+			sentry.CaptureException(err)
+		}
+
 		return false
 	}
 
@@ -367,6 +377,7 @@ func IsValidIssuer(iss string) bool {
 func CanRegisterUsers() bool {
 	canRegister, err := strconv.ParseBool(os.Getenv("ENABLE_USER_REGISTER"))
 	if err != nil {
+		sentry.CaptureException(err)
 		canRegister = true
 	}
 

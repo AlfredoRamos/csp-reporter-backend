@@ -21,6 +21,7 @@ func Cache() rueidis.Client {
 	onceCache.Do(func() {
 		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 		if err != nil {
+			sentry.CaptureException(err)
 			port = 6379
 		}
 
