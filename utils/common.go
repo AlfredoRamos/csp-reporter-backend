@@ -6,12 +6,16 @@ import (
 	"fmt"
 	"math/big"
 	"net/url"
+	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/net/publicsuffix"
 )
+
+const SplitChars string = "/,;"
 
 func AddError(m fiber.Map, k string, v string) fiber.Map {
 	if _, ok := m[k]; !ok {
@@ -91,4 +95,58 @@ func ToStringPtr(s string) *string {
 	}
 
 	return &s
+}
+
+// https://stackoverflow.com/a/54426140
+func SplitAny(s string, seps string) []string {
+	s = strings.TrimSpace(s)
+
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+
+	return strings.FieldsFunc(s, splitter)
+}
+
+func CleanString(s string) string {
+	c := strings.TrimSpace(s)
+
+	if len(c) < 1 {
+		return c
+	}
+
+	re := regexp.MustCompile(`([\s])+`)
+	c = re.ReplaceAllString(c, `$1`)
+
+	return c
+}
+
+func RemoveDuplicated[T comparable](sliceList []T) []T {
+	allKeys := make(map[T]bool, len(sliceList))
+	list := make([]T, 0)
+
+	for _, item := range sliceList {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+
+	return list
+}
+
+func CleanStringList(s []string) []string {
+	if len(s) < 1 {
+		return []string{}
+	}
+
+	for k, v := range s {
+		s[k] = CleanString(v)
+	}
+
+	s = RemoveDuplicated(s)
+
+	return slices.DeleteFunc(s, func(e string) bool {
+		return len(e) < 1
+	})
 }

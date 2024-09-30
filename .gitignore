@@ -20,3 +20,7 @@ tmp/
 *.orig
 *.pdf
 *.json
+*.toml
+!.air.toml
+!i18n/active.*.toml
+!i18n/translate.*.toml

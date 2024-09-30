@@ -131,3 +131,25 @@ Download latest version from [releases](https://github.com/hibiken/asynq/release
 go install github.com/hibiken/asynq/tools/asynq@latest
 asynq dash
 ```
+
+# Translate
+
+## Setup
+
+```shell
+go install github.com/nicksnyder/go-i18n/v2/goi18n@latest
+```
+
+## Extract messages
+
+```shell
+goi18n extract -sourceLanguage=en -outdir i18n -format toml
+```
+
+## Update translations
+
+```shell
+goi18n merge -outdir i18n i18n/active.*.toml
+goi18n merge -outdir i18n i18n/active.*.toml i18n/translate.*.toml
+rm i18n/translate.*.toml
+```

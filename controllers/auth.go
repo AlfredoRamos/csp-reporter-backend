@@ -18,6 +18,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gorm.io/gorm"
 )
 
@@ -48,18 +49,36 @@ func AuthLogin(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The user data is invalid."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			})},
 		})
 	}
 
 	errs := fiber.Map{}
 
 	if !utils.IsValidEmail(input.Email) {
-		errs = utils.AddError(errs, "email", "Please, enter a valid email address.")
+		errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidEmail",
+				Other: "Please, enter a valid email address.",
+			},
+		}))
 	}
 
 	if len(input.Password) < utils.MinimumPasswordLength() {
-		errs = utils.AddError(errs, "password", fmt.Sprintf("The password must be at least %d characters long.", utils.MinimumPasswordLength()))
+		errs = utils.AddError(errs, "password", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorShortPassword",
+				Other: "The password must be at least {{.MinLength}} characters long.",
+			},
+			TemplateData: map[string]interface{}{
+				"MinLength": utils.MinimumPasswordLength(),
+			},
+		}))
 	}
 
 	if len(errs) > 0 {
@@ -72,7 +91,12 @@ func AuthLogin(c *fiber.Ctx) error {
 	user := &models.User{Email: input.Email, Active: &active}
 	if err := app.DB().Where(&user).First(&user).Error; err != nil || !utils.ComparePasswordHash(input.Password, user.Password) {
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The user credentials are invalid."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserCredentials",
+					Other: "The user credentials are invalid.",
+				},
+			})},
 		})
 	}
 
@@ -81,7 +105,12 @@ func AuthLogin(c *fiber.Ctx) error {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate access token."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorAccessTokenGeneration",
+					Other: "Could not generate access token.",
+				},
+			})},
 		})
 	}
 
@@ -90,7 +119,12 @@ func AuthLogin(c *fiber.Ctx) error {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate refresh token."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorRefreshTokenGeneration",
+					Other: "Could not generate refresh token.",
+				},
+			})},
 		})
 	}
 
@@ -100,7 +134,12 @@ func AuthLogin(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid refresh token."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidRefreshToken",
+					Other: "Invalid refresh token.",
+				},
+			})},
 		})
 	}
 
@@ -122,7 +161,12 @@ func AuthLogin(c *fiber.Ctx) error {
 func AuthCheck(c *fiber.Ctx) error {
 	// Real validation is handled with middlewares
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": []string{"Successful authentication."},
+		"message": []string{app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "SuccessfulAuthCheck",
+				Other: "Successful authentication.",
+			},
+		})},
 	})
 }
 
@@ -130,7 +174,12 @@ func AuthRefresh(c *fiber.Ctx) error {
 	refreshToken := c.Cookies(utils.RefreshTokenContextKey())
 
 	if len(refreshToken) < 1 {
-		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"The refresh token is invalid."}})
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidRefreshToken",
+				Other: "Invalid refresh token.",
+			},
+		})}})
 	}
 
 	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
@@ -139,7 +188,12 @@ func AuthRefresh(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-			"error": []string{"The refresh token is invalid."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidRefreshToken",
+					Other: "Invalid refresh token.",
+				},
+			})},
 		})
 	}
 
@@ -160,7 +214,12 @@ func AuthRefresh(c *fiber.Ctx) error {
 		})
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-			"error": []string{"The refresh token is no longer valid."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidRefreshTokenTime",
+					Other: "The refresh token is no longer valid.",
+				},
+			})},
 		})
 	}
 
@@ -170,13 +229,23 @@ func AuthRefresh(c *fiber.Ctx) error {
 	if err := app.DB().Where(&user).First(&user).Error; err != nil {
 		slog.Error(fmt.Sprintf("Error getting user information: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The user information is invalid."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			})},
 		})
 	}
 
 	if !utils.IsValidUuid(refreshClaims.User.ID) || refreshClaims.User.ID != userID || refreshClaims.User.ID != user.ID {
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-			"error": []string{"The user information is invalid."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			})},
 		})
 	}
 
@@ -185,7 +254,12 @@ func AuthRefresh(c *fiber.Ctx) error {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not generate access token."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorAccessTokenGeneration",
+					Other: "Could not generate access token.",
+				},
+			})},
 		})
 	}
 
@@ -206,7 +280,12 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 func AuthRegister(c *fiber.Ctx) error {
 	if !utils.CanRegisterUsers() {
-		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{"error": []string{"User registration is disabled."}})
+		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorUserRegistrationDisabled",
+				Other: "User registration is disabled.",
+			},
+		})}})
 	}
 
 	input := &userRegisterInput{}
@@ -214,41 +293,89 @@ func AuthRegister(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid user registration data."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			})},
 		})
 	}
 
 	errs := fiber.Map{}
 
 	if !utils.IsValidEmail(input.Email) {
-		errs = utils.AddError(errs, "email", "Please, enter a valid email address.")
+		errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidEmail",
+				Other: "Please, enter a valid email address.",
+			},
+		}))
 	}
 
 	if !utils.IsRealEmail(input.Email) {
-		errs = utils.AddError(errs, "email", "Please, enter a real email address.")
+		errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorNotRealEmail",
+				Other: "Please, enter a real email address.",
+			},
+		}))
 	}
 
 	user := &models.User{Email: input.Email}
 	if err := app.DB().Unscoped().Where(&user).First(&user).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		slog.Error(fmt.Sprintf("Error creating user account: %v", err))
 
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"Could not create user account."}})
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorUserRegistration",
+				Other: "Could not create user account.",
+			},
+		})}})
 	}
 
 	if utils.IsValidUuid(user.ID) {
 		if deletedAt, _ := user.DeletedAt.Value(); deletedAt != nil {
-			errs = utils.AddError(errs, "email", "The requested user is inactive.")
+			errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInactiveUser",
+					Other: "The requested user is inactive.",
+				},
+			}))
 		} else if user.Active != nil && *user.Active {
-			errs = utils.AddError(errs, "email", "This email address has been taken.")
+			errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorUserEmailTaken",
+					Other: "This email address has been taken.",
+				},
+			}))
 		} else {
-			errs = utils.AddError(errs, "email", "A user with this email address is already waiting for validation.")
+			errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorUserEmailPendingValidation",
+					Other: "A user with this email address is already waiting for validation.",
+				},
+			}))
 		}
 	}
 
 	if len(input.Password) < utils.MinimumPasswordLength() {
-		errs = utils.AddError(errs, "password", fmt.Sprintf("The password must be at least %d characters long.", utils.MinimumPasswordLength()))
+		errs = utils.AddError(errs, "password", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorShortPassword",
+				Other: "The password must be at least {{.MinLength}} characters long.",
+			},
+			TemplateData: map[string]interface{}{
+				"MinLength": utils.MinimumPasswordLength(),
+			},
+		}))
 	} else if input.Password != input.ConfirmPassword {
-		errs = utils.AddError(errs, "confirm_password", "The passwords do not match.")
+		errs = utils.AddError(errs, "confirm_password", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorPasswordDoNotMatch",
+				Other: "The passwords do not match.",
+			},
+		}))
 	}
 
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); !utils.IsDebug() && !strong && err != nil {
@@ -291,7 +418,12 @@ func AuthRegister(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Error creating user account: %v", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not create user account."},
+			"error": []string{app.Translate(c, &i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorUserRegistration",
+					Other: "Could not create user account.",
+				},
+			})},
 		})
 	}
 
@@ -392,11 +524,21 @@ func AuthRecover(c *fiber.Ctx) error {
 	errs := fiber.Map{}
 
 	if !utils.IsValidEmail(input.Email) {
-		errs = utils.AddError(errs, "email", "Please, enter a valid email address.")
+		errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidEmail",
+				Other: "Please, enter a valid email address.",
+			},
+		}))
 	}
 
 	if !utils.IsRealEmail(input.Email) {
-		errs = utils.AddError(errs, "email", "Please, enter a real email address.")
+		errs = utils.AddError(errs, "email", app.Translate(c, &i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorNotRealEmail",
+				Other: "Please, enter a real email address.",
+			},
+		}))
 	}
 
 	if len(errs) > 0 {
