@@ -1,0 +1,63 @@
+[ErrorAccessTokenGeneration]
+hash = "sha1-5b72dde16f176db14179d5f0c93ccb94c9275d91"
+other = "No se pudo generar el token de acceso."
+
+[ErrorInactiveUser]
+hash = "sha1-36c5defebd32216961d58d82370b137b0933bb1c"
+other = "El usuario solicitado se encuentra inactivo."
+
+[ErrorInvalidEmail]
+hash = "sha1-f8086d35fd2a65387a9240d544862871b9514e08"
+other = "Por favor, ingrese una dirección de correo electrónico válida."
+
+[ErrorInvalidRefreshToken]
+hash = "sha1-0af26ca1233a2d747e83babccccb1824325c4f12"
+other = "El token de actualización es inválido."
+
+[ErrorInvalidRefreshTokenTime]
+hash = "sha1-4b931aba9fbf93f032c54d14ae6fd353b0361497"
+other = "El token de actualización ya no es válido."
+
+[ErrorInvalidUserCredentials]
+hash = "sha1-a6e6b3aeac218faebd69d11cd8274bf780ebcbdc"
+other = "Las credenciales de acceso son inválidas."
+
+[ErrorInvalidUserData]
+hash = "sha1-1027b840636e16206dd3dd2e111b5814de92895a"
+other = "La información del usuario es inválida."
+
+[ErrorNotRealEmail]
+hash = "sha1-42a32955891a1784b16c69a2a57c440d708165e0"
+other = "Por favor, ingrese una dirección de correo electrónico real."
+
+[ErrorPasswordDoNotMatch]
+hash = "sha1-540a66f4276cdf4ee0ebf7449dfe4229adf49ed0"
+other = "Las contraseñas no coinciden."
+
+[ErrorRefreshTokenGeneration]
+hash = "sha1-8be8c2634d108079fd115b87d289d0e2974c0e7f"
+other = "No se pudo generar el token de actualización."
+
+[ErrorShortPassword]
+hash = "sha1-9978cbffa86f49066e4ce38712ae287adb860083"
+other = "La contraseña debe tener al menos {{.MinLength}} caracteres."
+
+[ErrorUserEmailPendingValidation]
+hash = "sha1-30a131061992f26567617409e1ade36a23ecb681"
+other = "Un usuario con esta dirección de correo electrónico ya se encuentra en espera de validación."
+
+[ErrorUserEmailTaken]
+hash = "sha1-e288b0bdbe2c1d9f1116ee5ed458a61fb5704ae7"
+other = "Esta dirección de correo electrónico ya se encuentra en uso."
+
+[ErrorUserRegistration]
+hash = "sha1-85ee96e6eab898206c447078cf39d18166b0a634"
+other = "No se pudo generar la cuenta de usuario."
+
+[ErrorUserRegistrationDisabled]
+hash = "sha1-94eceb378fa306d79a9927f5009c4ddb25b5d39e"
+other = "El registro de cuentas de usuario se encuentra deshabilitado."
+
+[SuccessfulAuthCheck]
+hash = "sha1-694e2d44f8e90cb3915d94fba674dd3c75a782f1"
+other = "Autenticación exitosa."

@@ -91,6 +91,8 @@ linters-settings:
           - github.com/hibiken/asynq
           - github.com/wneessen/go-mail
           - github.com/getsentry/sentry-go
+          - github.com/nicksnyder/go-i18n/v2/i18n
+          - github.com/BurntSushi/toml
 
   prealloc:
     for-loops: true
