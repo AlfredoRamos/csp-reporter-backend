@@ -4,6 +4,8 @@ p, superadmin, /api/v1/activations/review/:id, PATCH, allow
 
 # Administrator
 p, admin, /api/v1/system/cache/purge, POST, allow
+p, admin, /api/v1/sites/all, GET, allow
+p, admin, /api/v1/sites/add, POST, allow
 
 # Viewer
 p, viewer, /api/v1/csp/reports/all, GET, allow

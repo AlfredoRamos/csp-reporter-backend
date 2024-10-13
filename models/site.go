@@ -15,3 +15,11 @@ type Site struct {
 	UpdatedAt time.Time      `gorm:"not null;default:clock_timestamp()" json:"-"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 }
+
+func (s Site) GetID() uuid.UUID {
+	return s.ID
+}
+
+func (s Site) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
