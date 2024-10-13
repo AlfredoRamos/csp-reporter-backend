@@ -2,6 +2,10 @@
 
 Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GORM](https://gorm.io), [Asynq](https://github.com/hibiken/asynq) and [Sentry](https://github.com/getsentry/sentry-go).
 
+[![Build Status - Main branch](https://img.shields.io/github/actions/workflow/status/AlfredoRamos/csp-reporter-backend/ci.yml?branch=main&style=flat-square&label=main)](https://github.com/AlfredoRamos/csp-reporter-backend/actions/workflows/ci.yml)
+[![Build Status - Dev branch](https://img.shields.io/github/actions/workflow/status/AlfredoRamos/csp-reporter-backend/ci.yml?branch=dev&style=flat-square&label=dev)](https://github.com/AlfredoRamos/csp-reporter-backend/actions/workflows/ci.yml)
+[![Latest Stable Version](https://img.shields.io/github/v/tag/AlfredoRamos/csp-reporter-backend?sort=semver&style=flat-square&label=stable)](https://github.com/AlfredoRamos/csp-reporter-backend/tags)
+
 # Setup
 
 ## Requirements
