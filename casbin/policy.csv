@@ -7,6 +7,7 @@ p, admin, /api/v1/system/cache/purge, POST, allow
 
 # Viewer
 p, viewer, /api/v1/csp/reports/all, GET, allow
+p, viewer, /api/v1/csp/reports/get/:id, GET, allow
 
 # User
 p, user, /api/v1/auth/logout, POST, allow

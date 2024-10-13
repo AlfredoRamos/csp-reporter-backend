@@ -15,6 +15,7 @@ import (
 	"alfredoramos.mx/csp-reporter/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -43,6 +44,23 @@ func GetAllCSPReports(c *fiber.Ctx) error {
 	opts := helpers.PaginatedItemOpts{RouteName: "api.csp.reports.index"}
 
 	return helpers.PaginateQuery(reports, query, c, opts)
+}
+
+func GetCSPReport(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil || !utils.IsValidUuid(id) {
+		slog.Error(fmt.Sprintf("Error parsing ID: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"The requested CSP report is invalid."},
+		})
+	}
+
+	report := &models.Report{ID: id}
+	if err := app.DB().Where(&report).Preload("Site").First(&report).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"The requested CSP report is invalid."}})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"data": report})
 }
 
 func PostCSPReport(c *fiber.Ctx) error {
