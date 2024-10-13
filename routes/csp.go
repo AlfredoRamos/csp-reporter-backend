@@ -13,4 +13,5 @@ func RegisterCSPReportRoutes(g fiber.Router) {
 	// Private
 	g.Use(middlewares.AuthProtected(), middlewares.ValidateAccessToken(), middlewares.CheckPermissions())
 	g.Get("/reports/all", controllers.GetAllCSPReports).Name("api.csp.reports.index")
+	g.Get("/reports/get/:id<guid>", controllers.GetCSPReport).Name("api.csp.reports.get")
 }
