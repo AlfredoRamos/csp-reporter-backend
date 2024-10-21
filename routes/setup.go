@@ -123,6 +123,9 @@ func SetupRoutes(app *fiber.App) {
 	// Auth
 	RegisterAuthRoutes(v1.Group("/auth"))
 
+	// Sites
+	RegisterSiteRoutes(v1.Group("/sites"))
+
 	// CSP Report
 	RegisterCSPReportRoutes(v1.Group("/csp"))
 

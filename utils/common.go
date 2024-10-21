@@ -10,6 +10,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/net/idna"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -73,8 +74,24 @@ func GetDomainHostname(d string) (string, error) {
 	return u.Hostname(), nil
 }
 
+func CleanDomain(d string) (string, error) {
+	d = strings.TrimSpace(d)
+
+	if len(d) < 1 {
+		return "", errors.New("Invalid domain.")
+	}
+
+	return idna.Lookup.ToASCII(d)
+}
+
 func GetApexDomain(d string) (string, error) {
 	h, err := GetDomainHostname(d)
+	if err != nil {
+		sentry.CaptureException(err)
+		return "", err
+	}
+
+	h, err = CleanDomain(h)
 	if err != nil {
 		sentry.CaptureException(err)
 		return "", err
