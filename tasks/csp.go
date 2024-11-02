@@ -13,42 +13,41 @@ import (
 )
 
 const (
-	TaskEmailDelivery string = "email:delivery"
+	TaskReportAdd string = "csp:report:add"
 )
 
-type EmailDeliveryPayload struct {
-	Source helpers.EmailOpts      `json:"source"`
-	Data   map[string]interface{} `json:"data"`
+type ReportAddPayload struct {
+	Data helpers.CspReport `json:"data"`
 }
 
-func NewEmailDeliveryTask(s helpers.EmailOpts, d map[string]interface{}) (*asynq.Task, error) {
-	payload, err := json.Marshal(EmailDeliveryPayload{s, d})
+func NewReportAddTask(d helpers.CspReport) (*asynq.Task, error) {
+	payload, err := json.Marshal(ReportAddPayload{d})
 	if err != nil {
 		sentry.CaptureException(err)
 		return nil, err
 	}
 
-	return asynq.NewTask(TaskEmailDelivery, payload), nil
+	return asynq.NewTask(TaskReportAdd, payload), nil
 }
 
-func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
-	p := EmailDeliveryPayload{}
+func HandleReportAddTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
+	p := ReportAddPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
 		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
 	//nolint:contextcheck
-	if err := helpers.SendEmail(p.Source, p.Data); err != nil {
+	if err := helpers.NewCspReport(p.Data); err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not deliver email: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("Could not add CSP report: %w: %w", err, asynq.SkipRetry)
 	}
 
 	return nil
 }
 
-func NewEmail(s helpers.EmailOpts, d map[string]interface{}) error {
-	task, err := NewEmailDeliveryTask(s, d)
+func NewCspReport(d helpers.CspReport) error {
+	task, err := NewReportAddTask(d)
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not create task: %v", err))

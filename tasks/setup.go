@@ -76,6 +76,7 @@ func AsynqServeMux() *asynq.ServeMux {
 	onceServeMux.Do(func() {
 		serveMux = asynq.NewServeMux()
 		serveMux.HandleFunc(TaskEmailDelivery, HandleEmailDeliveryTask)
+		serveMux.HandleFunc(TaskReportAdd, HandleReportAddTask)
 	})
 
 	return serveMux
