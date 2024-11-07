@@ -12,7 +12,7 @@ require (
 	github.com/hibiken/asynq v0.25.0
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/rueidis v1.0.48
-	github.com/wneessen/go-mail v0.5.1
+	github.com/wneessen/go-mail v0.5.2
 	golang.org/x/crypto v0.28.0
 	golang.org/x/net v0.30.0
 	gopkg.in/yaml.v3 v3.0.1
