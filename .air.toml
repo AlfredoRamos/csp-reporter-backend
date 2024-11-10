@@ -5,17 +5,9 @@ tmp_dir = "tmp"
 [build]
 args_bin = []
 bin = "./tmp/csp-reporter"
-cmd = "go build -o ./tmp/csp-reporter ."
+cmd = "go build -o ./tmp/csp-reporter ./cmd/api/..."
 delay = 1000
-exclude_dir = [
-  "cmd",
-  "assets",
-  "tmp",
-  "vendor",
-  "testdata",
-  "templates",
-  "keys",
-]
+exclude_dir = ["assets", "tmp", "vendor", "testdata", "templates", "keys"]
 exclude_file = []
 exclude_regex = ["_test.go"]
 exclude_unchanged = false

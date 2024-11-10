@@ -67,7 +67,7 @@ go install github.com/go-jose/go-jose/v4/jose-util@latest
 ## Production
 
 ```shell
-go build -ldflags='-s -w' -a -installsuffix cgo -o ./bin/csp-reporter .
+go build -ldflags='-s -w' -a -installsuffix cgo -o ./bin/csp-reporter ./cmd/api/...
 chmod +x csp-reporter
 csp-reporter
 ```
