@@ -14,6 +14,6 @@ quote_type = single
 [*.md]
 trim_trailing_whitespace = false
 
-[*.{yml,toml}]
+[*.{yml,yaml}]
 indent_size = 2
 indent_style = space
