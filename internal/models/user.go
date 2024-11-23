@@ -20,6 +20,8 @@ type User struct {
 	LastLogin          *time.Time     `json:"-"`
 	LastPasswordChange *time.Time     `json:"-"`
 	MustChangePassword *bool          `gorm:"default:false" json:"-"`
+	MFAEnabled         *bool          `gorm:"default:false" json:"mfa_enabled"`
+	MFASecret          *string        `gorm:"size:100" json:"mfa_secret"`
 	CreatedAt          time.Time      `gorm:"not null;default:clock_timestamp()" json:"-"`
 	UpdatedAt          time.Time      `gorm:"not null;default:clock_timestamp()" json:"-"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"deleted_at"`
