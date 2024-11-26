@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.0
 	github.com/joho/godotenv v1.5.1
-	github.com/redis/rueidis v1.0.49
+	github.com/redis/rueidis v1.0.50
 	github.com/wneessen/go-mail v0.5.2
 	golang.org/x/crypto v0.29.0
 	golang.org/x/net v0.31.0
