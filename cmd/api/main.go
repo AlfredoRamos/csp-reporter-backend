@@ -48,7 +48,7 @@ func main() {
 	}()
 
 	// Setup app
-	app := fiber.New(fiber.Config{
+	http := fiber.New(fiber.Config{
 		StrictRouting: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			sentry.CaptureException(err)
@@ -71,7 +71,7 @@ func main() {
 	})
 
 	// Setup routes
-	routes.SetupRoutes(app)
+	routes.SetupRoutes(http)
 
 	// Asynq server
 	go func() {
@@ -81,10 +81,12 @@ func main() {
 		if err := queue.Run(mux); err != nil {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not run queue server: %v", err))
-			os.Exit(1)
 		}
 	}()
 	defer func() {
+		defer app.SMTP().Close()
+		defer app.Cache().Close()
+
 		if err := tasks.AsynqClient().Close(); err != nil {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not close Asynq client: %v", err))
@@ -100,11 +102,19 @@ func main() {
 			slog.Error(fmt.Sprintf("Could not run periodic tasks manager: %v", err))
 		}
 	}()
+	defer tasks.AsynqPeriodicTaskManager().Shutdown()
 
 	// Setup server
-	if err := app.Listen(os.Getenv("APP_ADDRESS")); err != nil {
+	if err := http.Listen(os.Getenv("APP_ADDRESS")); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not setup server: %v", err))
+		slog.Error(fmt.Sprintf("Could not start HTTP server: %v", err))
 		os.Exit(1)
 	}
+
+	defer func() {
+		if err := http.Shutdown(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not close HTTP server: %v", err))
+		}
+	}()
 }
