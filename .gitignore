@@ -12,10 +12,10 @@ tmp/
 !*.env.example
 *.sql
 *.conf
-!casbin/model.conf
+!internal/casbin/model.conf
 *.ini
 *.csv
-!casbin/policy.csv
+!internal/casbin/policy.csv
 *.rej
 *.orig
 *.pdf
