@@ -2,6 +2,7 @@ binary_file=./tmp/csp-reporter
 module_path=./cmd/api/...
 module_name=$$(sed -n 's/^module //p' go.mod)
 app_version=$$(set -o pipefail; git describe --long --tags 2>/dev/null | sed -r 's/([^-]*-g)/r\1/;s/-/./g' || printf "r%s.%s" "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
+keys_path=internal/keys
 
 .PHONY: help deps build clean
 
@@ -20,9 +21,15 @@ build: deps
 	go build -ldflags="-s -w -X '${module_name}/app.version=${app_version}'" -a -installsuffix cgo -o "${binary_file}" "${module_path}"
 
 DESTDIR ?= ./bin
-## install: install the binary file
+## install: install the application
 install:
 	install -Dsm755 "${binary_file}" "$$(realpath $(DESTDIR))/$$(basename ${binary_file})"
+
+keys:
+	go install github.com/go-jose/go-jose/v4/jose-util@latest
+	mkdir -p "${keys_path}"
+	(cd "${keys_path}" && jose-util generate-key --use sig --alg EdDSA && mv -f jwk-sig-*-priv.json signing-private.json && mv -f jwk-sig-*-pub.json signing-public.json)
+	(cd "${keys_path}" && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv -f jwk-enc-*-priv.json encryption-private.json && mv -f jwk-enc-*-pub.json encryption-public.json)
 
 ## clean: cleanup tasks
 clean:
