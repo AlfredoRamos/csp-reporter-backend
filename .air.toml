@@ -10,6 +10,7 @@ delay = 1000
 exclude_dir = [
 	"assets",
 	"tmp",
+	"bin",
 	"vendor",
 	"testdata",
 	"internal/templates",

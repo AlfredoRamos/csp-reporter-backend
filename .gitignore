@@ -1,5 +1,6 @@
 keys/
 tmp/
+bin/
 .vscode/*
 !.vscode/*.json
 *.pem

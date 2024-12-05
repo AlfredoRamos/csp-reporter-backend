@@ -19,7 +19,12 @@ deps:
 build: deps
 	go build -ldflags="-s -w -X '${module_name}/app.version=${app_version}'" -a -installsuffix cgo -o "${binary_file}" "${module_path}"
 
+DESTDIR ?= ./bin
+## install: install the binary file
+install:
+	install -Dsm755 "${binary_file}" "$$(realpath $(DESTDIR))/$$(basename ${binary_file})"
+
 ## clean: cleanup tasks
 clean:
-	rm -fR $$(dirname ${binary_file})
+	rm -fR "$$(dirname ${binary_file})"
 	go clean -cache
