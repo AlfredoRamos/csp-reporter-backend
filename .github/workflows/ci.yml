@@ -19,11 +19,8 @@ jobs:
         with:
           go-version: '^1.23.1'
 
-      - name: Install dependencies
-        run: go mod tidy
-
       - name: Build app
-        run: go build -o ./tmp/csp-reporter ./cmd/api/...
+        run: make build
 
   security:
     if: ${{ !contains(github.event.head_commit.message, 'skip security') }}
@@ -45,7 +42,7 @@ jobs:
         run: govulncheck -show=traces ./...
 
       - name: Build app
-        run: go build -o ./tmp/csp-reporter ./cmd/api/...
+        run: make build
 
       - name: Check binary
         run: govulncheck -mode=binary -show=traces ./tmp/csp-reporter
