@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	github.com/casbin/casbin/v2 v2.102.0
 	github.com/ccojocar/zxcvbn-go v1.0.2
-	github.com/getsentry/sentry-go v0.29.1
+	github.com/getsentry/sentry-go v0.30.0
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
