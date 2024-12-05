@@ -116,8 +116,6 @@ linters-settings:
     strconcat: false
 
 issues:
-  exclude-files:
-    - routes/dev.go
   exclude-rules:
     # Exclude err and ctx variables in fieldalignment analyzer from govet
     - text: 'shadow: declaration of "(err|ctx)" shadows declaration at'

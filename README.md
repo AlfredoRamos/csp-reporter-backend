@@ -46,20 +46,20 @@ go install golang.org/x/tools/cmd/deadcode@latest
 ## Generate key pairs
 
 ```shell
-mkdir -p keys
+mkdir -p internal/keys
 go install github.com/go-jose/go-jose/v4/jose-util@latest
 ```
 
 ### Sign (JWS)
 
 ```shell
-(cd keys && jose-util generate-key --use sig --alg EdDSA && mv jwk-sig-*-priv.json signing-private.json && mv jwk-sig-*-pub.json signing-public.json)
+(cd internal/keys && jose-util generate-key --use sig --alg EdDSA && mv jwk-sig-*-priv.json signing-private.json && mv jwk-sig-*-pub.json signing-public.json)
 ```
 
 ### Encrypt (JWE)
 
 ```shell
-(cd keys && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv jwk-enc-*-priv.json encryption-private.json && mv jwk-enc-*-pub.json encryption-public.json)
+(cd internal/keys && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv jwk-enc-*-priv.json encryption-private.json && mv jwk-enc-*-pub.json encryption-public.json)
 ```
 
 # Run app
