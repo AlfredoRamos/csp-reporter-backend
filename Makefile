@@ -1,10 +1,10 @@
 binary_file=./tmp/csp-reporter
 module_path=./cmd/api/...
-module_name=$$(sed -n 's/^module //p' go.mod)
-app_version=$$(set -o pipefail; git describe --long --tags 2>/dev/null | sed -r 's/([^-]*-g)/r\1/;s/-/./g' || printf "r%s.%s" "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")
+module_name="$$(sed -n 's/^module //p' go.mod)"
+app_version="$$(set -o pipefail; git describe --long --tags 2>/dev/null | sed -r 's/([^-]*-g)/r\1/;s/-/./g' || printf "0.0.0+r%s.%s" "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")"
 keys_path=internal/keys
 
-.PHONY: help deps build clean
+.PHONY: help deps build install keys clean
 
 ## help: print this help message
 help:
@@ -25,6 +25,7 @@ DESTDIR ?= ./bin
 install:
 	install -Dsm755 "${binary_file}" "$$(realpath $(DESTDIR))/$$(basename ${binary_file})"
 
+## keys: generate encryption and signing keys for JWT (JWE + JWS)
 keys:
 	go install github.com/go-jose/go-jose/v4/jose-util@latest
 	mkdir -p "${keys_path}"

@@ -24,6 +24,7 @@ func SetupSentry() {
 		TracesSampleRate:   1.0,
 		ProfilesSampleRate: 1.0,
 		ServerName:         os.Getenv("APP_NAME"),
+		Release:            Version(),
 		Environment:        env,
 	}); err != nil {
 		sentry.CaptureException(err)
