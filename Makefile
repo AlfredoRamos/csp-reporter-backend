@@ -27,10 +27,12 @@ install:
 
 ## keys: generate encryption and signing keys for JWT (JWE + JWS)
 keys:
-	go install github.com/go-jose/go-jose/v4/jose-util@latest
 	mkdir -p "${keys_path}"
+	go install github.com/go-jose/go-jose/v4/jose-util@latest
 	(cd "${keys_path}" && jose-util generate-key --use sig --alg EdDSA && mv -f jwk-sig-*-priv.json signing-private.json && mv -f jwk-sig-*-pub.json signing-public.json)
 	(cd "${keys_path}" && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv -f jwk-enc-*-priv.json encryption-private.json && mv -f jwk-enc-*-pub.json encryption-public.json)
+	openssl genrsa -traditional -out "${keys_path}"/dkim.key 2048
+	openssl ec -in "${keys_path}"/dkim.key -pubout -outform der | openssl base64 -A > "${keys_path}"/dkim.pub
 
 ## clean: cleanup tasks
 clean:

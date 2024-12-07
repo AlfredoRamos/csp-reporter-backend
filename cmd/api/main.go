@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
@@ -65,7 +66,7 @@ func main() {
 
 			return c.Status(code).JSON(&fiber.Map{"error": []string{msg}})
 		},
-		AppName:     os.Getenv("APP_NAME"),
+		AppName:     strings.TrimSpace(fmt.Sprintf("%s v%s", os.Getenv("APP_NAME"), app.Version())),
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
 	})

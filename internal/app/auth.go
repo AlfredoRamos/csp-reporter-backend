@@ -21,14 +21,14 @@ func Auth() *casbin.SyncedEnforcer {
 		modelFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "casbin", "model.conf")))
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not read Casbin model file at %s", modelFile))
+			slog.Error(fmt.Sprintf("Could not read Casbin model file at %s: %v", modelFile, err))
 			os.Exit(1)
 		}
 
 		policyFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "casbin", "policy.csv")))
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not read Casbin policy file at %s", policyFile))
+			slog.Error(fmt.Sprintf("Could not read Casbin policy file at %s: %v", policyFile, err))
 			os.Exit(1)
 		}
 

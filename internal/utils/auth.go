@@ -246,6 +246,8 @@ func generateRandomBytes(n uint32) ([]byte, error) {
 }
 
 func IsValidEmail(e string) bool {
+	e = strings.TrimSpace(e)
+
 	if len(e) < 1 {
 		return false
 	}

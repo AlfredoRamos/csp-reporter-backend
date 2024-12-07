@@ -43,7 +43,7 @@ func (e EmailOpts) IsValid() bool {
 }
 
 func SendEmail(opts EmailOpts, data map[string]interface{}) error {
-	if len(os.Getenv("EMAIL_FROM")) < 1 {
+	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
 		return errors.New("The from email address is invalid.")
 	}
 
@@ -67,12 +67,21 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 		return fmt.Errorf("Error loading the TEXT template: %w", err)
 	}
 
+	lang := utils.EmailLang()
+
 	// Init message
-	msg := mail.NewMsg()
+	msg := mail.NewMsg(mail.WithNoDefaultUserAgent(), mail.WithMiddleware(utils.NewDkimMiddleware()))
 	msg.SetMessageID()
 	msg.SetDate()
 	msg.SetBulk()
 	msg.Subject(opts.Subject + " • " + os.Getenv("APP_NAME"))
+	msg.SetGenHeader(mail.HeaderContentLang, lang)
+
+	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
+		err := errors.New("The from email address is invalid.")
+		sentry.CaptureException(err)
+		return err
+	}
 
 	if err := msg.FromFormat(os.Getenv("APP_NAME"), os.Getenv("EMAIL_FROM")); err != nil {
 		sentry.CaptureException(err)
@@ -87,7 +96,7 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 	}
 
 	// Default values
-	data["Lang"] = utils.EmailLang()
+	data["Lang"] = lang
 	data["AppName"] = os.Getenv("APP_NAME")
 	data["AppDescription"] = os.Getenv("APP_DESCRIPTION")
 	data["AppLogo"] = os.Getenv("APP_LOGO")

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -84,7 +85,8 @@ func RefreshTokenExpiration() time.Duration {
 func DefaultTimeZone() string {
 	tz := os.Getenv("TZ")
 	if len(tz) < 1 {
-		tz = "America/Mexico_City"
+		tz = "UTC"
+		slog.Warn(fmt.Sprintf("Time zone not set. Falling back to '%s'.", tz))
 	}
 
 	return tz
@@ -122,9 +124,20 @@ func EmailLang() string {
 	l := os.Getenv("EMAIL_LANG")
 
 	if len(l) < 1 {
-		slog.Warn("Empty email language. Falling back to 'en'.")
 		l = "en"
+		slog.Warn(fmt.Sprintf("Empty email language. Falling back to '%s'.", l))
 	}
 
 	return l
+}
+
+func DkimSelector() string {
+	s := os.Getenv("EMAIL_DKIM_SELECTOR")
+
+	if len(s) < 1 {
+		s = "mail"
+		slog.Warn(fmt.Sprintf("Empty DKIM selector. Falling back to '%s'.", s))
+	}
+
+	return s
 }
