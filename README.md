@@ -62,6 +62,13 @@ go install github.com/go-jose/go-jose/v4/jose-util@latest
 (cd internal/keys && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv jwk-enc-*-priv.json encryption-private.json && mv jwk-enc-*-pub.json encryption-public.json)
 ```
 
+## Email (DKIM)
+
+```shell
+openssl genrsa -traditional -out internal/keys/dkim.key 2048
+openssl ec -in internal/keys/dkim.key -pubout -outform der | openssl base64 -A > internal/keys/dkim.pub
+```
+
 # Run app
 
 ## Production
