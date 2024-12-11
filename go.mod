@@ -9,7 +9,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
-	github.com/hibiken/asynq v0.25.0
+	github.com/hibiken/asynq v0.25.1
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/rueidis v1.0.51
 	github.com/wneessen/go-mail v0.5.2
