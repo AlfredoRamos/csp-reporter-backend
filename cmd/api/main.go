@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
@@ -19,6 +22,11 @@ import (
 )
 
 func main() {
+	// Setup shutdown and signal channel
+	wg := sync.WaitGroup{}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		sentry.CaptureException(err)
@@ -48,6 +56,47 @@ func main() {
 		}
 	}()
 
+	// Asynq server
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		queue := tasks.AsynqServer()
+		mux := tasks.AsynqServeMux()
+
+		if err := queue.Run(mux); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not run queue server: %v", err))
+		}
+	}()
+	defer func() {
+		app.Cache().Close()
+
+		if err := app.SMTP().Close(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not close SMTP server: %v", err))
+		}
+
+		if err := tasks.AsynqClient().Close(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not close Asynq client: %v", err))
+		}
+	}()
+
+	// Periodic tasks
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		manager := tasks.AsynqPeriodicTaskManager()
+
+		if err := manager.Run(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not run periodic tasks manager: %v", err))
+		}
+	}()
+	// defer tasks.AsynqPeriodicTaskManager().Shutdown()
+
 	// Setup app
 	http := fiber.New(fiber.Config{
 		StrictRouting: true,
@@ -74,48 +123,33 @@ func main() {
 	// Setup routes
 	routes.SetupRoutes(http)
 
-	// Asynq server
-	go func() {
-		queue := tasks.AsynqServer()
-		mux := tasks.AsynqServeMux()
-
-		if err := queue.Run(mux); err != nil {
-			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not run queue server: %v", err))
-		}
-	}()
-	defer func() {
-		defer app.SMTP().Close()
-		defer app.Cache().Close()
-
-		if err := tasks.AsynqClient().Close(); err != nil {
-			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not close Asynq client: %v", err))
-		}
-	}()
-
-	// Periodic tasks
-	go func() {
-		manager := tasks.AsynqPeriodicTaskManager()
-
-		if err := manager.Run(); err != nil {
-			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not run periodic tasks manager: %v", err))
-		}
-	}()
-	defer tasks.AsynqPeriodicTaskManager().Shutdown()
-
 	// Setup server
-	if err := http.Listen(os.Getenv("APP_ADDRESS")); err != nil {
-		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not start HTTP server: %v", err))
-		os.Exit(1)
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-	defer func() {
+		if err := http.Listen(os.Getenv("APP_ADDRESS")); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not start HTTP server: %v", err))
+		}
+	}()
+
+	// Listen to signals
+	sig := <-sigChan
+	slog.Info(fmt.Sprintf("Received signal: %v", sig))
+
+	// Shutdown server
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
 		if err := http.Shutdown(); err != nil {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not close HTTP server: %v", err))
 		}
 	}()
+
+	// Graceful shutdown
+	wg.Wait()
+	slog.Info("Gracefully shutting down the application.")
 }
