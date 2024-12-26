@@ -14,7 +14,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 )
 
 type userRole struct {
@@ -52,7 +52,7 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	roles := []userRole{}
 
 	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("roles:%s", id.String())).Cache(), 5*time.Minute).ToString()
-	if err != nil && !errors.Is(err, rueidis.Nil) {
+	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached roles: %v", err))
 	}

@@ -16,7 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/google/uuid"
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 )
 
 func ValidateAccessToken() fiber.Handler {
@@ -56,7 +56,7 @@ func ValidateAccessToken() fiber.Handler {
 		}
 
 		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
-		if err != nil && !errors.Is(err, rueidis.Nil) {
+		if err != nil && !errors.Is(err, valkey.Nil) {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
 
@@ -154,7 +154,7 @@ func ValidateRefreshToken() fiber.Handler {
 		}
 
 		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
-		if err != nil && !errors.Is(err, rueidis.Nil) {
+		if err != nil && !errors.Is(err, valkey.Nil) {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", accessClaims.ID, err))
 
@@ -197,7 +197,7 @@ func ValidateRefreshToken() fiber.Handler {
 		}
 
 		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
-		if err != nil && !errors.Is(err, rueidis.Nil) {
+		if err != nil && !errors.Is(err, valkey.Nil) {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshClaims.ID, err))
 

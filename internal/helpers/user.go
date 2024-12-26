@@ -13,7 +13,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 )
 
 func UserExists(id uuid.UUID, email string) bool {
@@ -22,7 +22,7 @@ func UserExists(id uuid.UUID, email string) bool {
 	}
 
 	cachedUser, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("user:%s", id.String())).Cache(), 5*time.Minute).ToString()
-	if err != nil && !errors.Is(err, rueidis.Nil) {
+	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached user: %v", err))
 	}

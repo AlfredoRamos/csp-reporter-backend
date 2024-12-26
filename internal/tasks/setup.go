@@ -26,19 +26,17 @@ var (
 
 func AsynqClient() *asynq.Client {
 	onceTasks.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
 		}
 
 		client = asynq.NewClient(asynq.RedisClientOpt{
-			Addr:     fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), port),
-			Password: os.Getenv("REDIS_PASS"),
+			Addr:     fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port),
+			Password: os.Getenv("CACHE_PASS"),
 			DB:       0,
 		})
-
-		// defer client.Close()
 	})
 
 	return client
@@ -46,7 +44,7 @@ func AsynqClient() *asynq.Client {
 
 func AsynqServer() *asynq.Server {
 	onceServer.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
@@ -54,8 +52,8 @@ func AsynqServer() *asynq.Server {
 
 		server = asynq.NewServer(
 			asynq.RedisClientOpt{
-				Addr:     fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), port),
-				Password: os.Getenv("REDIS_PASS"),
+				Addr:     fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port),
+				Password: os.Getenv("CACHE_PASS"),
 				DB:       0,
 			},
 			asynq.Config{
@@ -84,7 +82,7 @@ func AsynqServeMux() *asynq.ServeMux {
 
 func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 	onceTaskManager.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
@@ -92,8 +90,8 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 
 		taskManager, err = asynq.NewPeriodicTaskManager(asynq.PeriodicTaskManagerOpts{
 			RedisConnOpt: asynq.RedisClientOpt{
-				Addr:     fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), port),
-				Password: os.Getenv("REDIS_PASS"),
+				Addr:     fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port),
+				Password: os.Getenv("CACHE_PASS"),
 				DB:       0,
 			},
 			PeriodicTaskConfigProvider: NewTasksFileProvider(),

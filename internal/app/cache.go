@@ -9,30 +9,30 @@ import (
 	"sync"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 )
 
 var (
-	rdb       rueidis.Client
+	rdb       valkey.Client
 	onceCache sync.Once
 )
 
-func Cache() rueidis.Client {
+func Cache() valkey.Client {
 	onceCache.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
 		}
 
-		client, err := rueidis.NewClient(rueidis.ClientOption{
-			InitAddress: []string{fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), port)},
-			Password:    os.Getenv("REDIS_PASS"),
+		client, err := valkey.NewClient(valkey.ClientOption{
+			InitAddress: []string{fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port)},
+			Password:    os.Getenv("CACHE_PASS"),
 			SelectDB:    0,
 		})
-		if err != nil && !errors.Is(err, rueidis.Nil) {
+		if err != nil && !errors.Is(err, valkey.Nil) {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not connect to Redis: %v", err))
+			slog.Error(fmt.Sprintf("Could not connect to Valkey: %v", err))
 			os.Exit(1)
 		}
 

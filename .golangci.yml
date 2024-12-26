@@ -80,7 +80,7 @@ linters-settings:
           - gorm.io/driver/postgres
           - github.com/google/uuid
           - github.com/aws/aws-sdk-go-v2
-          - github.com/redis/rueidis
+          - github.com/valkey-io/valkey-go
           - github.com/go-jose/go-jose/v4
           - github.com/joho/godotenv
           - github.com/goccy/go-json

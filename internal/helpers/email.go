@@ -19,7 +19,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 	"github.com/wneessen/go-mail"
 )
 
@@ -154,7 +154,7 @@ func GetSuperAdminEmails() []string {
 
 	// Try to load from cache
 	ce, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key("email:superadmin:list").Cache(), 5*time.Minute).ToString()
-	if err != nil && !errors.Is(err, rueidis.Nil) {
+	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached superadministrator email list: %v", err))
 	}
