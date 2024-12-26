@@ -10,9 +10,9 @@ Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GO
 
 ## Requirements
 
-- [Go](https://go.dev/dl/) >= 1.23.1
-- [PostgreSQL](https://www.postgresql.org/download/) >= 16.3
-- [Redis](https://redis.io/download/) >= 7.2
+- [Go](https://go.dev/dl/) >= 1.23.4
+- [PostgreSQL](https://www.postgresql.org/download/) >= 17.2
+- [Valkey](https://valkey.io/download/) >= 8.0
 
 ### VSCode extensions
 
@@ -93,12 +93,12 @@ govulncheck -show=traces ./...
 deadcode -test ./...
 ```
 
-## Redis
+## Cache
 
 ### Enter CLI
 
 ```shell
-redis-cli
+valkey-cli
 ```
 
 ### List all revoked access tokens
@@ -121,8 +121,8 @@ SREM access-tokens:revoked "<JTI>"
 
 For more information, refer to the official documentation for sets:
 
-- [Redis sets](https://redis.io/docs/data-types/sets/)
-- [Redis sets: Commands](https://redis.io/commands/?group=set)
+- [Valkey sets](https://valkey.io/topics/sets/)
+- [Valkey sets: Commands](https://valkey.io/commands/#set)
 
 ## Queue
 
