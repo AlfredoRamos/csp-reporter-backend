@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 	_ "time/tzdata"
 
@@ -140,4 +142,33 @@ func DkimSelector() string {
 	}
 
 	return s
+}
+
+func CorsOrigins() string {
+	origins := []string{os.Getenv("APP_DOMAIN")}
+
+	orStr := strings.TrimSpace(os.Getenv("APP_CORS_ORIGINS"))
+
+	if len(orStr) < 1 {
+		return strings.Join(origins, ",")
+	}
+
+	orList := strings.Split(orStr, ",")
+	orList = CleanStringList(orList)
+
+	const maxOrigins int = 10
+
+	if len(orList) > maxOrigins {
+		orList = orList[:maxOrigins]
+	}
+
+	for _, or := range orList {
+		if !slices.Contains(origins, or) {
+			origins = append(origins, or)
+		}
+	}
+
+	origins = CleanStringList(origins)
+
+	return strings.Join(origins, ",")
 }

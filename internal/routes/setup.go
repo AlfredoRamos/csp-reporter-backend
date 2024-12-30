@@ -33,7 +33,7 @@ func SetupRoutes(app *fiber.App) {
 	}
 
 	corsConfig := cors.Config{
-		AllowOrigins:     os.Getenv("APP_DOMAIN"),
+		AllowOrigins:     utils.CorsOrigins(),
 		AllowCredentials: true,
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token",
 	}
@@ -71,14 +71,14 @@ func SetupRoutes(app *fiber.App) {
 
 	maxRequests, err := strconv.Atoi(os.Getenv("LIMIT_REQUESTS_MAX"))
 	if err != nil {
-		maxRequests = 5
+		sentry.CaptureException(err)
+		maxRequests = 10
+		slog.Warn(fmt.Sprintf("Invalid number of max requests, using %d.", maxRequests))
 	}
 
 	limiterConfig := limiter.Config{
 		Max: maxRequests,
 		LimitReached: func(c *fiber.Ctx) error {
-			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Limiter error: %v", err))
 			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{"Too many requests received within a short amount of time."}})
 		},
 	}
