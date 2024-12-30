@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,6 +12,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
+	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"github.com/valkey-io/valkey-go"
 )
