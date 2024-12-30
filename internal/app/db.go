@@ -27,6 +27,7 @@ func DB() *gorm.DB {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 5432
+			slog.Error(fmt.Sprintf("Invalid database port. Falling back to %d: %v", port, err))
 		}
 
 		dsn := fmt.Sprintf(
