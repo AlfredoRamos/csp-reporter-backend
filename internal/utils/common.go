@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 	"net/url"
+	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/getsentry/sentry-go"
@@ -108,4 +110,47 @@ func ToStringPtr(s string) *string {
 	}
 
 	return &s
+}
+
+func CleanString(s string) string {
+	c := strings.TrimSpace(s)
+
+	if len(c) < 1 {
+		return c
+	}
+
+	re := regexp.MustCompile(`([\s])+`)
+	c = re.ReplaceAllString(c, `$1`)
+
+	return c
+}
+
+func RemoveDuplicated[T comparable](sliceList []T) []T {
+	allKeys := make(map[T]bool, len(sliceList))
+	list := make([]T, 0)
+
+	for _, item := range sliceList {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+
+	return list
+}
+
+func CleanStringList(s []string) []string {
+	if len(s) < 1 {
+		return []string{}
+	}
+
+	for k, v := range s {
+		s[k] = CleanString(v)
+	}
+
+	s = RemoveDuplicated(s)
+
+	return slices.DeleteFunc(s, func(e string) bool {
+		return len(e) < 1
+	})
 }

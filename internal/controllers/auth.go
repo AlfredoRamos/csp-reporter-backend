@@ -121,7 +121,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 func AuthCheck(c *fiber.Ctx) error {
 	// Real validation is handled with middlewares
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"message": []string{"Successful authentication."},
 	})
 }
