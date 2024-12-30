@@ -7,6 +7,7 @@ require (
 	github.com/ccojocar/zxcvbn-go v1.0.2
 	github.com/getsentry/sentry-go v0.30.0
 	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/goccy/go-yaml v1.15.13
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
@@ -16,7 +17,6 @@ require (
 	github.com/wneessen/go-mail-middleware v0.0.8
 	golang.org/x/crypto v0.31.0
 	golang.org/x/net v0.33.0
-	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
 )

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/goccy/go-yaml"
 	"github.com/hibiken/asynq"
-	"gopkg.in/yaml.v3"
 )
 
 type FileBasedConfigProvider struct {
