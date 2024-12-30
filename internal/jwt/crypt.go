@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
+	"github.com/goccy/go-json"
 )
 
 var (

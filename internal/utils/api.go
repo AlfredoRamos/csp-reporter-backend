@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"mime/multipart"
 	"net/url"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )

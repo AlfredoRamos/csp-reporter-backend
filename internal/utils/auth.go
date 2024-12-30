@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -20,6 +19,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
 	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
+	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
 )

@@ -2,13 +2,13 @@ package tasks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"github.com/getsentry/sentry-go"
+	"github.com/goccy/go-json"
 	"github.com/hibiken/asynq"
 )
 
