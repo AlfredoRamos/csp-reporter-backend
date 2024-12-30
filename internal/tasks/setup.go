@@ -75,6 +75,7 @@ func AsynqServeMux() *asynq.ServeMux {
 		serveMux = asynq.NewServeMux()
 		serveMux.HandleFunc(TaskEmailDelivery, HandleEmailDeliveryTask)
 		serveMux.HandleFunc(TaskReportAdd, HandleReportAddTask)
+		serveMux.HandleFunc(TaskPurgeCachePattern, HandlePurgeCachePatternTask)
 	})
 
 	return serveMux

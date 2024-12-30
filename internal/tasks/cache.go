@@ -13,40 +13,40 @@ import (
 )
 
 const (
-	TaskReportAdd string = "csp:report:add"
+	TaskPurgeCachePattern string = "cache:pattern"
 )
 
-type ReportAddPayload struct {
-	Data helpers.CspReport `json:"data"`
+type PurgeCachePatternPayload struct {
+	Pattern string `json:"pattern"`
 }
 
-func NewReportAddTask(d helpers.CspReport) (*asynq.Task, error) {
-	payload, err := json.Marshal(ReportAddPayload{d})
+func NewPurgeCachePatternTask(p string) (*asynq.Task, error) {
+	payload, err := json.Marshal(PurgeCachePatternPayload{p})
 	if err != nil {
 		sentry.CaptureException(err)
 		return nil, err
 	}
 
-	return asynq.NewTask(TaskReportAdd, payload), nil
+	return asynq.NewTask(TaskPurgeCachePattern, payload), nil
 }
 
-func HandleReportAddTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
-	p := ReportAddPayload{}
+func HandlePurgeCachePatternTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
+	p := PurgeCachePatternPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
 		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
-	if err := helpers.NewCspReport(p.Data); err != nil { //nolint:contextcheck
+	if err := helpers.PurgeCachePattern(p.Pattern); err != nil { //nolint:contextcheck
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not add CSP report: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("Could not purge user roles from cache: %w: %w", err, asynq.SkipRetry)
 	}
 
 	return nil
 }
 
-func NewCspReport(d helpers.CspReport) error {
-	task, err := NewReportAddTask(d)
+func NewPurgeCachePattern(p string) error {
+	task, err := NewPurgeCachePatternTask(p)
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not create task: %v", err))
