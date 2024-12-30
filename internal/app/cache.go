@@ -23,6 +23,7 @@ func Cache() valkey.Client {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
+			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
 		}
 
 		client, err := valkey.NewClient(valkey.ClientOption{

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-yaml"
 	"github.com/hibiken/asynq"
 )
@@ -26,6 +27,7 @@ type PeriodicTaskConfigContainer struct {
 func NewTasksFileProvider() *FileBasedConfigProvider {
 	configFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "tasks", "config.yml")))
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not read tasks config file at %s", configFile))
 		return &FileBasedConfigProvider{}
 	}
@@ -38,12 +40,15 @@ func NewTasksFileProvider() *FileBasedConfigProvider {
 func (p *FileBasedConfigProvider) GetConfigs() ([]*asynq.PeriodicTaskConfig, error) {
 	data, err := os.ReadFile(p.Filename)
 	if err != nil {
+		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not read tasks config file: %v", err))
 		return nil, err
 	}
 
 	c := &PeriodicTaskConfigContainer{}
 	if err := yaml.Unmarshal(data, &c); err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not parse tasks config file: %v", err))
 		return nil, err
 	}
 
