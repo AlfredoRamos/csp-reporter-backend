@@ -38,8 +38,7 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
-	//nolint:contextcheck
-	if err := helpers.SendEmail(p.Source, p.Data); err != nil {
+	if err := helpers.SendEmail(p.Source, p.Data); err != nil { //nolint:contextcheck
 		sentry.CaptureException(err)
 		return fmt.Errorf("Could not deliver email: %w: %w", err, asynq.SkipRetry)
 	}
