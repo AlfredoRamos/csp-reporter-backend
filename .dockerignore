@@ -20,6 +20,8 @@
 # Backend
 **/keys
 **/tmp
+**/bin
+**/build
 **/.golangci.yml
 **/*.air*.toml
 **/*_test.go

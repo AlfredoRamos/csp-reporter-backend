@@ -18,7 +18,8 @@ deps:
 
 ## build: build the application for production
 build: deps
-	go build -ldflags="-s -w -X '${module_name}/app.version=${app_version}'" -a -installsuffix cgo -o "${binary_file}" "${module_path}"
+	go env -w CGO_ENABLED=0
+	go build -ldflags="-s -w -X '${module_name}/app.version=${app_version}'" -trimpath -a -installsuffix cgo -o "${binary_file}" "${module_path}"
 
 DESTDIR ?= ./bin
 ## install: install the application
@@ -37,4 +38,4 @@ keys:
 ## clean: cleanup tasks
 clean:
 	rm -fR "$$(dirname ${binary_file})"
-	go clean -cache
+	go clean -cache -testcache -modcache
