@@ -9,11 +9,10 @@ LABEL org.opencontainers.image.authors="Alfredo Ramos <alfredoramos@duck.com>"
 # Backend setup
 RUN apk upgrade --no-cache && apk add --no-cache --virtual .build-backend make git postgresql-dev
 WORKDIR /srv/http/backend
-RUN rm -fR tmp
 COPY go.mod go.sum ./
-RUN go mod tidy
+RUN --mount=type=cache,target=/go/pkg/mod/ go env -w GOCACHE=/.cache/go-build && go mod tidy
 COPY ./ ./
-RUN make build && make DESTDIR=/usr/local/bin install && chmod a+x /usr/local/bin/csp-reporter; \
+RUN --mount=type=cache,target=/go/pkg/mod/ --mount=type=cache,target="/.cache/go-build" make build && make DESTDIR=/usr/local/bin install && chmod a+x /usr/local/bin/csp-reporter; \
 	go install github.com/hibiken/asynq/tools/asynq@latest; \
 	apk del .build-backend; \
 	rm -fR .git
