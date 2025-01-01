@@ -28,7 +28,10 @@
 
 # Exceptions
 !.env
-!.git
+!.git/refs/
+!.git/objects/
+!.git/HEAD
+!.git/packed-refs
 !internal/keys/signing-private.json
 !internal/keys/signing-public.json
 !internal/keys/encryption-private.json
