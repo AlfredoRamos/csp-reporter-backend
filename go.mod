@@ -15,7 +15,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/valkey-io/valkey-go v1.0.52
 	github.com/wneessen/go-mail v0.5.2
-	github.com/wneessen/go-mail-middleware v0.0.8
+	github.com/wneessen/go-mail-middleware v0.0.9
 	golang.org/x/crypto v0.31.0
 	golang.org/x/net v0.33.0
 	gorm.io/driver/postgres v1.5.11

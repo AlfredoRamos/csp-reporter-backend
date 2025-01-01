@@ -109,8 +109,8 @@ github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVS
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
 github.com/wneessen/go-mail v0.5.2 h1:MZKwgHJoRboLJ+EHMLuHpZc95wo+u1xViL/4XSswDT8=
 github.com/wneessen/go-mail v0.5.2/go.mod h1:kRroJvEq2hOSEPFRiKjN7Csrz0G1w+RpiGR3b6yo+Ck=
-github.com/wneessen/go-mail-middleware v0.0.8 h1:MOryD/hwybX5W5nOllWKhg0Pt/2OQLHWYusoCHLyg78=
-github.com/wneessen/go-mail-middleware v0.0.8/go.mod h1:/vUHFT8fS77FaPxOPgcboOCvbEDd3nUxinzLhHe0ia8=
+github.com/wneessen/go-mail-middleware v0.0.9 h1:LiWv4XsLtY+pgkeoOlHS3UBQl4GySN1DxNN9TND9nS8=
+github.com/wneessen/go-mail-middleware v0.0.9/go.mod h1:k5x2NF1mkeDZLOI5/hOvD+/0n6uRdVqiH41SLKKXuwU=
 github.com/xyproto/randomstring v1.0.5 h1:YtlWPoRdgMu3NZtP45drfy1GKoojuR7hmRcnhZqKjWU=
 github.com/xyproto/randomstring v1.0.5/go.mod h1:rgmS5DeNXLivK7YprL0pY+lTuhNQW3iGxZ18UQApw/E=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
