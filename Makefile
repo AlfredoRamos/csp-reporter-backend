@@ -1,7 +1,7 @@
 binary_file=./tmp/csp-reporter
 module_path=./cmd/api/...
 module_name="$$(sed -n 's/^module //p' go.mod)"
-app_version="$$(set -o pipefail; git describe --long --tags 2>/dev/null | sed -r 's/([^-]*-g)/r\1/;s/-/./g' || printf "0.0.0+r%s.%s" "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)")"
+app_version="$$(git_output=$$(git describe --long --tags 2>/dev/null); if [ $${?} -eq 0 ]; then printf '%s' "$${git_output}" | sed -r 's/([^-]*-g)/r\1/;s/-/./g'; else printf '0.0.0+r%s.%s' "$$(git rev-list --count HEAD)" "$$(git rev-parse --short HEAD)"; fi)"
 keys_path=internal/keys
 
 .PHONY: help deps build install keys clean
@@ -19,14 +19,14 @@ deps:
 ## build: build the application for production
 build: deps
 	go env -w CGO_ENABLED=0
-	go build -ldflags="-s -w -X '${module_name}/app.version=${app_version}'" -trimpath -a -installsuffix cgo -o "${binary_file}" "${module_path}"
+	go build -ldflags="-s -w -X '${module_name}/internal/app.version=${app_version}'" -trimpath -a -installsuffix cgo -o "${binary_file}" "${module_path}"
 
 DESTDIR ?= ./bin
 ## install: install the application
 install:
 	install -Dsm755 "${binary_file}" "$$(realpath $(DESTDIR))/$$(basename ${binary_file})"
 
-## keys: generate encryption and signing keys for JWT (JWE + JWS)
+## keys: generate encryption and signing keys for JWT (JWS + JWE)
 keys:
 	mkdir -p "${keys_path}"
 	go install github.com/go-jose/go-jose/v4/jose-util@latest
