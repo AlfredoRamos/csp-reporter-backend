@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"alfredoramos.mx/csp-reporter/internal/models"
@@ -112,14 +113,33 @@ func setupSites() {
 		domain = "localhost"
 	}
 
-	defaultSite := &models.Site{
-		Title:  utils.ToStringPtr(os.Getenv("APP_NAME")),
-		Domain: domain,
+	sites := []models.Site{
+		{
+			Title:  utils.ToStringPtr(os.Getenv("APP_NAME")),
+			Domain: domain,
+		},
 	}
-	if err := DB().Model(&models.Site{}).
-		Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", domain)).
-		FirstOrCreate(&defaultSite).Error; err != nil {
-		slog.Error(fmt.Sprintf("Could not create default site: %v", err))
+
+	if len(utils.CorsOrigins()) > 0 {
+		origins := strings.Split(utils.CorsOrigins(), ",")
+
+		for _, orig := range origins {
+			domain, err := utils.GetApexDomain(orig)
+			if err != nil {
+				slog.Error(fmt.Sprintf("Could not get domain from %s: %v", orig, err))
+				continue
+			}
+
+			sites = append(sites, models.Site{Domain: domain})
+		}
+	}
+
+	for _, s := range sites {
+		if err := DB().Model(&models.Site{}).
+			Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", s.Domain)).
+			FirstOrCreate(&s).Error; err != nil {
+			slog.Error(fmt.Sprintf("Could not create default site: %v", err))
+		}
 	}
 }
 
