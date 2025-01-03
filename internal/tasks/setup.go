@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -30,6 +31,7 @@ func AsynqClient() *asynq.Client {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
+			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
 		}
 
 		client = asynq.NewClient(asynq.RedisClientOpt{
@@ -48,6 +50,7 @@ func AsynqServer() *asynq.Server {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
+			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
 		}
 
 		server = asynq.NewServer(
@@ -73,6 +76,7 @@ func AsynqServer() *asynq.Server {
 func AsynqServeMux() *asynq.ServeMux {
 	onceServeMux.Do(func() {
 		serveMux = asynq.NewServeMux()
+		serveMux.Use(loggingMiddleware)
 		serveMux.HandleFunc(TaskEmailDelivery, HandleEmailDeliveryTask)
 		serveMux.HandleFunc(TaskReportAdd, HandleReportAddTask)
 		serveMux.HandleFunc(TaskPurgeCachePattern, HandlePurgeCachePatternTask)
@@ -87,6 +91,7 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
+			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
 		}
 
 		taskManager, err = asynq.NewPeriodicTaskManager(asynq.PeriodicTaskManagerOpts{
@@ -109,4 +114,20 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 	})
 
 	return taskManager
+}
+
+func loggingMiddleware(h asynq.Handler) asynq.Handler {
+	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
+		start := time.Now()
+		slog.Info(fmt.Sprintf("Start processing '%s'", t.Type()))
+
+		if err := h.ProcessTask(ctx, t); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not process task '%s': %v", t.Type(), err))
+			return err
+		}
+
+		slog.Info(fmt.Sprintf("Finished processing '%s'. Elapsed time: %v", t.Type(), time.Since(start)))
+		return nil
+	})
 }

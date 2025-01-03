@@ -18,6 +18,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/valkey-io/valkey-go"
 	"gorm.io/gorm"
 )
 
@@ -127,13 +128,19 @@ func AuthCheck(c *fiber.Ctx) error {
 }
 
 func AuthRefresh(c *fiber.Ctx) error {
-	refreshToken := c.Cookies(utils.RefreshTokenContextKey())
+	accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
+	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
-	if len(refreshToken) < 1 {
-		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"The refresh token is invalid."}})
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The access token is invalid."},
+		})
 	}
 
-	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
+	refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
+	refreshJWEClaims, err := utils.ParseJWEClaims(refreshJWE)
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
@@ -143,9 +150,25 @@ func AuthRefresh(c *fiber.Ctx) error {
 		})
 	}
 
+	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
+	if err != nil && !errors.Is(err, valkey.Nil) {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshJWEClaims.ID, err))
+
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"Could not validate refresh token."},
+		})
+	}
+
+	if isRefreshRevoked {
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The refresh token has been revoked."},
+		})
+	}
+
 	now := time.Now().In(utils.DefaultLocation())
 
-	if now.Before(refreshClaims.IssuedAt.Time()) || now.Before(refreshClaims.NotBefore.Time()) || now.After(refreshClaims.Expiry.Time()) {
+	if now.Before(refreshJWEClaims.IssuedAt.Time()) || now.Before(refreshJWEClaims.NotBefore.Time()) || now.After(refreshJWEClaims.Expiry.Time()) {
 		defer c.Locals(utils.AccessTokenContextKey(), nil)
 		c.ClearCookie(utils.RefreshTokenContextKey())
 		c.Cookie(&fiber.Cookie{
@@ -174,11 +197,18 @@ func AuthRefresh(c *fiber.Ctx) error {
 		})
 	}
 
-	if !utils.IsValidUuid(refreshClaims.User.ID) || refreshClaims.User.ID != userID || refreshClaims.User.ID != user.ID {
+	if !utils.IsValidUuid(refreshJWEClaims.User.ID) || refreshJWEClaims.User.ID != userID || refreshJWEClaims.User.ID != user.ID {
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 			"error": []string{"The user information is invalid."},
 		})
 	}
+
+	// TODO: Show errors
+	app.Cache().DoMulti(
+		context.Background(),
+		app.Cache().B().Sadd().Key("access-tokens:revoked").Member(accessJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Build(),
+	)
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
@@ -186,6 +216,25 @@ func AuthRefresh(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{"Could not generate access token."},
+		})
+	}
+
+	refreshToken, err := helpers.NewRefreshToken(user)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Could not generate refresh token."},
+		})
+	}
+
+	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{"Invalid refresh token."},
 		})
 	}
 
@@ -332,21 +381,25 @@ func AuthRegister(c *fiber.Ctx) error {
 }
 
 func AuthLogout(c *fiber.Ctx) error {
-	if len(c.Get("Authorization")) <= 7 {
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token."},
-		})
-	}
-
-	tokenStr := c.Get("Authorization")[7:]
-
-	claims, err := utils.ParseJWEClaims(tokenStr)
+	accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
+	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
 
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token."},
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The access token is invalid."},
+		})
+	}
+
+	refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
+	refreshJWEClaims, err := utils.ParseJWEClaims(refreshJWE)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
+			"error": []string{"The refresh token is invalid."},
 		})
 	}
 
@@ -363,18 +416,12 @@ func AuthLogout(c *fiber.Ctx) error {
 		SessionOnly: true,
 	})
 
-	if len(claims.ID) < 1 {
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid access token."},
-		})
-	}
-
-	if err := app.Cache().Do(context.Background(), app.Cache().B().Sadd().Key("access-tokens:revoked").Member(claims.ID).Build()).Error(); err != nil {
-		sentry.CaptureException(err)
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not revoke access token."},
-		})
-	}
+	// TODO: Show errors
+	app.Cache().DoMulti(
+		context.Background(),
+		app.Cache().B().Sadd().Key("access-tokens:revoked").Member(accessJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Build(),
+	)
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
