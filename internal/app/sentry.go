@@ -18,14 +18,13 @@ func SetupSentry() {
 	}
 
 	if err := sentry.Init(sentry.ClientOptions{
-		Dsn:                os.Getenv("SENTRY_DSN"),
-		Debug:              isDebug,
-		EnableTracing:      true,
-		TracesSampleRate:   1.0,
-		ProfilesSampleRate: 1.0,
-		ServerName:         os.Getenv("APP_NAME"),
-		Release:            Version(),
-		Environment:        env,
+		Dsn:              os.Getenv("SENTRY_DSN"),
+		Debug:            isDebug,
+		EnableTracing:    true,
+		TracesSampleRate: 1.0,
+		ServerName:       os.Getenv("APP_NAME"),
+		Release:          Version(),
+		Environment:      env,
 	}); err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Sentry initialization failed: %v", err))

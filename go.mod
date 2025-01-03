@@ -5,7 +5,8 @@ go 1.23.4
 require (
 	github.com/casbin/casbin/v2 v2.103.0
 	github.com/ccojocar/zxcvbn-go v1.0.2
-	github.com/getsentry/sentry-go v0.30.0
+	github.com/getsentry/sentry-go v0.31.1
+	github.com/getsentry/sentry-go/fiber v0.31.1
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/goccy/go-json v0.10.4
 	github.com/goccy/go-yaml v1.15.13
