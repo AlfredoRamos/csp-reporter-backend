@@ -105,6 +105,12 @@ func RefreshTokenContextKey() string {
 }
 
 func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
+	if len(token) < 1 {
+		err := errors.New("Error parsing empty JWE.")
+		sentry.CaptureException(err)
+		return &CustomJwtClaims{}, err
+	}
+
 	// Parse JWE
 	jwe, err := jose.ParseEncryptedCompact(token, []jose.KeyAlgorithm{jose.ECDH_ES_A256KW}, []jose.ContentEncryption{jose.A256GCM})
 	if err != nil {
