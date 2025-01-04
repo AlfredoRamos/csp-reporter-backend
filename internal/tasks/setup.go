@@ -119,15 +119,14 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 func loggingMiddleware(h asynq.Handler) asynq.Handler {
 	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
 		start := time.Now()
-		slog.Info(fmt.Sprintf("Start processing '%s'", t.Type()))
+		slog.Info(fmt.Sprintf("Start processing [%s]", t.Type()))
 
 		if err := h.ProcessTask(ctx, t); err != nil {
-			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not process task '%s': %v", t.Type(), err))
+			sentry.CaptureException(fmt.Errorf("Could not process task [%s] '%s': %w", t.Type(), t.Payload(), err))
 			return err
 		}
 
-		slog.Info(fmt.Sprintf("Finished processing '%s'. Elapsed time: %v", t.Type(), time.Since(start)))
+		slog.Info(fmt.Sprintf("Finished processing [%s]. Elapsed time: %v", t.Type(), time.Since(start)))
 		return nil
 	})
 }

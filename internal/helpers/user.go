@@ -27,9 +27,7 @@ func UserExists(id uuid.UUID, email string) bool {
 		slog.Warn(fmt.Sprintf("Could not get cached user: %v", err))
 	}
 
-	exists := len(cachedUser) > 0 && cachedUser == email
-
-	if exists {
+	if len(cachedUser) > 0 && cachedUser == email {
 		return true
 	}
 
@@ -38,16 +36,16 @@ func UserExists(id uuid.UUID, email string) bool {
 		return false
 	}
 
-	exists = utils.IsValidUuid(user.ID)
-
-	if exists {
+	if utils.IsValidUuid(user.ID) {
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("user:%s", id.String())).Value(user.Email).Ex(time.Hour).Build()).Error(); err != nil {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not save user to cache: %v", err))
 		}
+
+		return true
 	}
 
-	return exists
+	return false
 }
 
 func GetUserID(c *fiber.Ctx) uuid.UUID {

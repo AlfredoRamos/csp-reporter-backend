@@ -14,17 +14,17 @@ import (
 
 type cspReportFields struct {
 	BlockedURI         string  `json:"blocked-uri"`
-	Disposition        string  `json:"disposition"`
+	Disposition        *string `json:"disposition,omitempty"`
 	DocumentURI        string  `json:"document-uri"`
 	EffectiveDirective string  `json:"effective-directive"`
 	OriginalPolicy     string  `json:"original-policy"`
-	Referrer           *string `json:"referrer"`
-	StatusCode         int     `json:"status-code"`
+	Referrer           *string `json:"referrer,omitempty"`
+	StatusCode         *int    `json:"status-code,omitempty"`
 	ViolatedDirective  string  `json:"violated-directive"`
-	ScriptSample       *string `json:"script-sample"`
-	SourceFile         *string `json:"source-file"`
-	LineNumber         *int64  `json:"line-number"`
-	ColumnNumber       *int64  `json:"column-number"`
+	ScriptSample       *string `json:"script-sample,omitempty"`
+	SourceFile         *string `json:"source-file,omitempty"`
+	LineNumber         *int64  `json:"line-number,omitempty"`
+	ColumnNumber       *int64  `json:"column-number,omitempty"`
 }
 
 type CspReport struct {
