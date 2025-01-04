@@ -72,7 +72,7 @@ func SetupRoutes(app *fiber.App) {
 	maxRequests, err := strconv.Atoi(os.Getenv("LIMIT_REQUESTS_MAX"))
 	if err != nil {
 		sentry.CaptureException(err)
-		maxRequests = 10
+		maxRequests = 100
 		slog.Warn(fmt.Sprintf("Invalid number of max requests, using %d.", maxRequests))
 	}
 

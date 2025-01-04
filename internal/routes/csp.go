@@ -8,7 +8,7 @@ import (
 
 func RegisterCSPReportRoutes(g fiber.Router) {
 	// Public
-	g.Post("/reports/add", controllers.PostCSPReport).Name("api.csp.reports.add")
+	g.Post("/reports/add", middlewares.CSPReportLimiter(), controllers.PostCSPReport).Name("api.csp.reports.add")
 
 	// Private
 	g.Use(middlewares.AuthProtected(), middlewares.ValidateAccessToken(), middlewares.CheckPermissions())

@@ -94,7 +94,7 @@ func setupRoles() {
 	for _, r := range roles {
 		role := &models.Role{}
 
-		if err := DB().Where(&models.Role{Name: r.Name, Title: r.Title}).FirstOrCreate(&role).Error; err != nil {
+		if err := DB().Where(&models.Role{Name: r.Name}).FirstOrCreate(&role).Error; err != nil {
 			slog.Error(fmt.Sprintf("Could not create %s role: %v", r.Name, err))
 			continue
 		}
