@@ -24,12 +24,12 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	isDebug := utils.IsDebug()
+	isProduction := utils.IsProduction()
 
 	sentryConfig := sentryfiber.Options{Timeout: 3 * time.Second}
 
 	recoverConfig := recover.Config{
-		EnableStackTrace: isDebug,
+		EnableStackTrace: utils.IsDebug(),
 	}
 
 	corsConfig := cors.Config{
@@ -45,7 +45,7 @@ func SetupRoutes(app *fiber.App) {
 	sessionConfig := session.Config{
 		CookieDomain:      os.Getenv("COOKIE_DOMAIN"),
 		CookiePath:        "/",
-		CookieSecure:      !isDebug,
+		CookieSecure:      isProduction,
 		CookieHTTPOnly:    true,
 		CookieSameSite:    "Strict",
 		CookieSessionOnly: true,
@@ -56,7 +56,7 @@ func SetupRoutes(app *fiber.App) {
 		CookieName:        "csrf_",
 		CookieDomain:      os.Getenv("COOKIE_DOMAIN"),
 		CookiePath:        "/",
-		CookieSecure:      !isDebug,
+		CookieSecure:      isProduction,
 		CookieHTTPOnly:    true,
 		CookieSessionOnly: true,
 		Session:           session.New(sessionConfig),
@@ -93,12 +93,12 @@ func SetupRoutes(app *fiber.App) {
 		Level: compress.LevelBestSpeed,
 	}
 
-	// Overwrite configuration when in DEBUG mode
-	if isDebug {
+	// Overwrite configuration in development environment
+	if !isProduction {
 		corsConfig.AllowOrigins = "*"
 		corsConfig.AllowCredentials = false
 		csrfConfig.Next = func(c *fiber.Ctx) bool { //nolint:unused
-			return isDebug
+			return true
 		}
 		limiterConfig.Max = 25
 	}
