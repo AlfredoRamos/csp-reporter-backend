@@ -22,6 +22,32 @@ const (
 	maxRefreshTokenExpiration     int64 = 12
 )
 
+const (
+	ProductionEnv  string = "production"
+	DevelopmentEnv string = "development"
+)
+
+func AppEnv() string {
+	e := strings.TrimSpace(os.Getenv("APP_ENV"))
+
+	switch {
+	case len(e) < 1:
+		e = ProductionEnv
+		slog.Warn(fmt.Sprintf("Invalid environment. Falling back to '%s'.", e))
+	case strings.EqualFold(e, ProductionEnv), strings.EqualFold(e, DevelopmentEnv):
+		// * Valid environment
+	default:
+		e = DevelopmentEnv
+		slog.Warn(fmt.Sprintf("Unknown environment. Falling back to '%s'.", e))
+	}
+
+	return e
+}
+
+func IsProduction() bool {
+	return strings.EqualFold(AppEnv(), ProductionEnv)
+}
+
 func IsDebug() bool {
 	isDebug, err := strconv.ParseBool(os.Getenv("APP_DEBUG"))
 	if err != nil {

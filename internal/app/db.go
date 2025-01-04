@@ -102,14 +102,16 @@ func setupRoles() {
 }
 
 func setupSites() {
+	isProduction := utils.IsProduction()
+
 	domain, err := utils.GetApexDomain(os.Getenv("APP_DOMAIN"))
-	if err != nil && !utils.IsDebug() {
+	if err != nil && isProduction {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not get app domain: %v", err))
 		return
 	}
 
-	if len(domain) < 1 && utils.IsDebug() {
+	if len(domain) < 1 && !isProduction {
 		domain = "localhost"
 	}
 

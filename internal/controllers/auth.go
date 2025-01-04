@@ -111,7 +111,7 @@ func AuthLogin(c *fiber.Ctx) error {
 		Path:        "/",
 		Domain:      os.Getenv("COOKIE_DOMAIN"),
 		Expires:     refreshClaims.Expiry.Time(),
-		Secure:      !utils.IsDebug(),
+		Secure:      utils.IsProduction(),
 		HTTPOnly:    true,
 		SameSite:    "Strict",
 		SessionOnly: true,
@@ -167,6 +167,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	}
 
 	now := time.Now().In(utils.DefaultLocation())
+	isProduction := utils.IsProduction()
 
 	if now.Before(refreshJWEClaims.IssuedAt.Time()) || now.Before(refreshJWEClaims.NotBefore.Time()) || now.After(refreshJWEClaims.Expiry.Time()) {
 		defer c.Locals(utils.AccessTokenContextKey(), nil)
@@ -176,7 +177,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 			Path:        "/",
 			Domain:      os.Getenv("COOKIE_DOMAIN"),
 			Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
-			Secure:      !utils.IsDebug(),
+			Secure:      isProduction,
 			HTTPOnly:    true,
 			SameSite:    "Strict",
 			SessionOnly: true,
@@ -244,7 +245,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 		Path:        "/",
 		Domain:      os.Getenv("COOKIE_DOMAIN"),
 		Expires:     refreshClaims.Expiry.Time(),
-		Secure:      !utils.IsDebug(),
+		Secure:      isProduction,
 		HTTPOnly:    true,
 		SameSite:    "Strict",
 		SessionOnly: true,
@@ -300,7 +301,7 @@ func AuthRegister(c *fiber.Ctx) error {
 		errs = utils.AddError(errs, "confirm_password", "The passwords do not match.")
 	}
 
-	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); !utils.IsDebug() && !strong && err != nil {
+	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
 		errs = utils.AddError(errs, "password", err.Error())
 	}
@@ -410,7 +411,7 @@ func AuthLogout(c *fiber.Ctx) error {
 		Path:        "/",
 		Domain:      os.Getenv("COOKIE_DOMAIN"),
 		Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
-		Secure:      !utils.IsDebug(),
+		Secure:      utils.IsProduction(),
 		HTTPOnly:    true,
 		SameSite:    "Strict",
 		SessionOnly: true,
@@ -612,7 +613,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 		errs = utils.AddError(errs, "confirm_password", "The passwords do not match.")
 	}
 
-	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); !utils.IsDebug() && !strong && err != nil {
+	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
 		errs = utils.AddError(errs, "password", err.Error())
 	}

@@ -29,7 +29,7 @@ type CaptchaResponse struct {
 
 func CaptchaProtected() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if utils.IsDebug() {
+		if !utils.IsProduction() {
 			disableEnv, err := strconv.ParseBool(os.Getenv("HCAPTCHA_DISABLE"))
 			if err != nil {
 				disableEnv = false
@@ -41,6 +41,7 @@ func CaptchaProtected() fiber.Handler {
 			}
 
 			if disableEnv && disableHeader {
+				slog.Warn("Ignoring captcha middleware.")
 				return c.Next()
 			}
 		}

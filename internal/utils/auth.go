@@ -355,7 +355,7 @@ func RandomPassword(n int) (string, error) {
 func GetJwtIssuer() (string, error) {
 	d := os.Getenv("APP_DOMAIN")
 
-	if IsDebug() {
+	if !IsProduction() {
 		return GetDomainHostname(d)
 	}
 
