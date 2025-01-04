@@ -76,14 +76,16 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 		return []userRole{}, err
 	}
 
-	rawRoles, err := json.Marshal(roles)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Could not serialize roles for cache: %v", err))
-	}
+	if len(roles) > 0 {
+		rawRoles, err := json.Marshal(roles)
+		if err != nil {
+			slog.Error(fmt.Sprintf("Could not serialize roles for cache: %v", err))
+		}
 
-	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("roles:%s", id.String())).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
-		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not save roles to cache: %v", err))
+		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("roles:%s", id.String())).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not save roles to cache: %v", err))
+		}
 	}
 
 	return roles, nil
