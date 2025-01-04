@@ -81,6 +81,8 @@ func main() {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not close Asynq client: %v", err))
 		}
+
+		tasks.AsynqServer().Shutdown()
 	}()
 
 	// Periodic tasks
