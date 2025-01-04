@@ -1,31 +1,61 @@
 package helpers
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
+	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
+	"github.com/getsentry/sentry-go"
+	"github.com/google/uuid"
+	"github.com/valkey-io/valkey-go"
 )
 
 func IsAllowedDomain(d string) bool {
-	d = strings.TrimSpace(d)
-
-	if len(d) < 1 {
+	domain, err := utils.GetApexDomain(d)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not get app domain: %v", err))
 		return false
 	}
 
-	s := &models.Site{}
+	cachedDomain, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("domain:%s", domain)).Cache(), 5*time.Minute).ToString()
+	if err != nil && !errors.Is(err, valkey.Nil) {
+		sentry.CaptureException(err)
+		slog.Warn(fmt.Sprintf("Could not get cached domain: %v", err))
+	}
 
+	if len(cachedDomain) > 0 {
+		siteID, err := uuid.Parse(cachedDomain)
+		if err != nil {
+			sentry.CaptureException(err)
+		}
+
+		if utils.IsValidUuid(siteID) {
+			return true
+		}
+	}
+
+	site := &models.Site{}
 	if err := app.DB().Model(&models.Site{}).
-		Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", d)).
-		First(&s).Error; err != nil {
-		slog.Error(fmt.Sprintf("Error checking allowed domain: %v", err))
+		Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", domain)).
+		First(&site).Error; err != nil {
 		return false
 	}
 
-	return utils.IsValidUuid(s.ID)
+	if utils.IsValidUuid(site.ID) {
+		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("domain:%s", domain)).Value(site.ID.String()).Ex(time.Hour).Build()).Error(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not save user to cache: %v", err))
+		}
+
+		return true
+	}
+
+	return false
 }
