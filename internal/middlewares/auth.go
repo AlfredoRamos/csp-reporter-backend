@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/google/uuid"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -23,7 +24,12 @@ func AuthProtected() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if len(c.Get("Authorization")) <= 7 {
 			return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
-				"error": []string{"Invalid access token."},
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidAccessToken",
+						Other: "Invalid access token.",
+					},
+				}, c)},
 			})
 		}
 
@@ -73,7 +79,12 @@ func ValidateAccessToken() fiber.Handler {
 
 		if len(accessJWE) < 1 || len(c.Get("Authorization")) <= 7 {
 			return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
-				"error": []string{"Invalid access token."},
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidAccessToken",
+						Other: "Invalid access token.",
+					},
+				}, c)},
 			})
 		}
 
@@ -137,7 +148,12 @@ func ValidateRefreshToken() fiber.Handler {
 
 		if len(accessJWE) < 1 || len(c.Get("Authorization")) <= 7 {
 			return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
-				"error": []string{"Invalid access token."},
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidAccessToken",
+						Other: "Invalid access token.",
+					},
+				}, c)},
 			})
 		}
 
@@ -224,7 +240,12 @@ func jwtError(c *fiber.Ctx, status int, err error) error {
 		status = fiber.StatusBadRequest
 	}
 
-	return c.Status(status).JSON(&fiber.Map{"error": []string{"Invalid or expired access token."}})
+	return c.Status(status).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "ErrorInvalidExpiredAccessToken",
+			Other: "Invalid or expired access token.",
+		},
+	}, c)}})
 }
 
 func jwtSuccess(c *fiber.Ctx) error {
@@ -240,7 +261,12 @@ func CheckPermissions() fiber.Handler {
 		}
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-			"error": []string{"You are not allowed to access this resource."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorEndpointPermissions",
+					Other: "You are not allowed to access this resource.",
+				},
+			}, c)},
 		})
 	}
 }
@@ -250,7 +276,12 @@ func AuthLimiter() fiber.Handler {
 		Max:        25,
 		Expiration: 5 * time.Minute,
 		LimitReached: func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{"Too many requests received within a short amount of time."}})
+			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorEndpointRateLimited",
+					Other: "Too many requests received within a short amount of time.",
+				},
+			}, c)}})
 		},
 	}
 

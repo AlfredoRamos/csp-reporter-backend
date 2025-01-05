@@ -30,6 +30,7 @@ type PaginatedItemOpts struct {
 	TableAlias string
 }
 
+// TODO: Translate errors
 func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opts PaginatedItemOpts) error {
 	perPage := c.Query("per_page")
 	sortOrder := c.Query("sort_order", "desc")

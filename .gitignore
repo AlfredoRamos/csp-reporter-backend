@@ -22,3 +22,7 @@ build/
 *.orig
 *.pdf
 *.json
+*.toml
+!.air.toml
+!internal/i18n/active.*.toml
+!internal/i18n/translate.*.toml

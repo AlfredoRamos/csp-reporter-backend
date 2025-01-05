@@ -33,5 +33,6 @@ func PurgeCache(c *fiber.Ctx) error {
 }
 
 func GetCsrf(c *fiber.Ctx) error {
+	// * Used only to generate CSRF cookie
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }

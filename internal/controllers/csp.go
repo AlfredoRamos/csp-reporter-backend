@@ -13,6 +13,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 func GetAllCSPReports(c *fiber.Ctx) error {
@@ -28,13 +29,23 @@ func GetCSPReport(c *fiber.Ctx) error {
 	if err != nil || !utils.IsValidUuid(id) {
 		slog.Error(fmt.Sprintf("Error parsing ID: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The requested CSP report is invalid."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidCSPReport",
+					Other: "Invalid Content Security Policy report.",
+				},
+			}, c)},
 		})
 	}
 
 	report := &models.Report{ID: id}
 	if err := app.DB().Where(&report).Preload("Site").First(&report).Error; err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"The requested CSP report is invalid."}})
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidCSPReport",
+				Other: "Invalid Content Security Policy report.",
+			},
+		}, c)}})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"data": report})
@@ -43,7 +54,12 @@ func GetCSPReport(c *fiber.Ctx) error {
 func PostCSPReport(c *fiber.Ctx) error {
 	allowedMimeTypes := []string{"application/csp-report", "application/json"}
 	accept := c.Accepts(allowedMimeTypes...)
-	defaultErr := c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"errors": []string{"Invalid Content Security Policy Report."}})
+	defaultErr := c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"errors": []string{app.Translate(&i18n.LocalizeConfig{
+		DefaultMessage: &i18n.Message{
+			ID:    "ErrorInvalidCSPReport",
+			Other: "Invalid Content Security Policy report.",
+		},
+	}, c)}})
 
 	if !slices.Contains(allowedMimeTypes, accept) {
 		slog.Error(fmt.Sprintf("The MIME type '%s' for the 'Accept' header is invalid.", accept))
@@ -69,7 +85,12 @@ func PostCSPReport(c *fiber.Ctx) error {
 
 	if err := tasks.NewCspReport(input); err != nil {
 		slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
-		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{"Could not regisger CSP report."}})
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorCSPReportCreation",
+				Other: "Could not regisger CSP report.",
+			},
+		}, c)}})
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})

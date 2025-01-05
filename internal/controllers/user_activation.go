@@ -13,6 +13,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gorm.io/gorm"
 )
 
@@ -37,7 +38,12 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	if err != nil || !utils.IsValidUuid(id) {
 		slog.Error(fmt.Sprintf("Error parsing ID: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The requested user is invalid."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			}, c)},
 		})
 	}
 
@@ -45,7 +51,12 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	if err := c.BodyParser(&input); err != nil {
 		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Invalid user activation data."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidActivationUserData",
+					Other: "The activation user data is invalid.",
+				},
+			}, c)},
 		})
 	}
 
@@ -53,13 +64,23 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	if err := app.DB().Where(&user).First(&user).Error; err != nil {
 		slog.Error(fmt.Sprintf("Error getting user: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The requested user is invalid."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			}, c)},
 		})
 	}
 
 	if utils.IsValidUuid(user.ID) && (user.Active != nil && *user.Active) {
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"The requested user account is already active."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorAlreadyActiveUser",
+					Other: "The requested user account is already active.",
+				},
+			}, c)},
 		})
 	}
 
@@ -67,7 +88,12 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	errs := fiber.Map{}
 
 	if !approved && input.Reason != nil && len(*input.Reason) < 1 {
-		errs = utils.AddError(errs, "reason", "Please, provide a reason for rejection.")
+		errs = utils.AddError(errs, "reason", app.Translate(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidRejectionReason",
+				Other: "Please, provide a reason for rejection.",
+			},
+		}, c))
 	}
 
 	if len(errs) > 0 {
@@ -129,18 +155,17 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 		slog.Error(fmt.Sprintf("Error activating user account: %v", err))
 
 		return c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
-			"error": []string{"Could not activate user account."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorUserActivation",
+					Other: "Could not activate user account.",
+				},
+			}, c)},
 		})
 	}
 
-	userName := user.GetFullName()
-	opts := helpers.EmailOpts{
-		Subject:      "User account registration status",
-		TemplateName: "signup_user_status",
-		ToList:       []string{userActivation.User.Email},
-	}
 	data := map[string]interface{}{
-		"UserName": userName,
+		"UserName": user.GetFullName(),
 		"Approved": approved,
 	}
 
@@ -148,7 +173,12 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 		data["RejectionReason"] = userActivation.Reason
 	}
 
-	if err := tasks.NewEmail(opts, data); err != nil {
+	if err := tasks.NewEmail(&helpers.EmailOpts{
+		Subject:      "User account registration status",
+		TemplateName: "signup_user_status",
+		ToList:       []string{userActivation.User.Email},
+		Locale:       helpers.ParseApiLocale(c),
+	}, data); err != nil {
 		sentry.CaptureException(err)
 		return err
 	}

@@ -309,6 +309,7 @@ func MinimumPasswordLength() int {
 	return passLen
 }
 
+// TODO: Translate errors
 func ValidatePasswordStrength(p string, i []string) (bool, error) {
 	if len(p) < MinimumPasswordLength() {
 		return false, fmt.Errorf("The password needs to be at least %[1]d characters long. Please add %[2]d more characters.", MinimumPasswordLength(), MinimumPasswordLength()-len(p))

@@ -148,8 +148,8 @@ func InternalStaffEmail() string {
 	return e
 }
 
-func EmailLang() string {
-	l := os.Getenv("EMAIL_LANG")
+func DefaultLang() string {
+	l := os.Getenv("I18N_DEFAULT_LANG")
 
 	if len(l) < 1 {
 		l = "en"

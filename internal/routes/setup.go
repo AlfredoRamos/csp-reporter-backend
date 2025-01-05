@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	cspapp "alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	sentryfiber "github.com/getsentry/sentry-go/fiber"
@@ -21,6 +22,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 func SetupRoutes(app *fiber.App) {
@@ -79,7 +81,12 @@ func SetupRoutes(app *fiber.App) {
 	limiterConfig := limiter.Config{
 		Max: maxRequests,
 		LimitReached: func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{"Too many requests received within a short amount of time."}})
+			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{cspapp.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorEndpointRateLimited",
+					Other: "Too many requests received within a short amount of time.",
+				},
+			}, c)}})
 		},
 	}
 

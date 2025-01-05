@@ -9,6 +9,8 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	html_tpl "html/template"
@@ -19,6 +21,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
+	"github.com/gofiber/fiber/v2"
 	"github.com/valkey-io/valkey-go"
 	"github.com/wneessen/go-mail"
 )
@@ -28,6 +31,37 @@ const (
 	maxFileSize   int64 = 3 * mibMultiplier
 )
 
+type MessageLocale struct {
+	language string
+	country  *string
+}
+
+func (l *MessageLocale) Language() string {
+	return l.language
+}
+
+func (l *MessageLocale) Country() *string {
+	if l.country != nil {
+		l.country = utils.ToStringPtr(strings.ToUpper(*l.country))
+	}
+
+	return l.country
+}
+
+func (l *MessageLocale) String() string {
+	loc := l.Language()
+
+	if l.Country() != nil && len(*l.Country()) > 0 {
+		loc += "-" + *l.Country()
+	}
+
+	return strings.TrimSpace(loc)
+}
+
+func (l *MessageLocale) IsValid() bool {
+	return len(l.language) > 0 && (l.country == nil || (l.country != nil && len(*l.country) > 0))
+}
+
 type EmailOpts struct {
 	Subject        string                  `json:"subject"`
 	TemplateName   string                  `json:"template_name"`
@@ -36,13 +70,14 @@ type EmailOpts struct {
 	BCCList        []string                `json:"bcc_list"`
 	AttachmentList []*multipart.FileHeader `json:"attachment_list"`
 	IsInternal     bool                    `json:"is_internal"`
+	Locale         *MessageLocale          `json:"locale"`
 }
 
-func (e EmailOpts) IsValid() bool {
+func (e *EmailOpts) IsValid() bool {
 	return len(e.Subject) > 0 && len(e.TemplateName) > 0 && len(e.ToList) > 0
 }
 
-func SendEmail(opts EmailOpts, data map[string]interface{}) error {
+func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
 		return errors.New("The from email address is invalid.")
 	}
@@ -51,6 +86,11 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 		return errors.New("Missing information to send email.")
 	}
 
+	if opts.Locale == nil {
+		opts.Locale = DefaultLocale()
+	}
+
+	lang := opts.Locale.Language()
 	tplBase := filepath.Clean(filepath.Join("internal", "templates", "email", opts.TemplateName))
 
 	htmlTplFile := filepath.Clean(tplBase + ".html")
@@ -66,8 +106,6 @@ func SendEmail(opts EmailOpts, data map[string]interface{}) error {
 		sentry.CaptureException(err)
 		return fmt.Errorf("Error loading the TEXT template: %w", err)
 	}
-
-	lang := utils.EmailLang()
 
 	// Init message
 	msg := mail.NewMsg(mail.WithNoDefaultUserAgent(), mail.WithMiddleware(utils.NewDkimMiddleware()))
@@ -187,4 +225,73 @@ func GetSuperAdminEmails() []string {
 	}
 
 	return e
+}
+
+func DefaultLocale() *MessageLocale {
+	loc, err := ParseLocale(utils.ToStringPtr(app.DefaultLanguage()))
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not parse locale: %v", err))
+		return &MessageLocale{}
+	}
+
+	return loc
+}
+
+func ParseLocale(locale *string) (*MessageLocale, error) {
+	if locale == nil || (locale != nil && !slices.Contains(app.AllowedLanguages(), *locale)) {
+		return &MessageLocale{}, errors.New("Invalid message locale.")
+	}
+
+	lc := strings.Split(strings.TrimSpace(*locale), "-")
+
+	if len(lc) < 1 {
+		return &MessageLocale{}, errors.New("Invalid message locale.")
+	}
+
+	sl := &MessageLocale{}
+
+	if len(lc) >= 2 {
+		sl.language = (lc[0])
+		sl.country = &lc[1]
+	} else if len(lc) == 1 {
+		sl.language = lc[0]
+		sl.country = nil
+	}
+
+	// ! Should not get here
+	if !sl.IsValid() {
+		return &MessageLocale{}, errors.New("Could not generate valid message locale.")
+	}
+
+	return sl, nil
+}
+
+func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
+	defaultLocale := DefaultLocale()
+
+	if c == nil {
+		err := errors.New("Invalid context for API locale. Falling back to default locale.")
+		sentry.CaptureException(err)
+		slog.Error(err.Error())
+		return defaultLocale
+	}
+
+	langs := app.GetApiLanguages(c)
+
+	if len(langs) < 1 {
+		err := errors.New("Invalid language list from API context. Falling back to default locale.")
+		sentry.CaptureException(err)
+		slog.Error(err.Error())
+		return defaultLocale
+	}
+
+	loc, err := ParseLocale(&langs[0])
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not parse locale from API context. Falling back to default locale: %v", err))
+		return defaultLocale
+	}
+
+	return loc
 }
