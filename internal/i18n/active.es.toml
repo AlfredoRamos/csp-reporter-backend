@@ -26,6 +26,10 @@ other = "La cuenta de usuario solicitada ya se encuentra activa."
 hash = "sha1-2f3b1fc1bab13d661b02c3da565dfd580ae5e59c"
 other = "No se pudo registrar el reporte CSP."
 
+[ErrorEndpointNotFound]
+hash = "sha1-0b7e734f76965c5533022971179ef8b072a1715b"
+other = "El recurso solicitado no pudo ser encontrado."
+
 [ErrorEndpointPermissions]
 hash = "sha1-b45fb5b84ba684c07387031d89b8523a88263e1e"
 other = "No tiene permisos para acceder a este recurso."
@@ -90,6 +94,10 @@ other = "El token de actualización ya no es válido."
 hash = "sha1-06767eacbc0023969d2192f1e2ae3f5267ebea2d"
 other = "Por favor, ingrese una razón de rechazo."
 
+[ErrorInvalidResultPagination]
+hash = "sha1-3f2940bda57517aba044f03e42c23983f78a8539"
+other = "No se pudo obtener los resultados."
+
 [ErrorInvalidSiteData]
 hash = "sha1-31dc559e319025f5116642d2f54a674dc13bc591"
 other = "La información del sitio es inválida."
@@ -126,9 +134,17 @@ other = "No se pudo actualizar la contraseña de usuario."
 hash = "sha1-8be8c2634d108079fd115b87d289d0e2974c0e7f"
 other = "No se pudo generar el token de actualización."
 
+[ErrorResultPagination]
+hash = "sha1-6644892ab9141012b5561f3b0be235c6ec68c074"
+other = "No se pudo paginar los resultados."
+
 [ErrorRevokedRefreshToken]
 hash = "sha1-d3680735e9eb05e824cf31bfe46537f9d44e3223"
 other = "El token de actualización ha sido revocado."
+
+[ErrorServerInternal]
+hash = "sha1-973527732ffc7fd94c899231c9ad89d176bd6b0f"
+other = "El servidor ha encontrado un error que pudo solucionar."
 
 [ErrorShortPassword]
 hash = "sha1-9978cbffa86f49066e4ce38712ae287adb860083"

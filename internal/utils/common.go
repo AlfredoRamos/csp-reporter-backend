@@ -89,6 +89,12 @@ func CleanDomain(d string) (string, error) {
 }
 
 func GetApexDomain(d string) (string, error) {
+	d = strings.TrimSpace(d)
+
+	if len(d) < 1 {
+		return "", errors.New("Invalid domain.")
+	}
+
 	h, err := GetDomainHostname(d)
 	if err != nil {
 		sentry.CaptureException(err)

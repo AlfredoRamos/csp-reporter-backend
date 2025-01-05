@@ -448,6 +448,7 @@ func AuthRegister(c *fiber.Ctx) error {
 		}, c))
 	}
 
+	// TODO: Translate errors
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
 		errs = utils.AddError(errs, "password", err.Error())

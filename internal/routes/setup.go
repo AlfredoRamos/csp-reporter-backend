@@ -67,7 +67,12 @@ func SetupRoutes(app *fiber.App) {
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("CSRF error: %v", err))
-			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{"You do not have permission to access this resource."}})
+			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{cspapp.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorEndpointPermissions",
+					Other: "You are not allowed to access this resource.",
+				},
+			}, c)}})
 		},
 	}
 

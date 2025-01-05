@@ -40,21 +40,15 @@ func PostSite(c *fiber.Ctx) error {
 
 	errs := fiber.Map{}
 
-	if len(input.Domain) < 1 {
-		errs = utils.AddError(errs, "domain", "Please, enter a domain.")
-	} else {
-		d, err := utils.GetApexDomain(input.Domain)
-		if err != nil {
-			slog.Error(fmt.Sprintf("Error getting apex domain: %v", err))
-			errs = utils.AddError(errs, "domain", app.Translate(&i18n.LocalizeConfig{
-				DefaultMessage: &i18n.Message{
-					ID:    "ErrorInvalidDomain",
-					Other: "Please, enter a valid domain.",
-				},
-			}, c))
-		}
-
-		input.Domain = d
+	d, err := utils.GetApexDomain(input.Domain)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error getting apex domain: %v", err))
+		errs = utils.AddError(errs, "domain", app.Translate(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidDomain",
+				Other: "Please, enter a valid domain.",
+			},
+		}, c))
 	}
 
 	if len(errs) > 0 {
@@ -62,6 +56,8 @@ func PostSite(c *fiber.Ctx) error {
 			"error": errs,
 		})
 	}
+
+	input.Domain = d
 
 	site := &models.Site{Title: input.Title, Domain: input.Domain}
 	if err := app.DB().Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", input.Domain)).
