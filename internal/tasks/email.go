@@ -17,11 +17,11 @@ const (
 )
 
 type EmailDeliveryPayload struct {
-	Source helpers.EmailOpts      `json:"source"`
+	Source *helpers.EmailOpts     `json:"source"`
 	Data   map[string]interface{} `json:"data"`
 }
 
-func NewEmailDeliveryTask(s helpers.EmailOpts, d map[string]interface{}) (*asynq.Task, error) {
+func NewEmailDeliveryTask(s *helpers.EmailOpts, d map[string]interface{}) (*asynq.Task, error) {
 	payload, err := json.Marshal(EmailDeliveryPayload{s, d})
 	if err != nil {
 		sentry.CaptureException(err)
@@ -46,7 +46,7 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 	return nil
 }
 
-func NewEmail(s helpers.EmailOpts, d map[string]interface{}) error {
+func NewEmail(s *helpers.EmailOpts, d map[string]interface{}) error {
 	task, err := NewEmailDeliveryTask(s, d)
 	if err != nil {
 		sentry.CaptureException(err)

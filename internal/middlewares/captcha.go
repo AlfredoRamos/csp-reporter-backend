@@ -7,10 +7,12 @@ import (
 	"os"
 	"strconv"
 
+	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 const hcaptchaApiUrl string = "https://api.hcaptcha.com/siteverify"
@@ -51,14 +53,24 @@ func CaptchaProtected() fiber.Handler {
 			slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": []string{"Invalid captcha data."},
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidCaptchaData",
+						Other: "Invalid captcha data.",
+					},
+				}, c)},
 			})
 		}
 
 		errs := fiber.Map{}
 
 		if len(input.Response) < 1 {
-			errs = utils.AddError(errs, "captcha", "The captcha response is invalid.")
+			errs = utils.AddError(errs, "captcha", app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidCaptchaResponse",
+					Other: "The captcha response is invalid.",
+				},
+			}, c))
 		}
 
 		if len(errs) > 0 {
@@ -77,7 +89,12 @@ func CaptchaProtected() fiber.Handler {
 			slog.Error(fmt.Sprintf("Could not parse agent: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": []string{"Could not validate captcha response."},
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorValidateCaptchaResponse",
+						Other: "Could not validate captcha response.",
+					},
+				}, c)},
 			})
 		}
 
@@ -88,38 +105,59 @@ func CaptchaProtected() fiber.Handler {
 		args.Set("remoteip", c.IP())
 
 		agent.Form(args)
-		fiber.ReleaseArgs(args)
+		defer fiber.ReleaseArgs(args)
 
 		status, body, errList := agent.Bytes()
 		if len(errList) > 0 {
 			sentry.CaptureException(errors.Join(errList...))
-			slog.Error(fmt.Sprintf("Could not read response body and got HTTP '%d' status code.", status))
+			slog.Error(fmt.Sprintf("Could not read response body and got HTTP '%d' status code: %v", status, errList))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": errList,
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorVerifyCaptchaResponse",
+						Other: "Could not verify captcha data.",
+					},
+				}, c)},
 			})
 		}
 
-		fiber.ReleaseAgent(agent)
+		defer fiber.ReleaseAgent(agent)
 
 		response := &CaptchaResponse{}
 		if err := json.Unmarshal(body, &response); err != nil {
 			slog.Error(fmt.Sprintf("Could not decode response: %v", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": []string{"Could not validate captcha response."},
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorValidateCaptchaResponse",
+						Other: "Could not validate captcha response.",
+					},
+				}, c)},
 			})
 		}
 
 		if response.Success {
 			return c.Next()
 		} else if !response.Success && len(response.Errors) > 0 {
+			slog.Error(fmt.Sprintf("Could not verify captcha response: %v", response.Errors))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": response.Errors,
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidCaptchaResponse",
+						Other: "The captcha response is invalid.",
+					},
+				}, c)},
 			})
 		}
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-			"error": []string{"Could not validate captcha response."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorValidateCaptchaResponse",
+					Other: "Could not validate captcha response.",
+				},
+			}, c)},
 		})
 	}
 }

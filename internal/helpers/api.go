@@ -11,6 +11,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
@@ -45,14 +46,24 @@ func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opt
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Error paginating results: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not paginate results."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorResultPagination",
+					Other: "Could not paginate results.",
+				},
+			}, c)},
 		})
 	}
 
 	if err := query.Limit(limit + 1).Find(&items).Error; err != nil {
 		slog.Error(fmt.Sprintf("Error getting paginated results: %v", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
-			"error": []string{"Could not get results."},
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidResultPagination",
+					Other: "Could not get results.",
+				},
+			}, c)},
 		})
 	}
 

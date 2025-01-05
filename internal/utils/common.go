@@ -16,6 +16,8 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
+const SplitChars string = "/,;"
+
 func AddError(m fiber.Map, k string, v string) fiber.Map {
 	if _, ok := m[k]; !ok {
 		m[k] = []string{v}
@@ -87,6 +89,12 @@ func CleanDomain(d string) (string, error) {
 }
 
 func GetApexDomain(d string) (string, error) {
+	d = strings.TrimSpace(d)
+
+	if len(d) < 1 {
+		return "", errors.New("Invalid domain.")
+	}
+
 	h, err := GetDomainHostname(d)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -110,6 +118,17 @@ func ToStringPtr(s string) *string {
 	}
 
 	return &s
+}
+
+// https://stackoverflow.com/a/54426140
+func SplitAny(s string, seps string) []string {
+	s = strings.TrimSpace(s)
+
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+
+	return strings.FieldsFunc(s, splitter)
 }
 
 func CleanString(s string) string {

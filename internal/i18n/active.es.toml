@@ -1,0 +1,199 @@
+[EmailAdminNewRegistration]
+hash = "sha1-7db96b988200bb1f907cb3190ae0a9054f221c84"
+other = "Nuevo registro de usuario"
+
+[EmailPasswordRecoveryConfirmation]
+hash = "sha1-35199938d5d08b25f092a5adecf69d68634129b1"
+other = "Confirmación de cambio de contraseña"
+
+[EmailPasswordRecoveryRequest]
+hash = "sha1-f52b66b1bab354eb3a12b65fb2a571f7c8602dc7"
+other = "Solicitud de restablecimiento de contraseña"
+
+[EmailUserNewRegistration]
+hash = "sha1-4357acebe0da0dc8d2e5219f1f7b47167c632d26"
+other = "Solicitud de registro de cuenta de usuario"
+
+[ErrorAccessTokenGeneration]
+hash = "sha1-5b72dde16f176db14179d5f0c93ccb94c9275d91"
+other = "No se pudo generar el token de acceso."
+
+[ErrorAlreadyActiveUser]
+hash = "sha1-ceb3197e6bc9044900be9287448d17ff7033a9e9"
+other = "La cuenta de usuario solicitada ya se encuentra activa."
+
+[ErrorCSPReportCreation]
+hash = "sha1-2f3b1fc1bab13d661b02c3da565dfd580ae5e59c"
+other = "No se pudo registrar el reporte CSP."
+
+[ErrorEndpointNotFound]
+hash = "sha1-0b7e734f76965c5533022971179ef8b072a1715b"
+other = "El recurso solicitado no pudo ser encontrado."
+
+[ErrorEndpointPermissions]
+hash = "sha1-b45fb5b84ba684c07387031d89b8523a88263e1e"
+other = "No tiene permisos para acceder a este recurso."
+
+[ErrorEndpointRateLimited]
+hash = "sha1-3a0826fc940f4906b960a9cefa6dd534c61b2aaa"
+other = "Demasiadas peticiones recibidas en un corto período de tiempo."
+
+[ErrorInactiveUser]
+hash = "sha1-36c5defebd32216961d58d82370b137b0933bb1c"
+other = "El usuario solicitado se encuentra inactivo."
+
+[ErrorInvalidAccessToken]
+hash = "sha1-ef6d37e44003b6a17f3ea368cd9d411d0edb6f83"
+other = "El token de acceso es inválido."
+
+[ErrorInvalidActivationUserData]
+hash = "sha1-66f83647171a7de560a04a8770424c81a998a9ea"
+other = "Los datos de activación del usuario no son válidos."
+
+[ErrorInvalidCSPReport]
+hash = "sha1-26f4a9542ada3108cd343e8b9c446ad75da258fc"
+other = "Reporte Content Security Policy inválido."
+
+[ErrorInvalidCaptchaData]
+hash = "sha1-e38d2b2d6803db9c81f9174dad7713c3fa0fe26b"
+other = "Datos de captcha inválidos."
+
+[ErrorInvalidCaptchaResponse]
+hash = "sha1-0064a47e9c001b426b1caa7225cf81580f9d1bdf"
+other = "La respuesta del captcha es inválida."
+
+[ErrorInvalidDomain]
+hash = "sha1-cf3d608cc6eb4930156edc6d7338b83e2e982e9e"
+other = "Por favor, ingrese un dominio válido."
+
+[ErrorInvalidEmail]
+hash = "sha1-f8086d35fd2a65387a9240d544862871b9514e08"
+other = "Por favor, ingrese una dirección de correo electrónico válida."
+
+[ErrorInvalidExpiredAccessToken]
+hash = "sha1-52d34c42920f137bdbabc0889788b6562b9a8bac"
+other = "El token de acceso es inválido o ha expirado."
+
+[ErrorInvalidPassword]
+hash = "sha1-f3a71c93832203200c25205a35ada208dc994d89"
+other = "La contraseña es inválida."
+
+[ErrorInvalidRecoveryData]
+hash = "sha1-d7912b821425fd4aba00f5830817027babf9a0b3"
+other = "La información de recuperación es inválida."
+
+[ErrorInvalidRecoveryURL]
+hash = "sha1-17e961b1ecdc32cf9f27295173f2859592250ee7"
+other = "La URL para recuperación de cuenta es inválida."
+
+[ErrorInvalidRefreshToken]
+hash = "sha1-0af26ca1233a2d747e83babccccb1824325c4f12"
+other = "El token de actualización es inválido."
+
+[ErrorInvalidRefreshTokenTime]
+hash = "sha1-4b931aba9fbf93f032c54d14ae6fd353b0361497"
+other = "El token de actualización ya no es válido."
+
+[ErrorInvalidRejectionReason]
+hash = "sha1-06767eacbc0023969d2192f1e2ae3f5267ebea2d"
+other = "Por favor, ingrese una razón de rechazo."
+
+[ErrorInvalidResultPagination]
+hash = "sha1-3f2940bda57517aba044f03e42c23983f78a8539"
+other = "No se pudo obtener los resultados."
+
+[ErrorInvalidSiteData]
+hash = "sha1-31dc559e319025f5116642d2f54a674dc13bc591"
+other = "La información del sitio es inválida."
+
+[ErrorInvalidUserCredentials]
+hash = "sha1-a6e6b3aeac218faebd69d11cd8274bf780ebcbdc"
+other = "Las credenciales de acceso son inválidas."
+
+[ErrorInvalidUserData]
+hash = "sha1-1027b840636e16206dd3dd2e111b5814de92895a"
+other = "La información del usuario es inválida."
+
+[ErrorLongFirstName]
+hash = "sha1-c948dd2f3b0c5e537cbe04962cbbd0684444e36e"
+other = "Su nombre es más extenso de la longitud permitida."
+
+[ErrorLongLastName]
+hash = "sha1-d858d5b7505f6a128036c28f97faec6f0c73a1d0"
+other = "Sus apellidos son más extensos de la longitud permitida."
+
+[ErrorLowEntropyPassword]
+hash = "sha1-aa459b1bf20875a4c959b1cac30801532cc94281"
+other = "La entropía de la contraseña es baja. Evite usar frases muy comunes y replace algunas letras con minúsculas, mayúsculas, números y símbolos."
+
+[ErrorNotRealEmail]
+hash = "sha1-42a32955891a1784b16c69a2a57c440d708165e0"
+other = "Por favor, ingrese una dirección de correo electrónico real."
+
+[ErrorPasswordDoNotMatch]
+hash = "sha1-540a66f4276cdf4ee0ebf7449dfe4229adf49ed0"
+other = "Las contraseñas no coinciden."
+
+[ErrorPasswordUpdate]
+hash = "sha1-0c90ad5758869dbe8991e2e65c0ece2023e23614"
+other = "No se pudo actualizar la contraseña de usuario."
+
+[ErrorRefreshTokenGeneration]
+hash = "sha1-8be8c2634d108079fd115b87d289d0e2974c0e7f"
+other = "No se pudo generar el token de actualización."
+
+[ErrorResultPagination]
+hash = "sha1-6644892ab9141012b5561f3b0be235c6ec68c074"
+other = "No se pudo paginar los resultados."
+
+[ErrorRevokedRefreshToken]
+hash = "sha1-d3680735e9eb05e824cf31bfe46537f9d44e3223"
+other = "El token de actualización ha sido revocado."
+
+[ErrorServerInternal]
+hash = "sha1-973527732ffc7fd94c899231c9ad89d176bd6b0f"
+other = "El servidor ha encontrado un error que pudo solucionar."
+
+[ErrorShortPassword]
+hash = "sha1-9978cbffa86f49066e4ce38712ae287adb860083"
+other = "La contraseña debe tener al menos {{.MinLength}} caracteres."
+
+[ErrorSiteCreation]
+hash = "sha1-64668291c3da0dde3c1979c97aa89d91e98cd05b"
+other = "No se pudo registrar el sitio."
+
+[ErrorUserActivation]
+hash = "sha1-043ebe6e6cf896e1c07dfce7efbe3f6266a5e1a7"
+other = "No se pudo activar la cuenta de usuario."
+
+[ErrorUserEmailPendingValidation]
+hash = "sha1-30a131061992f26567617409e1ade36a23ecb681"
+other = "Un usuario con esta dirección de correo electrónico ya se encuentra en espera de validación."
+
+[ErrorUserEmailTaken]
+hash = "sha1-e288b0bdbe2c1d9f1116ee5ed458a61fb5704ae7"
+other = "Esta dirección de correo electrónico ya se encuentra en uso."
+
+[ErrorUserRegistration]
+hash = "sha1-85ee96e6eab898206c447078cf39d18166b0a634"
+other = "No se pudo generar la cuenta de usuario."
+
+[ErrorUserRegistrationDisabled]
+hash = "sha1-94eceb378fa306d79a9927f5009c4ddb25b5d39e"
+other = "El registro de cuentas de usuario se encuentra deshabilitado."
+
+[ErrorValidateCaptchaResponse]
+hash = "sha1-2db6db20b58b75a57ae00eb890b915e3621e020c"
+other = "No se pudo validar la respuesta del captcha."
+
+[ErrorVerifyCaptchaResponse]
+hash = "sha1-4bce97bc207efda5e3861b0739b31410d645aa88"
+other = "No se pudo verificar la información del captcha."
+
+[ErrorWeakPassword]
+hash = "sha1-c81f9e0871e1c9bac2796d804a81220691e7b6a0"
+other = "La fuerza de la contraseña es baja. Use minúsculas, mayúsculas, números y símbolos."
+
+[SuccessfulAuthCheck]
+hash = "sha1-694e2d44f8e90cb3915d94fba674dd3c75a782f1"
+other = "Autenticación exitosa."

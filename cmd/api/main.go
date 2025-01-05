@@ -19,6 +19,7 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 func main() {
@@ -107,9 +108,14 @@ func main() {
 			slog.Error(fmt.Sprintf("Application error handler: %v", err))
 
 			code := fiber.StatusInternalServerError
-			msg := "The server has encountered an error that cannot be handled."
+			msg := app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorServerInternal",
+					Other: "The server has encountered an error that cannot be handled.",
+				},
+			}, c)
 
-			var e *fiber.Error
+			e := &fiber.Error{}
 			if errors.As(err, &e) {
 				code = e.Code
 				msg = e.Message

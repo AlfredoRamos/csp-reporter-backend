@@ -15,6 +15,7 @@ exclude_dir = [
 	"testdata",
 	"internal/templates",
 	"internal/keys",
+	"internal/i18n",
 ]
 exclude_file = []
 exclude_regex = ["_test.go"]

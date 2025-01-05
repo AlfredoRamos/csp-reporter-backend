@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/jwt"
 	"github.com/ccojocar/zxcvbn-go"
 	"github.com/getsentry/sentry-go"
@@ -32,12 +33,12 @@ const (
 	minPassScore    int     = 3
 )
 
-type Argon2Config struct {
-	Memory      uint32
-	Iterations  uint32
-	Parallelism uint8
-	SaltLength  uint32
-	KeyLength   uint32
+type argon2Config struct {
+	memory      uint32
+	iterations  uint32
+	parallelism uint8
+	saltLength  uint32
+	keyLength   uint32
 }
 
 type UserClaimData struct {
@@ -148,27 +149,27 @@ func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
 	return claims, nil
 }
 
-func NewArgon2Config() Argon2Config {
-	return Argon2Config{
-		Memory:      64 * 1024,
-		Iterations:  4,
-		Parallelism: 4,
-		SaltLength:  16,
-		KeyLength:   32,
+func NewArgon2Config() argon2Config {
+	return argon2Config{
+		memory:      64 * 1024,
+		iterations:  4,
+		parallelism: 4,
+		saltLength:  16,
+		keyLength:   32,
 	}
 }
 
 func HashString(p string) string {
 	a := NewArgon2Config()
-	a.Memory = 32 * 1024
+	a.memory = 32 * 1024
 
-	s, err := generateRandomBytes(a.SaltLength)
+	s, err := generateRandomBytes(a.saltLength)
 	if err != nil {
 		sentry.CaptureException(err)
 		panic(fmt.Sprintf("Could not generate secure salt: %v", err))
 	}
 
-	h := argon2.IDKey([]byte(p), s, a.Iterations, a.Memory, a.Parallelism, a.KeyLength)
+	h := argon2.IDKey([]byte(p), s, a.iterations, a.memory, a.parallelism, a.keyLength)
 	sb64 := base64.RawStdEncoding.EncodeToString(s)
 	hb64 := base64.RawStdEncoding.EncodeToString(h)
 
@@ -177,17 +178,17 @@ func HashString(p string) string {
 
 func HashPassword(p string) string {
 	a := NewArgon2Config()
-	s, err := generateRandomBytes(a.SaltLength)
+	s, err := generateRandomBytes(a.saltLength)
 	if err != nil {
 		sentry.CaptureException(err)
 		panic(fmt.Sprintf("Could not generate secure salt: %v", err))
 	}
 
-	h := argon2.IDKey([]byte(p), s, a.Iterations, a.Memory, a.Parallelism, a.KeyLength)
+	h := argon2.IDKey([]byte(p), s, a.iterations, a.memory, a.parallelism, a.keyLength)
 	sb64 := base64.RawStdEncoding.EncodeToString(s)
 	hb64 := base64.RawStdEncoding.EncodeToString(h)
 
-	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, a.Memory, a.Iterations, a.Parallelism, sb64, hb64)
+	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, a.memory, a.iterations, a.parallelism, sb64, hb64)
 }
 
 func ComparePasswordHash(p string, h string) bool {
@@ -199,44 +200,44 @@ func ComparePasswordHash(p string, h string) bool {
 		return false
 	}
 
-	newHash := argon2.IDKey([]byte(p), salt, config.Iterations, config.Memory, config.Parallelism, config.KeyLength)
+	newHash := argon2.IDKey([]byte(p), salt, config.iterations, config.memory, config.parallelism, config.keyLength)
 
 	return (subtle.ConstantTimeCompare(hash, newHash) == 1)
 }
 
-func decodeHash(h string) (Argon2Config, []byte, []byte, error) {
+func decodeHash(h string) (argon2Config, []byte, []byte, error) {
 	vals := strings.Split(h, "$")
 	if len(vals) != 6 {
-		return Argon2Config{}, nil, nil, errors.New("Invalid encoded hash format.")
+		return argon2Config{}, nil, nil, errors.New("Invalid encoded hash format.")
 	}
 
 	var av int
 	if _, err := fmt.Sscanf(vals[2], "v=%d", &av); err != nil {
 		sentry.CaptureException(err)
-		return Argon2Config{}, nil, nil, errors.New("The version of the Argon2 algorithm is not compatible.")
+		return argon2Config{}, nil, nil, errors.New("The version of the Argon2 algorithm is not compatible.")
 	}
 
-	config := Argon2Config{}
-	if _, err := fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &config.Memory, &config.Iterations, &config.Parallelism); err != nil {
+	config := argon2Config{}
+	if _, err := fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &config.memory, &config.iterations, &config.parallelism); err != nil {
 		sentry.CaptureException(err)
-		return Argon2Config{}, nil, nil, err
+		return argon2Config{}, nil, nil, err
 	}
 
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(vals[4])
 	if err != nil {
 		sentry.CaptureException(err)
-		return Argon2Config{}, nil, nil, err
+		return argon2Config{}, nil, nil, err
 	}
 
-	config.SaltLength = uint32(len(salt)) //#nosec G115
+	config.saltLength = uint32(len(salt)) //#nosec G115
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(vals[5])
 	if err != nil {
 		sentry.CaptureException(err)
-		return Argon2Config{}, nil, nil, err
+		return argon2Config{}, nil, nil, err
 	}
 
-	config.KeyLength = uint32(len(hash)) //#nosec G115
+	config.keyLength = uint32(len(hash)) //#nosec G115
 
 	return config, salt, hash, nil
 }
@@ -311,17 +312,17 @@ func MinimumPasswordLength() int {
 
 func ValidatePasswordStrength(p string, i []string) (bool, error) {
 	if len(p) < MinimumPasswordLength() {
-		return false, fmt.Errorf("The password needs to be at least %[1]d characters long. Please add %[2]d more characters.", MinimumPasswordLength(), MinimumPasswordLength()-len(p))
+		return false, csperrors.ErrAuthShortPassword
 	}
 
 	v := zxcvbn.PasswordStrength(p, i)
 
 	if v.Score < minPassScore {
-		return false, fmt.Errorf("The password is not strong enough. It must has a score equal or greater than %[1]d but you got %[2]d.", minPassScore, v.Score)
+		return false, csperrors.ErrAuthWeakPassword
 	}
 
 	if v.Entropy <= minPassEntrophy {
-		return false, fmt.Errorf("The password entropy is low. It must be equal or greater than %.2[1]f but you got %.2[2]f.", minPassEntrophy, v.Entropy)
+		return false, csperrors.ErrAuthLowEntropyPassword
 	}
 
 	return true, nil
