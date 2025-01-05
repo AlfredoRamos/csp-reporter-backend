@@ -274,12 +274,21 @@ func AuthRefresh(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Show errors
-	app.Cache().DoMulti(
-		context.Background(),
+	errs := []error{}
+	cmds := valkey.Commands{
 		app.Cache().B().Sadd().Key("access-tokens:revoked").Member(accessJWEClaims.ID).Build(),
 		app.Cache().B().Sadd().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Build(),
-	)
+	}
+
+	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {
+		if err := res.Error(); err != nil && !errors.Is(err, valkey.Nil) {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		slog.Error(fmt.Sprintf("Error revoking access and refresh tokens: %v", errors.Join(errs...)))
+	}
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
@@ -592,12 +601,21 @@ func AuthLogout(c *fiber.Ctx) error {
 		SessionOnly: true,
 	})
 
-	// TODO: Show errors
-	app.Cache().DoMulti(
-		context.Background(),
+	errs := []error{}
+	cmds := valkey.Commands{
 		app.Cache().B().Sadd().Key("access-tokens:revoked").Member(accessJWEClaims.ID).Build(),
 		app.Cache().B().Sadd().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Build(),
-	)
+	}
+
+	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {
+		if err := res.Error(); err != nil && !errors.Is(err, valkey.Nil) {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		slog.Error(fmt.Sprintf("Error revoking access and refresh tokens: %v", errors.Join(errs...)))
+	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
