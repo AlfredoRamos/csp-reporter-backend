@@ -2,8 +2,10 @@ package helpers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"github.com/getsentry/sentry-go"
@@ -15,10 +17,19 @@ const (
 )
 
 func PurgeCachePattern(pattern string) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
 	cursor := uint64(0)
 
 	for {
+		select {
+		case <-ctx.Done():
+			slog.Warn(fmt.Sprintf("Cache purge timeout: %v", ctx.Err()))
+			break
+		default:
+			// Continue
+		}
+
 		result, err := app.Cache().Do(ctx, app.Cache().B().Scan().Cursor(cursor).Match(pattern).Count(batchSize).Build()).AsScanEntry()
 		if err != nil {
 			sentry.CaptureException(err)
@@ -42,8 +53,16 @@ func PurgeCachePattern(pattern string) error {
 				cmds = append(cmds, app.Cache().B().Del().Key(key).Build())
 			}
 
-			// TODO: Show errors
-			app.Cache().DoMulti(ctx, cmds...)
+			errs := []error{}
+			for _, res := range app.Cache().DoMulti(ctx, cmds...) {
+				if err := res.Error(); err != nil && !errors.Is(err, valkey.Nil) {
+					errs = append(errs, err)
+				}
+			}
+
+			if len(errs) > 0 {
+				slog.Error(fmt.Sprintf("Error purging cache: %v", errors.Join(errs...)))
+			}
 		}
 
 		if cursor == 0 {

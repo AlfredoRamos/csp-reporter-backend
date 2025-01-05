@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
@@ -448,10 +449,46 @@ func AuthRegister(c *fiber.Ctx) error {
 		}, c))
 	}
 
-	// TODO: Translate errors
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
-		errs = utils.AddError(errs, "password", err.Error())
+
+		msg := ""
+
+		switch {
+		case errors.Is(err, csperrors.ErrAuthShortPassword):
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorShortPassword",
+					Other: "The password must be at least {{.MinLength}} characters long.",
+				},
+				TemplateData: map[string]interface{}{
+					"MinLength": utils.MinimumPasswordLength(),
+				},
+			}, c)
+
+		case errors.Is(err, csperrors.ErrAuthWeakPassword):
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorWeakPassword",
+					Other: "The password strength score is low. Use lowercase and uppercase letters, numbers and symbols.",
+				}}, c)
+
+		case errors.Is(err, csperrors.ErrAuthLowEntropyPassword):
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorLowEntropyPassword",
+					Other: "The password entropy is low. Avoid using very common phrases and replace some letters with lowercase or uppercase letters, numbers and symbols.",
+				}}, c)
+
+		default: // ! Must not get here
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidPassword",
+					Other: "The password is invalid.",
+				}}, c)
+		}
+
+		errs = utils.AddError(errs, "password", msg)
 	}
 
 	if input.FirstName != nil && len(*input.FirstName) > 100 {
@@ -871,10 +908,46 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 		}, c))
 	}
 
-	// TODO: Translate errors
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
-		errs = utils.AddError(errs, "password", err.Error())
+
+		msg := ""
+
+		switch {
+		case errors.Is(err, csperrors.ErrAuthShortPassword):
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorShortPassword",
+					Other: "The password must be at least {{.MinLength}} characters long.",
+				},
+				TemplateData: map[string]interface{}{
+					"MinLength": utils.MinimumPasswordLength(),
+				},
+			}, c)
+
+		case errors.Is(err, csperrors.ErrAuthWeakPassword):
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorWeakPassword",
+					Other: "The password strength score is low. Use lowercase and uppercase letters, numbers and symbols.",
+				}}, c)
+
+		case errors.Is(err, csperrors.ErrAuthLowEntropyPassword):
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorLowEntropyPassword",
+					Other: "The password entropy is low. Avoid using very common phrases and replace some letters with lowercase or uppercase letters, numbers and symbols.",
+				}}, c)
+
+		default: // ! Must not get here
+			msg = app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidPassword",
+					Other: "The password is invalid.",
+				}}, c)
+		}
+
+		errs = utils.AddError(errs, "password", msg)
 	}
 
 	if len(errs) > 0 {

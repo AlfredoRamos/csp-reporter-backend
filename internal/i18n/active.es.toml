@@ -74,6 +74,10 @@ other = "Por favor, ingrese una dirección de correo electrónico válida."
 hash = "sha1-52d34c42920f137bdbabc0889788b6562b9a8bac"
 other = "El token de acceso es inválido o ha expirado."
 
+[ErrorInvalidPassword]
+hash = "sha1-f3a71c93832203200c25205a35ada208dc994d89"
+other = "La contraseña es inválida."
+
 [ErrorInvalidRecoveryData]
 hash = "sha1-d7912b821425fd4aba00f5830817027babf9a0b3"
 other = "La información de recuperación es inválida."
@@ -117,6 +121,10 @@ other = "Su nombre es más extenso de la longitud permitida."
 [ErrorLongLastName]
 hash = "sha1-d858d5b7505f6a128036c28f97faec6f0c73a1d0"
 other = "Sus apellidos son más extensos de la longitud permitida."
+
+[ErrorLowEntropyPassword]
+hash = "sha1-aa459b1bf20875a4c959b1cac30801532cc94281"
+other = "La entropía de la contraseña es baja. Evite usar frases muy comunes y replace algunas letras con minúsculas, mayúsculas, números y símbolos."
 
 [ErrorNotRealEmail]
 hash = "sha1-42a32955891a1784b16c69a2a57c440d708165e0"
@@ -181,6 +189,10 @@ other = "No se pudo validar la respuesta del captcha."
 [ErrorVerifyCaptchaResponse]
 hash = "sha1-4bce97bc207efda5e3861b0739b31410d645aa88"
 other = "No se pudo verificar la información del captcha."
+
+[ErrorWeakPassword]
+hash = "sha1-c81f9e0871e1c9bac2796d804a81220691e7b6a0"
+other = "La fuerza de la contraseña es baja. Use minúsculas, mayúsculas, números y símbolos."
 
 [SuccessfulAuthCheck]
 hash = "sha1-694e2d44f8e90cb3915d94fba674dd3c75a782f1"
