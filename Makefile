@@ -62,7 +62,7 @@ keys:
 	(cd "${keys_path}" && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv -f jwk-enc-*-priv.json encryption-private.json && mv -f jwk-enc-*-pub.json encryption-public.json)
 	openssl genrsa -traditional -out "${keys_path}"/dkim.key 2048
 	openssl ec -in "${keys_path}"/dkim.key -pubout -outform der | openssl base64 -A > "${keys_path}"/dkim.pub
-	chmod 644 "${keys_path}"/*.{json,key,pub}
+	chmod 644 "${keys_path}"/*.json
 
 ## clean: cleanup tasks
 clean:
