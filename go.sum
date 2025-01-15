@@ -113,8 +113,8 @@ github.com/valyala/fasthttp v1.58.0 h1:GGB2dWxSbEprU9j0iMJHgdKYJVDyjrOwF9RE59PbR
 github.com/valyala/fasthttp v1.58.0/go.mod h1:SYXvHHaFp7QZHGKSHmoMipInhrI5StHrhDTYVEjK/Kw=
 github.com/valyala/tcplisten v1.0.0 h1:rBHj/Xf+E1tRGZyWIWwJDiRY0zc1Js+CV5DqwacVSA8=
 github.com/valyala/tcplisten v1.0.0/go.mod h1:T0xQ8SeCZGxckz9qRXTfG43PvQ/mcWh7FwZEA7Ioqkc=
-github.com/wneessen/go-mail v0.6.0 h1:wO7EeJ8RL6DD+aycFGntil6b11g3FNQpQQQC1gkm97Y=
-github.com/wneessen/go-mail v0.6.0/go.mod h1:G702XlFhzHV0Z4w9j2VsH5K9dJDvj0hx+yOOp1oX9vc=
+github.com/wneessen/go-mail v0.6.1 h1:cDGqlGuEEhdILRe53VFzmM9WBk8Xh/QMvbO0oxrNJB4=
+github.com/wneessen/go-mail v0.6.1/go.mod h1:G702XlFhzHV0Z4w9j2VsH5K9dJDvj0hx+yOOp1oX9vc=
 github.com/wneessen/go-mail-middleware v0.0.9 h1:LiWv4XsLtY+pgkeoOlHS3UBQl4GySN1DxNN9TND9nS8=
 github.com/wneessen/go-mail-middleware v0.0.9/go.mod h1:k5x2NF1mkeDZLOI5/hOvD+/0n6uRdVqiH41SLKKXuwU=
 github.com/xyproto/randomstring v1.0.5 h1:YtlWPoRdgMu3NZtP45drfy1GKoojuR7hmRcnhZqKjWU=
