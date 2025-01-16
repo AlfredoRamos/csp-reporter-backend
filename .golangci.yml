@@ -119,6 +119,9 @@ linters-settings:
     err-error: true
     strconcat: false
 
+  unparam:
+    check-exported: true
+
 issues:
   exclude-rules:
     # Exclude err and ctx variables in fieldalignment analyzer from govet
