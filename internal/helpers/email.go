@@ -70,13 +70,14 @@ type EmailOpts struct {
 	BCCList        []string                `json:"bcc_list"`
 	AttachmentList []*multipart.FileHeader `json:"attachment_list"`
 	IsInternal     bool                    `json:"is_internal"`
-	Locale         *MessageLocale          `json:"locale"`
+	Locale         *MessageLocale          `json:"locale,omitempty"`
 }
 
 func (e *EmailOpts) IsValid() bool {
 	return len(e.Subject) > 0 && len(e.TemplateName) > 0 && len(e.ToList) > 0
 }
 
+// TODO: Fix opts.Locale is being received empty
 func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
 		return errors.New("The from email address is invalid.")
@@ -86,12 +87,12 @@ func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 		return errors.New("Missing information to send email.")
 	}
 
-	if opts.Locale == nil {
+	if opts.Locale == nil || !opts.Locale.IsValid() {
 		opts.Locale = DefaultLocale()
 	}
 
 	lang := opts.Locale.Language()
-	tplBase := filepath.Clean(filepath.Join("internal", "templates", "email", opts.TemplateName))
+	tplBase := filepath.Clean(filepath.Join("internal", "templates", "email", lang, opts.TemplateName))
 
 	htmlTplFile := filepath.Clean(tplBase + ".html")
 	htmlTpl, err := html_tpl.New(filepath.Base(htmlTplFile)).ParseFiles(htmlTplFile)
@@ -286,7 +287,7 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 		return defaultLocale
 	}
 
-	loc, err := ParseLocale(&langs[0])
+	loc, err := ParseLocale(utils.ToStringPtr(langs[0]))
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not parse locale from API context. Falling back to default locale: %v", err))

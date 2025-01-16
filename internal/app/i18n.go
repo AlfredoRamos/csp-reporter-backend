@@ -130,6 +130,10 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []string {
 		langs = append(langs, accept)
 	}
 
+	if len(langs) < 1 {
+		langs = append(langs, allowed...)
+	}
+
 	return langs
 }
 

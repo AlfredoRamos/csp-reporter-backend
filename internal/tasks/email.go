@@ -17,14 +17,15 @@ const (
 )
 
 type EmailDeliveryPayload struct {
-	Source *helpers.EmailOpts     `json:"source"`
-	Data   map[string]interface{} `json:"data"`
+	Options *helpers.EmailOpts     `json:"source"`
+	Data    map[string]interface{} `json:"data"`
 }
 
-func NewEmailDeliveryTask(s *helpers.EmailOpts, d map[string]interface{}) (*asynq.Task, error) {
-	payload, err := json.Marshal(EmailDeliveryPayload{s, d})
+func NewEmailDeliveryTask(o *helpers.EmailOpts, d map[string]interface{}) (*asynq.Task, error) {
+	payload, err := json.Marshal(EmailDeliveryPayload{o, d})
 	if err != nil {
 		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not serialize payload: %v", err))
 		return nil, err
 	}
 
@@ -35,10 +36,11 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 	p := EmailDeliveryPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not deserialize payload: %v", err))
 		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
-	if err := helpers.SendEmail(p.Source, p.Data); err != nil { //nolint:contextcheck
+	if err := helpers.SendEmail(p.Options, p.Data); err != nil { //nolint:contextcheck
 		sentry.CaptureException(err)
 		return fmt.Errorf("Could not deliver email: %w: %w", err, asynq.SkipRetry)
 	}
@@ -46,8 +48,8 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 	return nil
 }
 
-func NewEmail(s *helpers.EmailOpts, d map[string]interface{}) error {
-	task, err := NewEmailDeliveryTask(s, d)
+func NewEmail(o *helpers.EmailOpts, d map[string]interface{}) error {
+	task, err := NewEmailDeliveryTask(o, d)
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not create task: %v", err))
