@@ -38,6 +38,14 @@ other = "No tiene permisos para acceder a este recurso."
 hash = "sha1-3a0826fc940f4906b960a9cefa6dd534c61b2aaa"
 other = "Demasiadas peticiones recibidas en un corto período de tiempo."
 
+[ErrorExpiredAccessToken]
+hash = "sha1-aaa4d3994933bdb9d14df90d0ac96b67d31ef6df"
+other = "El token de acceso ha expirado."
+
+[ErrorExpiredRefreshToken]
+hash = "sha1-0efd020473bb3c3b7a2c23869d438c1ebb560efe"
+other = "El token de actualización ha expirado."
+
 [ErrorInactiveUser]
 hash = "sha1-36c5defebd32216961d58d82370b137b0933bb1c"
 other = "El usuario solicitado se encuentra inactivo."
