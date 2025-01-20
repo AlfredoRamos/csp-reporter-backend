@@ -1,0 +1,12 @@
+Hola {{.UserName}},
+
+Hemos recibido su solicitud de creación de cuenta de usuario y actualmente nos encontramos en proceso de validación.
+
+De ser aprobada, recibirá una confirmación nuestra indicando que su cuenta se encuentra lista para ser utilizada.
+
+Agradecemos de antemano su paciencia.
+
+Deseando que tenga un buen día, quedamos a sus órdenes.
+
+Sinceramente,
+El equipo de {{.AppName}}.

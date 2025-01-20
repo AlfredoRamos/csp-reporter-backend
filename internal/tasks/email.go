@@ -17,12 +17,12 @@ const (
 )
 
 type EmailDeliveryPayload struct {
-	Options *helpers.EmailOpts     `json:"source"`
+	Options *helpers.EmailOpts     `json:"options"`
 	Data    map[string]interface{} `json:"data"`
 }
 
 func NewEmailDeliveryTask(o *helpers.EmailOpts, d map[string]interface{}) (*asynq.Task, error) {
-	payload, err := json.Marshal(EmailDeliveryPayload{o, d})
+	payload, err := json.Marshal(&EmailDeliveryPayload{o, d})
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not serialize payload: %v", err))
@@ -33,7 +33,7 @@ func NewEmailDeliveryTask(o *helpers.EmailOpts, d map[string]interface{}) (*asyn
 }
 
 func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
-	p := EmailDeliveryPayload{}
+	p := &EmailDeliveryPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not deserialize payload: %v", err))
