@@ -19,60 +19,76 @@ import (
 
 var (
 	bundle               *i18n.Bundle
-	defaultLanguage      string
-	allowedLangs         []string
+	defaultLanguage      language.Tag
+	allowedLangs         []language.Tag
 	onceLanguageBundle   sync.Once
 	onceDefaultLang      sync.Once
 	onceAllowedLanguages sync.Once
 )
 
-func DefaultLanguage() string {
+func DefaultLanguage() language.Tag {
 	onceDefaultLang.Do(func() {
-		defaultLanguage = os.Getenv("I18N_DEFAULT_LANG")
-		if len(defaultLanguage) < 1 {
-			defaultLanguage = "en"
-			slog.Warn(fmt.Sprintf("Default language not specified. Using fallback language '%s'.", defaultLanguage))
+		lang := os.Getenv("I18N_LANG")
+		if len(lang) < 1 {
+			lang = "en-US"
+			slog.Warn(fmt.Sprintf("Default language not specified. Using fallback language '%s'.", lang))
+		}
+
+		var err error
+		defaultLanguage, err = language.Parse(lang)
+		if err != nil {
+			sentry.CaptureException(err)
+			defaultLanguage = language.AmericanEnglish
+			slog.Error(fmt.Sprintf("Could not get tag from default language: '%v'. Using fallback '%s'.", err, defaultLanguage.String()))
 		}
 	})
 
 	return defaultLanguage
 }
 
-func AllowedLanguages() []string {
+func AllowedLanguages() []language.Tag {
 	onceAllowedLanguages.Do(func() {
 		defaultLang := DefaultLanguage()
 		allowedLangsStr := strings.TrimSpace(os.Getenv("I18N_ALLOWED_LANGS"))
 
-		if len(allowedLangsStr) < 1 {
-			allowedLangsStr = defaultLang
-			slog.Warn(fmt.Sprintf("Allowed languages not specified. Using default language '%s'.", defaultLang))
-		}
+		if len(allowedLangsStr) > 0 {
+			langList := utils.CleanStringList(utils.SplitAny(allowedLangsStr, utils.SplitChars))
+			langBundle := languageBundle()
 
-		langList := utils.CleanStringList(utils.SplitAny(allowedLangsStr, utils.SplitChars))
-		langBundle := languageBundle()
+			for _, lang := range langList {
+				lang = strings.ToLower(strings.TrimSpace(lang))
+				langTag, err := language.Parse(lang)
+				if err != nil {
+					sentry.CaptureException(err)
+					slog.Error(fmt.Sprintf("Could not get allowed tag from '%s' language: %v", lang, err))
+				}
 
-		for _, lang := range langList {
-			lang = strings.ToLower(strings.TrimSpace(lang))
-			langFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "i18n", fmt.Sprintf("active.%s.toml", lang))))
-			if err != nil {
-				sentry.CaptureException(err)
-				slog.Error(fmt.Sprintf("Could not read translation file at %s: %v", langFile, err))
-				continue
-			}
+				baseLang, confidence := langTag.Base()
+				if confidence < language.Low {
+					continue
+				}
 
-			if _, err := langBundle.LoadMessageFile(langFile); err != nil {
-				sentry.CaptureException(err)
-				slog.Error(fmt.Sprintf("Could not load translation file: %v", err))
-				continue
-			}
+				langFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "i18n", fmt.Sprintf("active.%s.toml", baseLang))))
+				if err != nil {
+					sentry.CaptureException(err)
+					slog.Error(fmt.Sprintf("Could not read translation file at %s: %v", langFile, err))
+					continue
+				}
 
-			if !slices.Contains(allowedLangs, lang) {
-				allowedLangs = append(allowedLangs, lang)
+				if _, err := langBundle.LoadMessageFile(langFile); err != nil {
+					sentry.CaptureException(err)
+					slog.Error(fmt.Sprintf("Could not load translation file: %v", err))
+					continue
+				}
+
+				if !slices.Contains(allowedLangs, langTag) {
+					allowedLangs = append(allowedLangs, langTag)
+				}
 			}
 		}
 
 		if !slices.Contains(allowedLangs, defaultLang) || len(allowedLangs) < 1 {
-			allowedLangs = append([]string{defaultLang}, allowedLangs...)
+			allowedLangs = append([]language.Tag{defaultLang}, allowedLangs...)
 		}
 	})
 
@@ -81,28 +97,35 @@ func AllowedLanguages() []string {
 
 func languageBundle() *i18n.Bundle {
 	onceLanguageBundle.Do(func() {
-		defaultLang := DefaultLanguage()
-
-		langTag, err := language.Parse(defaultLang)
-		if err != nil {
-			sentry.CaptureException(err)
-			langTag = language.English
-			slog.Error(fmt.Sprintf("Could not get tag from default language '%v'. Using fallback '%s'.", err, langTag.String()))
-		}
-
-		bundle = i18n.NewBundle(langTag)
+		bundle = i18n.NewBundle(DefaultLanguage())
 		bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	})
 
 	return bundle
 }
 
-func GetLanguages(langList ...string) []string {
+func GetLanguages(langList ...string) []language.Tag {
 	allowed := AllowedLanguages()
-	langs := []string{}
 
-	if len(langList) > 0 {
-		langs = append(langs, langList...)
+	if len(langList) < 1 {
+		return allowed
+	}
+
+	langs := []language.Tag{}
+
+	for _, lang := range langList {
+		langTag, err := language.Parse(lang)
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not get context tag from '%s' language: %v", lang, err))
+			continue
+		}
+
+		if !slices.Contains(allowed, langTag) {
+			continue
+		}
+
+		langs = append([]language.Tag{langTag}, langs...)
 	}
 
 	langs = append(langs, allowed...)
@@ -111,28 +134,62 @@ func GetLanguages(langList ...string) []string {
 	return langs
 }
 
-func GetApiLanguages(c *fiber.Ctx, langList ...string) []string {
+func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
+	langs := GetLanguages(langList...)
+
 	if c == nil {
-		return GetLanguages(langList...)
+		return langs
 	}
 
 	allowed := AllowedLanguages()
-	langs := []string{}
 
+	// Use ?lang=<lang> query
 	lang := utils.CleanString(c.Query("lang"))
-	accept := utils.CleanString(c.Get("Accept-Language"))
+	if len(lang) > 0 {
+		langTag, err := language.Parse(lang)
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not get lang API tag from '%s' language: %v", lang, err))
+		}
 
-	if len(lang) > 0 && slices.Contains(allowed, lang) {
-		langs = append(langs, lang)
+		if slices.Contains(allowed, langTag) {
+			langs = append([]language.Tag{langTag}, langs...)
+		}
 	}
 
-	if len(accept) > 0 && slices.Contains(allowed, accept) {
-		langs = append(langs, accept)
+	// Use Accept-Language header
+	accept := utils.CleanString(c.Get("Accept-Language"))
+	if len(accept) > 0 {
+		acceptTag, err := language.Parse(accept)
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not get Accept-Language API tag from '%s' language: %v", accept, err))
+		}
+
+		if slices.Contains(allowed, acceptTag) {
+			langs = append([]language.Tag{acceptTag}, langs...)
+		}
+	}
+
+	// ! Must not get here
+	if len(langs) < 1 {
+		langs = allowed
 	}
 
 	return langs
 }
 
 func Translate(conf *i18n.LocalizeConfig, c *fiber.Ctx, langs ...string) string {
-	return i18n.NewLocalizer(languageBundle(), GetApiLanguages(c, langs...)...).MustLocalize(conf)
+	langList := []string{}
+
+	for _, tag := range GetApiLanguages(c, langs...) {
+		base, confidence := tag.Base()
+		if confidence < language.Low {
+			continue
+		}
+
+		langList = append(langList, base.String())
+	}
+
+	return i18n.NewLocalizer(languageBundle(), langList...).MustLocalize(conf)
 }

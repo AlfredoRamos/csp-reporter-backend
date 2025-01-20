@@ -1,0 +1,20 @@
+Hola {{.UserName}},
+
+{{if .Approved}}
+Su cuenta de usuario en {{.AppName}} ha sido aprobada por nuestro equipo y ya se encuentra activa.
+{{else}}
+Su solicitud de creación de cuenta de usuario en {{.AppName}} ha sido rechazada por nuestro equipo.
+
+A continuación se comparte el motivo:
+
+"{{.RejectionReason}}"
+
+Si se requiere alguna acción de su parte, por favor realice los cambios necesarios para realizar una nueva solicitud de creación de cuenta de usuario.
+{{end}}
+
+Si tiene alguna duda o comentario, no dude en contactarnos.
+
+Deseando que tenga un buen día, quedamos a sus órdenes.
+
+Sinceramente,
+El equipo de {{.AppName}}.

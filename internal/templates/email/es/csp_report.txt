@@ -1,0 +1,15 @@
+Hola,
+
+Se ha recibido un nuevo reporte de violación de la Política de Seguridad de Contenido (Content Security Policy). A continuación se comparte el resumen.
+
+Sitio: {{.SiteTitle}} {{.SiteDomain}}
+Fecha de reporte: {{.ReportDateTime}}
+URI bloqueada: {{.BlockedURI}}
+Directiva violada: {{.ViolatedDirective}}
+
+Ver todos los reportes: {{.AppDomain}}
+
+Saludos cordiales.
+
+Sinceramente,
+El equipo de {{.AppName}}.

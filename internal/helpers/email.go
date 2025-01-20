@@ -9,7 +9,6 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/valkey-io/valkey-go"
 	"github.com/wneessen/go-mail"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -33,33 +33,57 @@ const (
 
 type MessageLocale struct {
 	language string
-	country  *string
+	region   *string
+}
+
+// Custom marshaling for MessageLocale
+func (m *MessageLocale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"language": m.Language(),
+		"region":   m.Region(),
+	})
+}
+
+// Custom unmarshaling for MessageLocale
+func (m *MessageLocale) UnmarshalJSON(data []byte) error {
+	temp := struct {
+		Language string  `json:"language"`
+		Region   *string `json:"region"`
+	}{}
+
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	m.language = temp.Language
+	m.region = temp.Region
+	return nil
 }
 
 func (l *MessageLocale) Language() string {
 	return l.language
 }
 
-func (l *MessageLocale) Country() *string {
-	if l.country != nil {
-		l.country = utils.ToStringPtr(strings.ToUpper(*l.country))
+func (l *MessageLocale) Region() *string {
+	if l.region != nil {
+		l.region = utils.ToStringPtr(strings.ToUpper(*l.region))
 	}
 
-	return l.country
+	return l.region
 }
 
 func (l *MessageLocale) String() string {
 	loc := l.Language()
 
-	if l.Country() != nil && len(*l.Country()) > 0 {
-		loc += "-" + *l.Country()
+	if l.Region() != nil && len(*l.Region()) > 0 {
+		loc += "-" + *l.Region()
 	}
 
 	return strings.TrimSpace(loc)
 }
 
 func (l *MessageLocale) IsValid() bool {
-	return len(l.language) > 0 && (l.country == nil || (l.country != nil && len(*l.country) > 0))
+	return len(l.language) > 0 && (l.region == nil || (l.region != nil && len(*l.region) > 0))
 }
 
 type EmailOpts struct {
@@ -68,7 +92,7 @@ type EmailOpts struct {
 	ToList         []string                `json:"to_list"`
 	CCList         []string                `json:"cc_list"`
 	BCCList        []string                `json:"bcc_list"`
-	AttachmentList []*multipart.FileHeader `json:"attachment_list"`
+	AttachmentList []*multipart.FileHeader `json:"attachment_list,omitempty"`
 	IsInternal     bool                    `json:"is_internal"`
 	Locale         *MessageLocale          `json:"locale"`
 }
@@ -86,12 +110,12 @@ func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 		return errors.New("Missing information to send email.")
 	}
 
-	if opts.Locale == nil {
+	if opts.Locale == nil || !opts.Locale.IsValid() {
 		opts.Locale = DefaultLocale()
 	}
 
 	lang := opts.Locale.Language()
-	tplBase := filepath.Clean(filepath.Join("internal", "templates", "email", opts.TemplateName))
+	tplBase := filepath.Clean(filepath.Join("internal", "templates", "email", lang, opts.TemplateName))
 
 	htmlTplFile := filepath.Clean(tplBase + ".html")
 	htmlTpl, err := html_tpl.New(filepath.Base(htmlTplFile)).ParseFiles(htmlTplFile)
@@ -228,7 +252,7 @@ func GetSuperAdminEmails() []string {
 }
 
 func DefaultLocale() *MessageLocale {
-	loc, err := ParseLocale(utils.ToStringPtr(app.DefaultLanguage()))
+	loc, err := ParseLocale(utils.ToStringPtr(app.DefaultLanguage().String()))
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not parse locale: %v", err))
@@ -239,29 +263,43 @@ func DefaultLocale() *MessageLocale {
 }
 
 func ParseLocale(locale *string) (*MessageLocale, error) {
-	if locale == nil || (locale != nil && !slices.Contains(app.AllowedLanguages(), *locale)) {
+	if locale == nil {
 		return &MessageLocale{}, errors.New("Invalid message locale.")
 	}
 
-	lc := strings.Split(strings.TrimSpace(*locale), "-")
+	// * Custom locale overwrite
+	switch *locale {
+	case "es":
+		locale = utils.ToStringPtr("es-MX")
+	case "en":
+		locale = utils.ToStringPtr("en-US")
+	}
 
-	if len(lc) < 1 {
-		return &MessageLocale{}, errors.New("Invalid message locale.")
+	tag, err := language.Parse(*locale)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Could not parse locale: %v", err))
+		return &MessageLocale{}, err
 	}
 
 	sl := &MessageLocale{}
 
-	if len(lc) >= 2 {
-		sl.language = (lc[0])
-		sl.country = &lc[1]
-	} else if len(lc) == 1 {
-		sl.language = lc[0]
-		sl.country = nil
+	base, confidence := tag.Base()
+	if confidence >= language.High {
+		sl.language = base.String()
 	}
 
-	// ! Should not get here
+	region, confidence := tag.Region()
+	if confidence >= language.High {
+		sl.region = utils.ToStringPtr(region.String())
+	}
+
+	// ! Must not get here
 	if !sl.IsValid() {
-		return &MessageLocale{}, errors.New("Could not generate valid message locale.")
+		err := errors.New("Could not generate valid message locale.")
+		sentry.CaptureException(err)
+		slog.Error(err.Error())
+		return &MessageLocale{}, err
 	}
 
 	return sl, nil
@@ -286,7 +324,7 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 		return defaultLocale
 	}
 
-	loc, err := ParseLocale(&langs[0])
+	loc, err := ParseLocale(utils.ToStringPtr(langs[0].String()))
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not parse locale from API context. Falling back to default locale: %v", err))

@@ -1,0 +1,13 @@
+Hola,
+
+Se ha recibido una nueva solicitud de creación de cuenta de usuario y se encuentra pendiente de aprobación. A continuación se comparte el resumen.
+
+Nombre de usuario: {{.UserName}}
+Email: {{.UserEmail}}
+
+Para aprobar o rechazar esta solicitud, por favor acceda a la plataforma a través del siguiente enlace.
+
+Saludos cordiales.
+
+Sinceramente,
+El equipo de {{.AppName}}.
