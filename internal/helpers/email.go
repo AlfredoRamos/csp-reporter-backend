@@ -92,9 +92,9 @@ type EmailOpts struct {
 	ToList         []string                `json:"to_list"`
 	CCList         []string                `json:"cc_list"`
 	BCCList        []string                `json:"bcc_list"`
-	AttachmentList []*multipart.FileHeader `json:"attachment_list"`
+	AttachmentList []*multipart.FileHeader `json:"attachment_list,omitempty"`
 	IsInternal     bool                    `json:"is_internal"`
-	Locale         *MessageLocale          `json:"locale,omitempty"`
+	Locale         *MessageLocale          `json:"locale"`
 }
 
 func (e *EmailOpts) IsValid() bool {
