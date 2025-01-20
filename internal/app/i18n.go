@@ -183,12 +183,7 @@ func Translate(conf *i18n.LocalizeConfig, c *fiber.Ctx, langs ...string) string 
 	langList := []string{}
 
 	for _, tag := range GetApiLanguages(c, langs...) {
-		base, confidence := tag.Base()
-		if confidence < language.Low {
-			continue
-		}
-
-		langList = append(langList, base.String())
+		langList = append(langList, tag.String())
 	}
 
 	return i18n.NewLocalizer(languageBundle(), langList...).MustLocalize(conf)
