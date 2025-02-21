@@ -2,7 +2,8 @@ run:
   modules-download-mode: readonly
 
 output:
-  formats: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   sort-results: true
 
