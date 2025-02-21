@@ -10,7 +10,7 @@ require (
 	github.com/getsentry/sentry-go/fiber v0.31.1
 	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/goccy/go-json v0.10.5
-	github.com/goccy/go-yaml v1.15.22
+	github.com/goccy/go-yaml v1.15.23
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
