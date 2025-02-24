@@ -19,7 +19,7 @@ require (
 	github.com/valkey-io/valkey-go v1.0.54
 	github.com/wneessen/go-mail v0.6.2
 	github.com/wneessen/go-mail-middleware v0.0.9
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.34.0
 	golang.org/x/net v0.35.0
 	golang.org/x/text v0.22.0
 	gorm.io/driver/postgres v1.5.11
