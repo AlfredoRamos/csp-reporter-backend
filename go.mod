@@ -8,7 +8,7 @@ require (
 	github.com/ccojocar/zxcvbn-go v1.0.2
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/getsentry/sentry-go/fiber v0.31.1
-	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/goccy/go-json v0.10.5
 	github.com/goccy/go-yaml v1.15.23
 	github.com/gofiber/fiber/v2 v2.52.6
