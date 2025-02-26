@@ -102,6 +102,20 @@ func AuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
+	if utils.MustRehashPassword(user.Password) {
+		user.Password = utils.HashPassword(input.Password)
+		if err := app.DB().Where(&models.User{ID: user.ID, Email: user.Email}).Updates(&models.User{Password: user.Password}).Error; err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorPasswordUpdate",
+						Other: "Could not update user password.",
+					},
+				}, c)},
+			})
+		}
+	}
+
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
 		sentry.CaptureException(err)
