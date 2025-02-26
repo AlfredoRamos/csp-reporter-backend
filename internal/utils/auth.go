@@ -51,7 +51,7 @@ type UserClaimData struct {
 
 type CustomJwtClaims struct {
 	jose_jwt.Claims
-	User UserClaimData `json:"user,omitempty"`
+	User UserClaimData `json:"user"`
 }
 
 func (c CustomJwtClaims) Validate() error {
@@ -203,6 +203,29 @@ func ComparePasswordHash(p string, h string) bool {
 	newHash := argon2.IDKey([]byte(p), salt, config.iterations, config.memory, config.parallelism, config.keyLength)
 
 	return (subtle.ConstantTimeCompare(hash, newHash) == 1)
+}
+
+func MustRehashPassword(h string) bool {
+	d := NewArgon2Config()
+
+	config, _, _, err := decodeHash(h)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Warn(fmt.Sprintf("Could not decode hash: %v", err))
+
+		return false
+	}
+
+	switch {
+	case config.memory != d.memory,
+		config.iterations != d.iterations,
+		config.parallelism != d.parallelism,
+		config.saltLength != d.saltLength,
+		config.keyLength != d.keyLength:
+		return true
+	}
+
+	return false
 }
 
 func decodeHash(h string) (argon2Config, []byte, []byte, error) {
