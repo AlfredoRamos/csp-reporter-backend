@@ -74,6 +74,9 @@ linters-settings:
       main:
         allow:
           - $gostd
+          - golang.org/x/text
+          - golang.org/x/crypto
+          - golang.org/x/net
           - alfredoramos.mx/csp-reporter
           - github.com/gofiber/fiber/v2
           - github.com/gofiber/contrib/jwt
