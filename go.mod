@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/casbin/casbin/v2 v2.103.0
+	github.com/casbin/casbin/v2 v2.104.0
 	github.com/ccojocar/zxcvbn-go v1.0.2
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/getsentry/sentry-go/fiber v0.31.1
