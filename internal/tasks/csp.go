@@ -34,12 +34,12 @@ func HandleReportAddTask(ctx context.Context, t *asynq.Task) error { //nolint:un
 	p := ReportAddPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
 	if err := helpers.NewCspReport(p.Data); err != nil { //nolint:contextcheck
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not add CSP report: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("could not add CSP report: %w: %w", err, asynq.SkipRetry)
 	}
 
 	return nil

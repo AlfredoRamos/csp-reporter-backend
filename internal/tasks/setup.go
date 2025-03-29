@@ -122,7 +122,7 @@ func loggingMiddleware(h asynq.Handler) asynq.Handler {
 		slog.Info(fmt.Sprintf("Start processing [%s]", t.Type()))
 
 		if err := h.ProcessTask(ctx, t); err != nil {
-			sentry.CaptureException(fmt.Errorf("Could not process task [%s] '%s': %w", t.Type(), t.Payload(), err))
+			sentry.CaptureException(fmt.Errorf("could not process task [%s] '%s': %w", t.Type(), t.Payload(), err))
 			return err
 		}
 

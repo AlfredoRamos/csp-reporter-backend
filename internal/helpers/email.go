@@ -103,11 +103,11 @@ func (e *EmailOpts) IsValid() bool {
 
 func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
-		return errors.New("The from email address is invalid.")
+		return errors.New("the from email address is invalid")
 	}
 
 	if !opts.IsValid() {
-		return errors.New("Missing information to send email.")
+		return errors.New("missing information to send email")
 	}
 
 	if opts.Locale == nil || !opts.Locale.IsValid() {
@@ -121,14 +121,14 @@ func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 	htmlTpl, err := html_tpl.New(filepath.Base(htmlTplFile)).ParseFiles(htmlTplFile)
 	if err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Error loading the HTML template: %w", err)
+		return fmt.Errorf("error loading the HTML template: %w", err)
 	}
 
 	textTplFile := filepath.Clean(tplBase + ".txt")
 	textTpl, err := text_tpl.New(filepath.Base(textTplFile)).ParseFiles(textTplFile)
 	if err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Error loading the TEXT template: %w", err)
+		return fmt.Errorf("error loading the TEXT template: %w", err)
 	}
 
 	// Init message
@@ -140,20 +140,20 @@ func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 	msg.SetGenHeader(mail.HeaderContentLang, lang)
 
 	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
-		err := errors.New("The from email address is invalid.")
+		err := errors.New("the from email address is invalid")
 		sentry.CaptureException(err)
 		return err
 	}
 
 	if err := msg.FromFormat(os.Getenv("APP_NAME"), os.Getenv("EMAIL_FROM")); err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not set the from email address: %w", err)
+		return fmt.Errorf("could not set the from email address: %w", err)
 	}
 
 	if !opts.IsInternal && len(utils.SupportEmail()) > 0 {
 		if err := msg.ReplyTo(utils.SupportEmail()); err != nil {
 			sentry.CaptureException(err)
-			return fmt.Errorf("Could not set the reply-to email address: %w", err)
+			return fmt.Errorf("could not set the reply-to email address: %w", err)
 		}
 	}
 
@@ -170,12 +170,12 @@ func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 
 	if err := msg.SetBodyHTMLTemplate(htmlTpl, data); err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Error setting HTML template: %w", err)
+		return fmt.Errorf("error setting HTML template: %w", err)
 	}
 
 	if err := msg.AddAlternativeTextTemplate(textTpl, data); err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Error setting TEXT template: %w", err)
+		return fmt.Errorf("error setting TEXT template: %w", err)
 	}
 
 	msg.ToIgnoreInvalid(opts.ToList...)
@@ -264,7 +264,7 @@ func DefaultLocale() *MessageLocale {
 
 func ParseLocale(locale *string) (*MessageLocale, error) {
 	if locale == nil {
-		return &MessageLocale{}, errors.New("Invalid message locale.")
+		return &MessageLocale{}, errors.New("invalid message locale")
 	}
 
 	// * Custom locale overwrite
@@ -296,7 +296,7 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 
 	// ! Must not get here
 	if !sl.IsValid() {
-		err := errors.New("Could not generate valid message locale.")
+		err := errors.New("could not generate valid message locale")
 		sentry.CaptureException(err)
 		slog.Error(err.Error())
 		return &MessageLocale{}, err
@@ -309,7 +309,7 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 	defaultLocale := DefaultLocale()
 
 	if c == nil {
-		err := errors.New("Invalid context for API locale. Falling back to default locale.")
+		err := errors.New("invalid context for API locale. Falling back to default locale")
 		sentry.CaptureException(err)
 		slog.Error(err.Error())
 		return defaultLocale
@@ -318,7 +318,7 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 	langs := app.GetApiLanguages(c)
 
 	if len(langs) < 1 {
-		err := errors.New("Invalid language list from API context. Falling back to default locale.")
+		err := errors.New("invalid language list from API context. Falling back to default locale")
 		sentry.CaptureException(err)
 		slog.Error(err.Error())
 		return defaultLocale

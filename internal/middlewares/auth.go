@@ -37,7 +37,7 @@ func AuthProtected() fiber.Handler {
 		tokenStr := c.Get("Authorization")[7:]
 
 		if len(tokenStr) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("Empty access token."))
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
 		}
 
 		jwe, err := jose.ParseEncryptedCompact(
@@ -46,26 +46,26 @@ func AuthProtected() fiber.Handler {
 			[]jose.ContentEncryption{jose.A256GCM},
 		)
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Error parsing JWE: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("error parsing JWE: %w", err))
 		}
 
 		decrypted, err := jwe.Decrypt(jwt.EncryptionKeys().Private)
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Error decrypting JWE: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("error decrypting JWE: %w", err))
 		}
 
 		parsedJWT, err := jose.ParseSigned(string(decrypted), []jose.SignatureAlgorithm{jose.SignatureAlgorithm(jwt.SigningKeys().Private.Algorithm)})
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Error parsing JWT: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("error parsing JWT: %w", err))
 		}
 
 		if _, err := parsedJWT.Verify(jwt.SigningKeys().Public); err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Error verifying JWT: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("error verifying JWT: %w", err))
 		}
 
 		jweStr, err := jwe.CompactSerialize()
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Error generating JWE access token: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("error generating JWE access token: %w", err))
 		}
 
 		c.Locals(utils.AccessTokenContextKey(), jweStr)
@@ -92,39 +92,39 @@ func ValidateAccessToken() fiber.Handler {
 		jwe := c.Get("Authorization")[7:]
 
 		if len(jwe) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("Empty access token."))
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
 		}
 
 		if accessJWE != jwe {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("Invalid provided access token."))
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided access token"))
 		}
 
 		accessClaims, err := utils.ParseJWEClaims(accessJWE)
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid access token claims: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid access token claims: %w", err))
 		}
 
 		if !utils.IsValidIssuer(accessClaims.Issuer) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid access token issuer: %v", accessClaims.Issuer))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid access token issuer: %v", accessClaims.Issuer))
 		}
 
 		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, valkey.Nil) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Could not check token revocation '%v': %w", accessClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", accessClaims.ID, err))
 		}
 
 		if len(accessClaims.ID) < 1 || isAccessRevoked {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("The access token is invalid or revoked '%v': %w", accessClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the access token is invalid or revoked '%v': %w", accessClaims.ID, err))
 		}
 
 		now := time.Now().In(utils.DefaultLocation())
 
 		if now.Before(accessClaims.IssuedAt.Time()) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid issued at date: %v", accessClaims.IssuedAt.Time()))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid issued at date: %v", accessClaims.IssuedAt.Time()))
 		}
 
 		if now.Before(accessClaims.NotBefore.Time()) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid not before date: %v", accessClaims.NotBefore.Time()))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid not before date: %v", accessClaims.NotBefore.Time()))
 		}
 
 		if now.After(accessClaims.Expiry.Time()) {
@@ -132,11 +132,11 @@ func ValidateAccessToken() fiber.Handler {
 		}
 
 		if sub, err := uuid.Parse(accessClaims.Subject); err != nil || !utils.IsValidUuid(sub) || accessClaims.User.ID != sub {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid subject: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid subject: %w", err))
 		}
 
 		if !helpers.UserExists(accessClaims.User.ID, accessClaims.User.Email) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid user: [%s] %v", accessClaims.User.ID, accessClaims.User.Email))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid user: [%s] %v", accessClaims.User.ID, accessClaims.User.Email))
 		}
 
 		return c.Next()
@@ -161,62 +161,62 @@ func ValidateRefreshToken() fiber.Handler {
 		jwe := c.Get("Authorization")[7:]
 
 		if len(jwe) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("Empty access token."))
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
 		}
 
 		if accessJWE != jwe {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("Invalid provided access token."))
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided access token"))
 		}
 
 		accessClaims, err := utils.ParseJWEClaims(accessJWE)
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid access token claims: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid access token claims: %w", err))
 		}
 
 		if !utils.IsValidIssuer(accessClaims.Issuer) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid access token issuer: %v", accessClaims.Issuer))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid access token issuer: %v", accessClaims.Issuer))
 		}
 
 		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("access-tokens:revoked").Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, valkey.Nil) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Could not check token revocation '%v': %w", accessClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", accessClaims.ID, err))
 		}
 
 		if len(accessClaims.ID) < 1 || isAccessRevoked {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("The access token is invalid or revoked '%v': %w", accessClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the access token is invalid or revoked '%v': %w", accessClaims.ID, err))
 		}
 
 		refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
 		if len(refreshJWE) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("The refresh token is not valid."))
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("the refresh token is not valid"))
 		}
 
 		refreshClaims, err := utils.ParseJWEClaims(refreshJWE)
 		if err != nil {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid refresh token claims: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid refresh token claims: %w", err))
 		}
 
 		if !utils.IsValidIssuer(refreshClaims.Issuer) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid refresh token issuer: %v", refreshClaims.Issuer))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid refresh token issuer: %v", refreshClaims.Issuer))
 		}
 
 		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, valkey.Nil) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Could not check token revocation '%v': %w", refreshClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", refreshClaims.ID, err))
 		}
 
 		if len(refreshClaims.ID) < 1 || isRefreshRevoked {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("The refresh token is invalid or revoked '%v': %w", refreshClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the refresh token is invalid or revoked '%v': %w", refreshClaims.ID, err))
 		}
 
 		now := time.Now().In(utils.DefaultLocation())
 
 		if now.Before(refreshClaims.IssuedAt.Time()) || refreshClaims.IssuedAt.Time().Before(accessClaims.IssuedAt.Time()) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid issued at date: %v", refreshClaims.IssuedAt.Time()))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid issued at date: %v", refreshClaims.IssuedAt.Time()))
 		}
 
 		if now.Before(refreshClaims.NotBefore.Time()) || refreshClaims.NotBefore.Time().Before(accessClaims.NotBefore.Time()) {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid not before date: %v", refreshClaims.NotBefore.Time()))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid not before date: %v", refreshClaims.NotBefore.Time()))
 		}
 
 		if now.After(refreshClaims.Expiry.Time()) || refreshClaims.Expiry.Time().Before(accessClaims.Expiry.Time()) {
@@ -224,7 +224,7 @@ func ValidateRefreshToken() fiber.Handler {
 		}
 
 		if refreshSub, err := uuid.Parse(refreshClaims.Subject); err != nil || !utils.IsValidUuid(refreshSub) || refreshClaims.User.ID != refreshSub || accessClaims.User.ID != refreshClaims.User.ID {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("Invalid subject: %w", err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid subject: %w", err))
 		}
 
 		return c.Next()

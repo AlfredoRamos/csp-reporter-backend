@@ -58,7 +58,7 @@ func GetDomainHostname(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	if len(d) < 1 {
-		return "", errors.New("Invalid domain.")
+		return "", errors.New("invalid domain")
 	}
 
 	if !strings.HasPrefix(d, "http") {
@@ -68,11 +68,11 @@ func GetDomainHostname(d string) (string, error) {
 	u, err := url.Parse(d)
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Could not parse URL: %w", err)
+		return "", fmt.Errorf("could not parse URL: %w", err)
 	}
 
 	if len(u.Scheme) < 1 || len(u.Host) < 1 || len(u.Hostname()) < 1 {
-		return "", fmt.Errorf("Invalid URL: %s", d)
+		return "", fmt.Errorf("invalid URL: %s", d)
 	}
 
 	return u.Hostname(), nil
@@ -82,7 +82,7 @@ func CleanDomain(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	if len(d) < 1 {
-		return "", errors.New("Invalid domain.")
+		return "", errors.New("invalid domain")
 	}
 
 	return idna.Lookup.ToASCII(d)
@@ -92,7 +92,7 @@ func GetApexDomain(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	if len(d) < 1 {
-		return "", errors.New("Invalid domain.")
+		return "", errors.New("invalid domain")
 	}
 
 	h, err := GetDomainHostname(d)

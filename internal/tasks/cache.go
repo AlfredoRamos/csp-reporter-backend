@@ -34,12 +34,12 @@ func HandlePurgeCachePatternTask(ctx context.Context, t *asynq.Task) error { //n
 	p := PurgeCachePatternPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
 	if err := helpers.PurgeCachePattern(p.Pattern); err != nil { //nolint:contextcheck
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not purge user roles from cache: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("could not purge user roles from cache: %w: %w", err, asynq.SkipRetry)
 	}
 
 	return nil

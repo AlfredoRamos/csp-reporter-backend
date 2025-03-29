@@ -37,12 +37,12 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not deserialize payload: %v", err))
-		return fmt.Errorf("Could not decode payload: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
 	if err := helpers.SendEmail(p.Options, p.Data); err != nil { //nolint:contextcheck
 		sentry.CaptureException(err)
-		return fmt.Errorf("Could not deliver email: %w: %w", err, asynq.SkipRetry)
+		return fmt.Errorf("could not deliver email: %w: %w", err, asynq.SkipRetry)
 	}
 
 	return nil

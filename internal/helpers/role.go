@@ -46,7 +46,7 @@ func (l userRoleList) IDs() []uuid.UUID {
 
 func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	if !utils.IsValidUuid(id) {
-		return []userRole{}, errors.New("Invalid user ID.")
+		return []userRole{}, errors.New("invalid user ID")
 	}
 
 	roles := []userRole{}
