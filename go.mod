@@ -1,7 +1,6 @@
 module alfredoramos.mx/csp-reporter
 
 go 1.24.1
-
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/casbin/casbin/v2 v2.104.0
@@ -20,7 +19,7 @@ require (
 	github.com/wneessen/go-mail v0.6.2
 	github.com/wneessen/go-mail-middleware v0.0.9
 	golang.org/x/crypto v0.36.0
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/text v0.23.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
