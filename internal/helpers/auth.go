@@ -15,13 +15,13 @@ func NewAccessToken(u *models.User) (string, error) {
 	roles, err := GetUserRoles(u.ID)
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("User roles error: %w", err)
+		return "", fmt.Errorf("user roles error: %w", err)
 	}
 
 	issuer, err := utils.GetJwtIssuer()
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Invalid access token issuer '%s': %w", issuer, err)
+		return "", fmt.Errorf("invalid access token issuer '%s': %w", issuer, err)
 	}
 
 	now := time.Now().In(utils.DefaultLocation())
@@ -47,19 +47,19 @@ func NewAccessToken(u *models.User) (string, error) {
 	jwtStr, err := jose_jwt.Signed(jwt.Signer()).Claims(claims).Serialize()
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Error generating JWT: %w", err)
+		return "", fmt.Errorf("error generating JWT: %w", err)
 	}
 
 	jwe, err := jwt.Encrypter().Encrypt([]byte(jwtStr))
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Error generating JWE: %w", err)
+		return "", fmt.Errorf("error generating JWE: %w", err)
 	}
 
 	jweStr, err := jwe.CompactSerialize()
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Error generating access token: %w", err)
+		return "", fmt.Errorf("error generating access token: %w", err)
 	}
 
 	return jweStr, nil
@@ -69,13 +69,13 @@ func NewRefreshToken(u *models.User) (string, error) {
 	roles, err := GetUserRoles(u.ID)
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("User roles error: %w", err)
+		return "", fmt.Errorf("user roles error: %w", err)
 	}
 
 	issuer, err := utils.GetJwtIssuer()
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Invalid refresh token issuer '%s': %w", issuer, err)
+		return "", fmt.Errorf("invalid refresh token issuer '%s': %w", issuer, err)
 	}
 
 	now := time.Now().In(utils.DefaultLocation())
@@ -99,19 +99,19 @@ func NewRefreshToken(u *models.User) (string, error) {
 	jwtStr, err := jose_jwt.Signed(jwt.Signer()).Claims(claims).Serialize()
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Error generating JWT: %w", err)
+		return "", fmt.Errorf("error generating JWT: %w", err)
 	}
 
 	jwe, err := jwt.Encrypter().Encrypt([]byte(jwtStr))
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Error generating JWE: %w", err)
+		return "", fmt.Errorf("error generating JWE: %w", err)
 	}
 
 	jweStr, err := jwe.CompactSerialize()
 	if err != nil {
 		sentry.CaptureException(err)
-		return "", fmt.Errorf("Error generating refresh token: %w", err)
+		return "", fmt.Errorf("error generating refresh token: %w", err)
 	}
 
 	return jweStr, nil

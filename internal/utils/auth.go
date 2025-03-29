@@ -56,7 +56,7 @@ type CustomJwtClaims struct {
 
 func (c CustomJwtClaims) Validate() error {
 	if !IsValidIssuer(c.Issuer) {
-		return errors.New("The issuer is invalid.")
+		return errors.New("the issuer is invalid")
 	}
 
 	sub, err := uuid.Parse(c.Subject)
@@ -65,19 +65,19 @@ func (c CustomJwtClaims) Validate() error {
 			sentry.CaptureException(err)
 		}
 
-		return errors.New("The subject is invalid.")
+		return errors.New("the subject is invalid")
 	}
 
 	if !IsValidUuid(c.User.ID) || sub != c.User.ID {
-		return errors.New("The user ID is invalid.")
+		return errors.New("the user ID is invalid")
 	}
 
 	if !IsValidEmail(c.User.Email) {
-		return errors.New("The user email is invalid.")
+		return errors.New("the user email is invalid")
 	}
 
 	if len(c.User.Roles) < 1 {
-		return errors.New("The user roles are invalid.")
+		return errors.New("the user roles are invalid")
 	}
 
 	return nil
@@ -107,7 +107,7 @@ func RefreshTokenContextKey() string {
 
 func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
 	if len(token) < 1 {
-		err := errors.New("Error parsing empty JWE.")
+		err := errors.New("error parsing empty JWE")
 		sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
@@ -231,13 +231,13 @@ func MustRehashPassword(h string) bool {
 func decodeHash(h string) (argon2Config, []byte, []byte, error) {
 	vals := strings.Split(h, "$")
 	if len(vals) != 6 {
-		return argon2Config{}, nil, nil, errors.New("Invalid encoded hash format.")
+		return argon2Config{}, nil, nil, errors.New("invalid encoded hash format")
 	}
 
 	var av int
 	if _, err := fmt.Sscanf(vals[2], "v=%d", &av); err != nil {
 		sentry.CaptureException(err)
-		return argon2Config{}, nil, nil, errors.New("The version of the Argon2 algorithm is not compatible.")
+		return argon2Config{}, nil, nil, errors.New("the version of the Argon2 algorithm is not compatible")
 	}
 
 	config := argon2Config{}

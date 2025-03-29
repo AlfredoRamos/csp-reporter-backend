@@ -40,7 +40,7 @@ func NewCspReport(d CspReport) error {
 	}
 
 	if !IsAllowedDomain(domain) {
-		err := fmt.Errorf("The document URI '%s' is not within the allowed domains.", domain)
+		err := fmt.Errorf("the document URI '%s' is not within the allowed domains", domain)
 		sentry.CaptureException(err)
 		return err
 	}
