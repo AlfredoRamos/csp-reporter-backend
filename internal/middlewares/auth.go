@@ -114,7 +114,7 @@ func ValidateAccessToken() fiber.Handler {
 		}
 
 		if len(accessClaims.ID) < 1 || isAccessRevoked {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the access token is invalid or revoked '%v': %w", accessClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the access token is invalid or revoked '%v'", accessClaims.ID))
 		}
 
 		now := time.Now().In(utils.DefaultLocation())
@@ -183,7 +183,7 @@ func ValidateRefreshToken() fiber.Handler {
 		}
 
 		if len(accessClaims.ID) < 1 || isAccessRevoked {
-			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the access token is invalid or revoked '%v': %w", accessClaims.ID, err))
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the access token is invalid or revoked '%v'", accessClaims.ID))
 		}
 
 		refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
