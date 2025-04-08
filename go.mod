@@ -1,6 +1,7 @@
 module alfredoramos.mx/csp-reporter
 
 go 1.24.1
+
 require (
 	github.com/BurntSushi/toml v1.5.0
 	github.com/casbin/casbin/v2 v2.104.0
@@ -18,9 +19,9 @@ require (
 	github.com/valkey-io/valkey-go v1.0.57
 	github.com/wneessen/go-mail v0.6.2
 	github.com/wneessen/go-mail-middleware v0.0.9
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.37.0
 	golang.org/x/net v0.38.0
-	golang.org/x/text v0.23.0
+	golang.org/x/text v0.24.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.25.12
 )
@@ -50,8 +51,8 @@ require (
 	github.com/tinylib/msgp v1.2.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.59.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
