@@ -23,8 +23,12 @@ hash = "sha1-ceb3197e6bc9044900be9287448d17ff7033a9e9"
 other = "La cuenta de usuario solicitada ya se encuentra activa."
 
 [ErrorCSPReportCreation]
-hash = "sha1-2f3b1fc1bab13d661b02c3da565dfd580ae5e59c"
+hash = "sha1-22ba4965e565205c9ab419cc3b140512a4484423"
 other = "No se pudo registrar el reporte CSP."
+
+[ErrorDashboardReportsByDirective]
+hash = "sha1-0d9d67980001777de954d809352bdf489fd73e60"
+other = "No se pudo obtener estadísticas de los reportes por directiva."
 
 [ErrorEndpointNotFound]
 hash = "sha1-0b7e734f76965c5533022971179ef8b072a1715b"
