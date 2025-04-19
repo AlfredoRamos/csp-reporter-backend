@@ -561,7 +561,7 @@ func AuthRegister(c *fiber.Ctx) error {
 
 	userName := user.GetFullName()
 
-	time.AfterFunc(3*time.Second, func() {
+	timer := time.AfterFunc(3*time.Second, func() {
 		if err := tasks.NewEmail(
 			&helpers.EmailOpts{
 				Subject: app.Translate(&i18n.LocalizeConfig{
@@ -583,6 +583,7 @@ func AuthRegister(c *fiber.Ctx) error {
 			slog.Error(fmt.Sprintf("Error sending email: %v", err))
 		}
 	})
+	defer timer.Stop()
 
 	if err := tasks.NewEmail(
 		&helpers.EmailOpts{
