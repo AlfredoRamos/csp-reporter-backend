@@ -20,6 +20,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/pquerna/otp/totp"
 	"github.com/valkey-io/valkey-go"
 	"gorm.io/gorm"
 )
@@ -29,6 +30,11 @@ const maxRecoveryTries int = 3
 type userLoginInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type userMFAInput struct {
+	Email   string `json:"email"`
+	MFACode string `json:"mfa_code"`
 }
 
 type userRegisterInput struct {
@@ -116,6 +122,33 @@ func AuthLogin(c *fiber.Ctx) error {
 		}
 	}
 
+	if user.MFAEnabled {
+		intermediateToken, err := helpers.NewIntermediateToken(user)
+		if err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Error generating intermediate token: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorIntermediateTokenGeneration",
+						Other: "Could not generate intermediate token.",
+					},
+				}, c)},
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(&fiber.Map{
+			"message": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "WarningMFARequired",
+					Other: "Multi-factor authentication is required.",
+				},
+			}, c)},
+			"mfa_required":       true,
+			"intermediate_token": intermediateToken,
+		})
+	}
+
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -172,6 +205,139 @@ func AuthLogin(c *fiber.Ctx) error {
 	})
 
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
+}
+
+func AuthMFAVerify(c *fiber.Ctx) error {
+	input := &userMFAInput{}
+	if err := c.BodyParser(&input); err != nil {
+		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserData",
+					Other: "The user data is invalid.",
+				},
+			}, c)},
+		})
+	}
+
+	errs := fiber.Map{}
+
+	if !utils.IsValidEmail(input.Email) {
+		errs = utils.AddError(errs, "email", app.Translate(&i18n.LocalizeConfig{
+			DefaultMessage: &i18n.Message{
+				ID:    "ErrorInvalidEmail",
+				Other: "Please, enter a valid email address.",
+			},
+		}, c))
+	}
+
+	if len(errs) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": errs,
+		})
+	}
+
+	active := true
+	user := &models.User{Email: input.Email, Active: &active}
+	if err := app.DB().Where(&user).First(&user).Error; err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidUserCredentials",
+					Other: "The user credentials are invalid.",
+				},
+			}, c)},
+		})
+	}
+
+	if !user.MFAEnabled {
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorMFADisabled",
+					Other: "Multi-factor authentication is not enabled.",
+				},
+			}, c)},
+		})
+	}
+
+	if totp.Validate(input.MFACode, *user.MFASecret) {
+		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidMFACode",
+					Other: "Invalid multi-factor authentication code.",
+				},
+			}, c)},
+		})
+	}
+
+	accessToken, err := helpers.NewAccessToken(user)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorAccessTokenGeneration",
+					Other: "Could not generate access token.",
+				},
+			}, c)},
+		})
+	}
+
+	refreshToken, err := helpers.NewRefreshToken(user)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorRefreshTokenGeneration",
+					Other: "Could not generate refresh token.",
+				},
+			}, c)},
+		})
+	}
+
+	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+
+		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"error": []string{app.Translate(&i18n.LocalizeConfig{
+				DefaultMessage: &i18n.Message{
+					ID:    "ErrorInvalidRefreshToken",
+					Other: "Invalid refresh token.",
+				},
+			}, c)},
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:        utils.RefreshTokenContextKey(),
+		Value:       refreshToken,
+		Path:        "/",
+		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Expires:     refreshClaims.Expiry.Time(),
+		Secure:      utils.IsProduction(),
+		HTTPOnly:    true,
+		SameSite:    "Strict",
+		SessionOnly: true,
+	})
+
+	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
+}
+
+func AuthMFAEnable(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusNotImplemented).JSON(&fiber.Map{})
+}
+
+func AuthMFADisable(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusNotImplemented).JSON(&fiber.Map{})
 }
 
 func AuthCheck(c *fiber.Ctx) error {

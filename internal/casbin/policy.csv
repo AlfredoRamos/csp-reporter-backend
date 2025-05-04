@@ -14,6 +14,8 @@ p, viewer, /api/v1/csp/reports/get/:id, GET, allow
 # User
 p, user, /api/v1/auth/logout, POST, allow
 p, user, /api/v1/auth/refresh, PATCH, allow
+p, user, /api/v1/auth/mfa/enable, POST, allow
+p, user, /api/v1/auth/mfa/disable, DELETE, allow
 
 # Guest
 p, guest, /api/v1/auth/login, POST, allow
@@ -22,6 +24,7 @@ p, guest, /api/v1/auth/register, POST, allow
 p, guest, /api/v1/auth/recover, POST, allow
 p, guest, /api/v1/auth/recover/validate, POST, allow
 p, guest, /api/v1/auth/recover/update, PATCH, allow
+p, guest, /api/v1/auth/mfa/verify, POST, allow
 p, guest, /api/v1/system/csrf, GET, allow
 p, guest, /api/v1/csp/reports/add, POST, allow
 

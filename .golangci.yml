@@ -1,4 +1,4 @@
-version: "2"
+version: '2'
 run:
   modules-download-mode: readonly
 output:
@@ -69,6 +69,7 @@ linters:
             - github.com/goccy/go-yaml
             - github.com/nicksnyder/go-i18n/v2/i18n
             - github.com/BurntSushi/toml
+            - github.com/pquerna/otp/totp
     errchkjson:
       check-error-free-encoding: false
       report-no-exported: true

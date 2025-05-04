@@ -2,6 +2,8 @@ package helpers
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/jwt"
@@ -9,6 +11,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
+	"github.com/pquerna/otp/totp"
 )
 
 func NewAccessToken(u *models.User) (string, error) {
@@ -36,11 +39,12 @@ func NewAccessToken(u *models.User) (string, error) {
 			Expiry:    jose_jwt.NewNumericDate(now.Add(utils.AccessTokenExpiration())),
 		},
 		User: utils.UserClaimData{
-			ID:        u.ID,
-			FirstName: u.FirstName,
-			LastName:  u.LastName,
-			Email:     u.Email,
-			Roles:     roles.Names(),
+			ID:         u.ID,
+			FirstName:  u.FirstName,
+			LastName:   u.LastName,
+			Email:      u.Email,
+			Roles:      roles.Names(),
+			MFAEnabled: u.MFAEnabled,
 		},
 	}
 
@@ -90,9 +94,10 @@ func NewRefreshToken(u *models.User) (string, error) {
 			Expiry:    jose_jwt.NewNumericDate(now.Add(utils.RefreshTokenExpiration())),
 		},
 		User: utils.UserClaimData{
-			ID:    u.ID,
-			Email: u.Email,
-			Roles: roles.Names(),
+			ID:         u.ID,
+			Email:      u.Email,
+			Roles:      roles.Names(),
+			MFAEnabled: u.MFAEnabled,
 		},
 	}
 
@@ -115,4 +120,67 @@ func NewRefreshToken(u *models.User) (string, error) {
 	}
 
 	return jweStr, nil
+}
+
+func NewIntermediateToken(u *models.User) (string, error) {
+	issuer, err := utils.GetJwtIssuer()
+	if err != nil {
+		sentry.CaptureException(err)
+		return "", fmt.Errorf("invalid refresh token issuer '%s': %w", issuer, err)
+	}
+
+	now := time.Now().In(utils.DefaultLocation())
+
+	claims := &utils.CustomJwtClaims{
+		Claims: jose_jwt.Claims{
+			ID:        utils.HashString(u.ID.String()),
+			Issuer:    issuer,
+			Subject:   u.ID.String(),
+			IssuedAt:  jose_jwt.NewNumericDate(now),
+			NotBefore: jose_jwt.NewNumericDate(now),
+			Expiry:    jose_jwt.NewNumericDate(now.Add(utils.RefreshTokenExpiration())),
+		},
+		User: utils.UserClaimData{
+			ID:         u.ID,
+			Email:      u.Email,
+			MFAEnabled: u.MFAEnabled,
+			Type:       utils.ToStringPtr("intermediate"),
+		},
+	}
+
+	jwtStr, err := jose_jwt.Signed(jwt.Signer()).Claims(claims).Serialize()
+	if err != nil {
+		sentry.CaptureException(err)
+		return "", fmt.Errorf("error generating JWT: %w", err)
+	}
+
+	jwe, err := jwt.Encrypter().Encrypt([]byte(jwtStr))
+	if err != nil {
+		sentry.CaptureException(err)
+		return "", fmt.Errorf("error generating JWE: %w", err)
+	}
+
+	jweStr, err := jwe.CompactSerialize()
+	if err != nil {
+		sentry.CaptureException(err)
+		return "", fmt.Errorf("error generating refresh token: %w", err)
+	}
+
+	return jweStr, nil
+}
+
+func GenerateMFASecret(email string) (string, string, error) {
+	secret, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      os.Getenv("APP_NAME"),
+		AccountName: email,
+		SecretSize:  30,
+	})
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error("Error generating TOTP secret", "error", err)
+		return "", "", err
+	}
+
+	qrCodeURL := secret.URL()
+	return secret.Secret(), qrCodeURL, nil
 }

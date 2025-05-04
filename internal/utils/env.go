@@ -14,12 +14,15 @@ import (
 )
 
 const (
-	minAccessTokenExpiration      int64 = 1
-	defaultAccessTokenExpiration  int64 = 1
-	maxAccessTokenExpiration      int64 = 2
-	minRefreshTokenExpiration     int64 = 1
-	defaultRefreshTokenExpiration int64 = 6
-	maxRefreshTokenExpiration     int64 = 12
+	minAccessTokenExpiration           int64 = 1
+	defaultAccessTokenExpiration       int64 = 1
+	maxAccessTokenExpiration           int64 = 2
+	minRefreshTokenExpiration          int64 = 1
+	defaultRefreshTokenExpiration      int64 = 6
+	maxRefreshTokenExpiration          int64 = 12
+	minIntermediateTokenExpiration     int64 = 1
+	defaultIntermediateTokenExpiration int64 = 3
+	maxIntermediateTokenExpiration     int64 = 5
 )
 
 const (
@@ -108,6 +111,24 @@ func RefreshTokenExpiration() time.Duration {
 	}
 
 	return time.Duration(exp) * time.Hour
+}
+
+func IntermediateTokenExpiration() time.Duration {
+	exp, err := strconv.ParseInt(os.Getenv("JWT_INTERMEDIATE_TOKEN_EXPIRATION"), 10, 64)
+	if err != nil {
+		sentry.CaptureException(err)
+		exp = defaultIntermediateTokenExpiration
+	}
+
+	if exp < minIntermediateTokenExpiration {
+		exp = minIntermediateTokenExpiration
+	}
+
+	if exp > maxIntermediateTokenExpiration {
+		exp = maxIntermediateTokenExpiration
+	}
+
+	return time.Duration(exp) * time.Minute
 }
 
 func DefaultTimeZone() string {

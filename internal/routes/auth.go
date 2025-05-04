@@ -19,9 +19,12 @@ func RegisterAuthRoutes(g fiber.Router) {
 
 	// Private
 	g.Patch("/refresh", middlewares.AuthProtected(), middlewares.ValidateRefreshToken(), middlewares.CheckPermissions(), controllers.AuthRefresh)
+	g.Post("/mfa/verify", middlewares.AuthProtected(), middlewares.ValidateIntermediateToken(), middlewares.CheckPermissions(), controllers.AuthMFAVerify)
 
 	// Private
 	g.Use(middlewares.AuthProtected(), middlewares.ValidateAccessToken(), middlewares.CheckPermissions())
 	g.Post("/check", controllers.AuthCheck)
 	g.Post("/logout", controllers.AuthLogout)
+	g.Post("/mfa/enable", controllers.AuthMFAEnable)
+	g.Delete("/mfa/disable", controllers.AuthMFADisable)
 }

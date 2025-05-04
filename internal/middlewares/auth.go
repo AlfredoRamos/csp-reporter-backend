@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"alfredoramos.mx/csp-reporter/internal/jwt"
+	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
@@ -18,6 +20,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/pquerna/otp/totp"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -231,6 +234,83 @@ func ValidateRefreshToken() fiber.Handler {
 	}
 }
 
+func ValidateIntermediateToken() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		intermediateJWE := c.Locals(utils.IntermediateTokenContextKey()).(string)
+
+		if len(intermediateJWE) < 1 || len(c.Get("Authorization")) <= 7 {
+			return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidIntermediateToken",
+						Other: "Invalid intermediate token.",
+					},
+				}, c)},
+			})
+		}
+
+		jwe := c.Get("Authorization")[7:]
+
+		if len(jwe) < 1 {
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty intermediate token"))
+		}
+
+		if intermediateJWE != jwe {
+			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided intermediate token"))
+		}
+
+		intermediateClaims, err := utils.ParseJWEClaims(intermediateJWE)
+		if err != nil {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid intermediate token claims: %w", err))
+		}
+
+		if intermediateClaims.User.Type == nil || intermediateClaims.User.Type != nil && strings.EqualFold(*intermediateClaims.User.Type, "intermediate") {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid intermediate token type: %v", *intermediateClaims.User.Type))
+		}
+
+		if !utils.IsValidIssuer(intermediateClaims.Issuer) {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid intermediate token issuer: %v", intermediateClaims.Issuer))
+		}
+
+		isIntermediateRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("intermediate-tokens:revoked").Member(intermediateClaims.ID).Cache(), 5*time.Minute).AsBool()
+		if err != nil && !errors.Is(err, valkey.Nil) {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", intermediateClaims.ID, err))
+		}
+
+		if len(intermediateClaims.ID) < 1 || isIntermediateRevoked {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("the intermediate token is invalid or revoked '%v'", intermediateClaims.ID))
+		}
+
+		now := time.Now().In(utils.DefaultLocation())
+
+		if now.Before(intermediateClaims.IssuedAt.Time()) {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid issued at date: %v", intermediateClaims.IssuedAt.Time()))
+		}
+
+		if now.Before(intermediateClaims.NotBefore.Time()) {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid not before date: %v", intermediateClaims.NotBefore.Time()))
+		}
+
+		if now.After(intermediateClaims.Expiry.Time()) {
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrExpiredAccessToken)
+		}
+
+		if sub, err := uuid.Parse(intermediateClaims.Subject); err != nil || !utils.IsValidUuid(sub) || intermediateClaims.User.ID != sub {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid subject: %w", err))
+		}
+
+		if !helpers.UserExists(intermediateClaims.User.ID, intermediateClaims.User.Email) {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid user: [%s] %v", intermediateClaims.User.ID, intermediateClaims.User.Email))
+		}
+
+		if !intermediateClaims.User.MFAEnabled {
+			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid MFA status: %v", intermediateClaims.User.MFAEnabled))
+		}
+
+		return c.Next()
+	}
+}
+
 func jwtError(c *fiber.Ctx, status int, err error) error { //nolint:unparam
 	if err != nil {
 		sentry.CaptureException(err)
@@ -315,4 +395,37 @@ func AuthLimiter() fiber.Handler {
 	}
 
 	return limiter.New(cfg)
+}
+
+func ValidateMFA() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := helpers.GetUserID(c)
+		user := &models.User{ID: userID}
+		if err := app.DB().Where(&user).First(&user).Error; err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
+				"error": []string{app.Translate(&i18n.LocalizeConfig{
+					DefaultMessage: &i18n.Message{
+						ID:    "ErrorInvalidUserData",
+						Other: "The user data is invalid.",
+					},
+				}, c)},
+			})
+		}
+
+		if user.MFAEnabled {
+			mfaCode := c.FormValue("mfa_code")
+			if !totp.Validate(mfaCode, *user.MFASecret) {
+				return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
+					"error": []string{app.Translate(&i18n.LocalizeConfig{
+						DefaultMessage: &i18n.Message{
+							ID:    "ErrorInvalidMFACode",
+							Other: "Invalid multi-factor authentication code.",
+						},
+					}, c)},
+				})
+			}
+		}
+
+		return c.Next()
+	}
 }

@@ -42,11 +42,13 @@ type argon2Config struct {
 }
 
 type UserClaimData struct {
-	ID        uuid.UUID `json:"id"`
-	FirstName *string   `json:"first_name,omitempty"`
-	LastName  *string   `json:"last_name,omitempty"`
-	Email     string    `json:"email"`
-	Roles     []string  `json:"roles"`
+	ID         uuid.UUID `json:"id"`
+	FirstName  *string   `json:"first_name,omitempty"`
+	LastName   *string   `json:"last_name,omitempty"`
+	Email      string    `json:"email"`
+	Roles      []string  `json:"roles"`
+	MFAEnabled bool      `json:"mfa_enabled"`
+	Type       *string   `json:"type,omitempty"`
 }
 
 type CustomJwtClaims struct {
@@ -100,6 +102,17 @@ func RefreshTokenContextKey() string {
 
 	if len(ctxKey) < 1 {
 		ctxKey = "refresh_token"
+	}
+
+	return ctxKey
+}
+
+func IntermediateTokenContextKey() string {
+	ctxKey := os.Getenv("JWT_INTERMEDIATE_TOKEN_CONTEXT_KEY")
+	ctxKey = strings.TrimSpace(ctxKey)
+
+	if len(ctxKey) < 1 {
+		ctxKey = "intermediate_token"
 	}
 
 	return ctxKey
