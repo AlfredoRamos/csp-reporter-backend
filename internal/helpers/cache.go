@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/valkey-io/valkey-go"
 )
@@ -17,6 +18,8 @@ const (
 )
 
 func PurgeCachePattern(pattern string) error {
+	pattern = utils.CacheKey(pattern)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	cursor := uint64(0)
@@ -25,7 +28,7 @@ func PurgeCachePattern(pattern string) error {
 		select {
 		case <-ctx.Done():
 			slog.Warn(fmt.Sprintf("Cache purge timeout: %v", ctx.Err()))
-			break
+			return ctx.Err()
 		default:
 			// Continue
 		}
@@ -40,12 +43,7 @@ func PurgeCachePattern(pattern string) error {
 		cursor = result.Cursor
 
 		for i := 0; i < len(result.Elements); i += int(batchSize) {
-			end := i + int(batchSize)
-
-			if end > len(result.Elements) {
-				end = len(result.Elements)
-			}
-
+			end := min(i+int(batchSize), len(result.Elements))
 			batch := result.Elements[i:end]
 
 			cmds := make(valkey.Commands, 0, len(batch))

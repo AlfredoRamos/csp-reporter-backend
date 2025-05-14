@@ -24,7 +24,8 @@ func IsAllowedDomain(d string) bool {
 		return false
 	}
 
-	cachedDomain, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(fmt.Sprintf("domain:%s", domain)).Cache(), 5*time.Minute).ToString()
+	cacheKey := utils.CacheKey(fmt.Sprintf("domain:%s", domain))
+	cachedDomain, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached domain: %v", err))
@@ -49,7 +50,7 @@ func IsAllowedDomain(d string) bool {
 	}
 
 	if utils.IsValidUuid(site.ID) {
-		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(fmt.Sprintf("domain:%s", domain)).Value(site.ID.String()).Ex(time.Hour).Build()).Error(); err != nil {
+		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(site.ID.String()).Ex(time.Hour).Build()).Error(); err != nil {
 			sentry.CaptureException(err)
 			slog.Error(fmt.Sprintf("Could not save user to cache: %v", err))
 		}
