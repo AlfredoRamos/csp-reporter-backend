@@ -219,7 +219,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 		})
 	}
 
-	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
+	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshJWEClaims.ID, err))
@@ -291,8 +291,8 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	errs := []error{}
 	cmds := valkey.Commands{
-		app.Cache().B().Sadd().Key("access-tokens:revoked").Member(accessJWEClaims.ID).Build(),
-		app.Cache().B().Sadd().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(utils.CacheKey("access-tokens:revoked")).Member(accessJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Build(),
 	}
 
 	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {
@@ -656,8 +656,8 @@ func AuthLogout(c *fiber.Ctx) error {
 
 	errs := []error{}
 	cmds := valkey.Commands{
-		app.Cache().B().Sadd().Key("access-tokens:revoked").Member(accessJWEClaims.ID).Build(),
-		app.Cache().B().Sadd().Key("refresh-tokens:revoked").Member(refreshJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(utils.CacheKey("access-tokens:revoked")).Member(accessJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Build(),
 	}
 
 	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {

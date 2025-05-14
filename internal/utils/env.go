@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -26,6 +27,18 @@ const (
 	ProductionEnv  string = "production"
 	DevelopmentEnv string = "development"
 )
+
+func AppKey() []byte {
+	key := strings.TrimSpace(os.Getenv("APP_KEY"))
+
+	if len(key) < 1 {
+		err := errors.New("invalid application key")
+		sentry.CaptureException(err)
+		panic(err.Error())
+	}
+
+	return []byte(key)
+}
 
 func AppEnv() string {
 	e := strings.TrimSpace(os.Getenv("APP_ENV"))

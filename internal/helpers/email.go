@@ -215,7 +215,8 @@ func GetSuperAdminEmails() []string {
 	e := []string{}
 
 	// Try to load from cache
-	ce, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key("email:superadmin:list").Cache(), 5*time.Minute).ToString()
+	cacheKey := utils.CacheKey("email:superadmin:list")
+	ce, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Warn(fmt.Sprintf("Could not get cached superadministrator email list: %v", err))
@@ -238,14 +239,16 @@ func GetSuperAdminEmails() []string {
 		slog.Error(fmt.Sprintf("Could not get superadministrator emails: %v", err))
 	}
 
-	re, err := json.Marshal(e)
-	if err != nil {
-		slog.Error(fmt.Sprintf("Could not serialize superadministrator email list for cache: %v", err))
-	}
+	if len(e) > 0 {
+		re, err := json.Marshal(e)
+		if err != nil {
+			slog.Error(fmt.Sprintf("Could not serialize superadministrator email list for cache: %v", err))
+		}
 
-	if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key("email:superadmin:list").Value(string(re)).Ex(15*time.Minute).Build()).Error(); err != nil {
-		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not save superadministrator email list to cache: %v", err))
+		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(string(re)).Ex(15*time.Minute).Build()).Error(); err != nil {
+			sentry.CaptureException(err)
+			slog.Error(fmt.Sprintf("Could not save superadministrator email list to cache: %v", err))
+		}
 	}
 
 	return e
