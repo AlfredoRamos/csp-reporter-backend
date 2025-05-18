@@ -16,7 +16,7 @@ require (
 	github.com/hibiken/asynq v0.25.1
 	github.com/joho/godotenv v1.5.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
-	github.com/valkey-io/valkey-go v1.0.59
+	github.com/valkey-io/valkey-go v1.0.60
 	github.com/wneessen/go-mail v0.6.2
 	github.com/wneessen/go-mail-middleware v0.0.9
 	golang.org/x/crypto v0.38.0
@@ -35,7 +35,7 @@ require (
 	github.com/emersion/go-msgauth v0.7.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.7.4 // indirect
+	github.com/jackc/pgx/v5 v5.7.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
