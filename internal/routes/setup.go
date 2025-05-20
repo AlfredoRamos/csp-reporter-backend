@@ -102,7 +102,7 @@ func SetupRoutes(app *fiber.App) {
 	}
 
 	compressConfig := compress.Config{
-		Level: compress.LevelBestSpeed,
+		Level: compress.LevelBestCompression,
 	}
 
 	// Overwrite configuration in development environment
