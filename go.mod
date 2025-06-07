@@ -16,7 +16,7 @@ require (
 	github.com/hibiken/asynq v0.25.1
 	github.com/joho/godotenv v1.5.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
-	github.com/valkey-io/valkey-go v1.0.60
+	github.com/valkey-io/valkey-go v1.0.61
 	github.com/wneessen/go-mail v0.6.2
 	github.com/wneessen/go-mail-middleware v0.0.9
 	golang.org/x/crypto v0.39.0
@@ -44,7 +44,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
-	github.com/redis/go-redis/v9 v9.9.0 // indirect
+	github.com/redis/go-redis/v9 v9.10.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
@@ -53,6 +53,6 @@ require (
 	github.com/valyala/fasthttp v1.62.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
