@@ -1,5 +1,5 @@
 # ---[ Arguments ]---
-ARG ALPINE_VERSION=3.21
+ARG ALPINE_VERSION=3.22
 ARG GO_VERSION=1.24-alpine
 
 # ---[ Backend ]---
