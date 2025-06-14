@@ -10,9 +10,9 @@ Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GO
 
 ## Requirements
 
-- [Go](https://go.dev/dl/) >= 1.24.1
+- [Go](https://go.dev/dl/) >= 1.24.4
 - [PostgreSQL](https://www.postgresql.org/download/) >= 17.2
-- [Valkey](https://valkey.io/download/) >= 8.0
+- [Valkey](https://valkey.io/download/) >= 8.1
 
 ### VSCode extensions
 
