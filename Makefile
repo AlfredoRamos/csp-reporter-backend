@@ -71,8 +71,7 @@ clean:
 
 ## docker-build: build Docker image
 docker-build:
-	sudo docker build --compress --force-rm --pull --rm -t "${docker_image}" .
-#	sudo docker buildx build --compress --pull --tag "${docker_image}" .
+	sudo docker buildx build --compress --pull --tag "${docker_image}" .
 
 ## docker-push: publish Docker image
 docker-push:
