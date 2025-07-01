@@ -12,7 +12,7 @@ docker_image::=alfredoramos/csp-reporter-backend:latest
 ## help: print this help message
 help:
 	@echo 'Usage:'
-	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /'
 
 ## deps: install dependencies
 deps:
@@ -71,7 +71,7 @@ clean:
 
 ## docker-build: build Docker image
 docker-build:
-	sudo docker buildx build --compress --pull --tag "${docker_image}" .
+	sudo docker buildx build --output type=image,compression=zstd --pull --tag "${docker_image}" .
 
 ## docker-push: publish Docker image
 docker-push:
