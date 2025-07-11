@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
@@ -24,29 +24,19 @@ var (
 
 func DB() *gorm.DB {
 	onceDB.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("DB_PORT"))
-		if err != nil {
-			sentry.CaptureException(err)
-			port = 5432
-			slog.Error(
-				"Invalid database port",
-				slog.Int("fallback", port),
-				slog.Any("error", err),
-			)
-		}
-
+		port := env.Int("DB_PORT", 5432)
 		dsn := fmt.Sprintf(
 			"postgres://%[4]s:%[5]s@%[1]s:%[2]d/%[3]s",
-			os.Getenv("DB_HOST"),
+			env.String("DB_HOST", ""),
 			port,
-			os.Getenv("DB_NAME"),
-			os.Getenv("DB_USER"),
-			os.Getenv("DB_PASS"),
+			env.String("DB_NAME", ""),
+			env.String("DB_USER", ""),
+			env.String("DB_PASS", ""),
 		)
 
 		logLevel := logger.Warn
 
-		if utils.IsDebug() {
+		if env.IsDebug() {
 			logLevel = logger.Info
 		}
 
@@ -110,9 +100,9 @@ func setupRoles() {
 }
 
 func setupSites() {
-	isProduction := utils.IsProduction()
+	isProduction := env.IsProduction()
 
-	domain, err := utils.GetApexDomain(os.Getenv("APP_DOMAIN"))
+	domain, err := utils.GetApexDomain(env.String("APP_DOMAIN", ""))
 	if err != nil && isProduction {
 		sentry.CaptureException(err)
 		slog.Error("Could not get app domain", slog.Any("error", err))
@@ -125,7 +115,7 @@ func setupSites() {
 
 	sites := []models.Site{
 		{
-			Title:  utils.ToStringPtr(os.Getenv("APP_NAME")),
+			Title:  utils.ToStringPtr(env.String("APP_NAME", "")),
 			Domain: domain,
 		},
 	}

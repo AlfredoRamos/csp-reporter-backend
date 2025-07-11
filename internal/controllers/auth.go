@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
-	"os"
 	"strings"
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/env"
 	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"alfredoramos.mx/csp-reporter/internal/models"
@@ -162,9 +162,9 @@ func AuthLogin(c *fiber.Ctx) error {
 		Name:        utils.RefreshTokenContextKey(),
 		Value:       refreshToken,
 		Path:        "/",
-		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Domain:      env.String("COOKIE_DOMAIN", ""),
 		Expires:     refreshClaims.Expiry.Time(),
-		Secure:      utils.IsProduction(),
+		Secure:      env.IsProduction(),
 		HTTPOnly:    true,
 		SameSite:    "Strict",
 		SessionOnly: true,
@@ -240,7 +240,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	}
 
 	now := time.Now().In(utils.DefaultLocation())
-	isProduction := utils.IsProduction()
+	isProduction := env.IsProduction()
 
 	if now.Before(refreshJWEClaims.IssuedAt.Time()) || now.Before(refreshJWEClaims.NotBefore.Time()) || now.After(refreshJWEClaims.Expiry.Time()) {
 		defer c.Locals(utils.AccessTokenContextKey(), nil)
@@ -248,7 +248,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 		c.Cookie(&fiber.Cookie{
 			Name:        utils.RefreshTokenContextKey(),
 			Path:        "/",
-			Domain:      os.Getenv("COOKIE_DOMAIN"),
+			Domain:      env.String("COOKIE_DOMAIN", ""),
 			Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
 			Secure:      isProduction,
 			HTTPOnly:    true,
@@ -355,7 +355,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 		Name:        utils.RefreshTokenContextKey(),
 		Value:       refreshToken,
 		Path:        "/",
-		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Domain:      env.String("COOKIE_DOMAIN", ""),
 		Expires:     refreshClaims.Expiry.Time(),
 		Secure:      isProduction,
 		HTTPOnly:    true,
@@ -466,7 +466,7 @@ func AuthRegister(c *fiber.Ctx) error {
 		}, c))
 	}
 
-	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
+	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); env.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
 
 		msg := ""
@@ -649,9 +649,9 @@ func AuthLogout(c *fiber.Ctx) error {
 	c.Cookie(&fiber.Cookie{
 		Name:        utils.RefreshTokenContextKey(),
 		Path:        "/",
-		Domain:      os.Getenv("COOKIE_DOMAIN"),
+		Domain:      env.String("COOKIE_DOMAIN", ""),
 		Expires:     time.Now().In(utils.DefaultLocation()).Add(-1 * time.Hour),
-		Secure:      utils.IsProduction(),
+		Secure:      env.IsProduction(),
 		HTTPOnly:    true,
 		SameSite:    "Strict",
 		SessionOnly: true,
@@ -926,7 +926,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 		}, c))
 	}
 
-	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); utils.IsProduction() && !strong && err != nil {
+	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); env.IsProduction() && !strong && err != nil {
 		sentry.CaptureException(err)
 
 		msg := ""

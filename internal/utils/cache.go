@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"log/slog"
-	"os"
 	"strings"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/getsentry/sentry-go"
 	"golang.org/x/crypto/blake2s"
 )
@@ -42,17 +42,17 @@ func CacheKey(key string) string {
 		return ""
 	}
 
-	appName := os.Getenv("APP_NAME")
-	appEnv := AppEnv()
+	appName := env.String("APP_NAME", "")
+	appEnv := env.AppEnv()
 
-	prefix, err := Blake2s128Hash(appName, AppKey())
+	prefix, err := Blake2s128Hash(appName, env.AppKey())
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error("Error generating cache key prefix", slog.Any("error", err))
 		return key
 	}
 
-	if !IsProduction() {
+	if !env.IsProduction() {
 		prefix += ":" + appEnv
 	}
 

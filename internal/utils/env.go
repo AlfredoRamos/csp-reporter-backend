@@ -1,15 +1,13 @@
 package utils
 
 import (
-	"errors"
 	"log/slog"
-	"os"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 	_ "time/tzdata"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/getsentry/sentry-go"
 )
 
@@ -22,56 +20,8 @@ const (
 	maxRefreshTokenExpiration     int64 = 12
 )
 
-const (
-	ProductionEnv  string = "production"
-	DevelopmentEnv string = "development"
-)
-
-func AppKey() []byte {
-	key := strings.TrimSpace(os.Getenv("APP_KEY"))
-
-	if len(key) < 1 {
-		err := errors.New("invalid application key")
-		sentry.CaptureException(err)
-		panic(err.Error())
-	}
-
-	return []byte(key)
-}
-
-func AppEnv() string {
-	e := strings.TrimSpace(os.Getenv("APP_ENV"))
-
-	switch {
-	case len(e) < 1:
-		e = ProductionEnv
-		slog.Warn("Invalid environment", slog.String("fallback", e))
-	case strings.EqualFold(e, ProductionEnv), strings.EqualFold(e, DevelopmentEnv):
-		// * Valid environment
-	default:
-		e = DevelopmentEnv
-		slog.Warn("Unknown environment", slog.String("fallback", e))
-	}
-
-	return e
-}
-
-func IsProduction() bool {
-	return strings.EqualFold(AppEnv(), ProductionEnv)
-}
-
-func IsDebug() bool {
-	isDebug, err := strconv.ParseBool(os.Getenv("APP_DEBUG"))
-	if err != nil {
-		sentry.CaptureException(err)
-		isDebug = false
-	}
-
-	return isDebug
-}
-
 func SupportEmail() string {
-	e := os.Getenv("SUPPORT_EMAIL")
+	e := env.String("SUPPORT_EMAIL", "")
 
 	if len(e) < 1 {
 		slog.Error("Support email is empty.")
@@ -87,49 +37,23 @@ func SupportEmail() string {
 }
 
 func AccessTokenExpiration() time.Duration {
-	exp, err := strconv.ParseInt(os.Getenv("JWT_ACCESS_TOKEN_EXPIRATION"), 10, 64)
-	if err != nil {
-		sentry.CaptureException(err)
-		exp = defaultAccessTokenExpiration
-	}
-
-	if exp < minAccessTokenExpiration {
-		exp = minAccessTokenExpiration
-	}
-
-	if exp > maxAccessTokenExpiration {
-		exp = maxAccessTokenExpiration
-	}
+	exp := env.Int64("JWT_ACCESS_TOKEN_EXPIRATION", defaultAccessTokenExpiration)
+	exp = max(exp, minAccessTokenExpiration)
+	exp = min(exp, maxAccessTokenExpiration)
 
 	return time.Duration(exp) * time.Hour
 }
 
 func RefreshTokenExpiration() time.Duration {
-	exp, err := strconv.ParseInt(os.Getenv("JWT_REFRESH_TOKEN_EXPIRATION"), 10, 64)
-	if err != nil {
-		sentry.CaptureException(err)
-		exp = defaultRefreshTokenExpiration
-	}
-
-	if exp < minRefreshTokenExpiration {
-		exp = minRefreshTokenExpiration
-	}
-
-	if exp > maxRefreshTokenExpiration {
-		exp = maxRefreshTokenExpiration
-	}
+	exp := env.Int64("JWT_REFRESH_TOKEN_EXPIRATION", defaultRefreshTokenExpiration)
+	exp = max(exp, minRefreshTokenExpiration)
+	exp = min(exp, maxRefreshTokenExpiration)
 
 	return time.Duration(exp) * time.Hour
 }
 
 func DefaultTimeZone() string {
-	tz := os.Getenv("TZ")
-	if len(tz) < 1 {
-		tz = "UTC"
-		slog.Warn("Time zone not set", slog.String("fallback", tz))
-	}
-
-	return tz
+	return env.String("TZ", "UTC")
 }
 
 func DefaultLocation() *time.Location {
@@ -138,6 +62,7 @@ func DefaultLocation() *time.Location {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		sentry.CaptureException(err)
+		slog.Warn("Error setting location", slog.String("fallback", loc.String()))
 		return time.Now().Location()
 	}
 
@@ -145,7 +70,7 @@ func DefaultLocation() *time.Location {
 }
 
 func InternalStaffEmail() string {
-	e := os.Getenv("INTERNAL_STAFF_EMAIL")
+	e := env.String("INTERNAL_STAFF_EMAIL", "")
 
 	if len(e) < 1 {
 		slog.Error("Internal support email is empty")
@@ -161,31 +86,17 @@ func InternalStaffEmail() string {
 }
 
 func DefaultLang() string {
-	l := os.Getenv("I18N_DEFAULT_LANG")
-
-	if len(l) < 1 {
-		l = "en"
-		slog.Warn("Empty email language", slog.String("fallback", l))
-	}
-
-	return l
+	return env.String("I18N_DEFAULT_LANG", "en")
 }
 
 func DkimSelector() string {
-	s := os.Getenv("EMAIL_DKIM_SELECTOR")
-
-	if len(s) < 1 {
-		s = "mail"
-		slog.Warn("Empty DKIM selector", slog.String("fallback", s))
-	}
-
-	return s
+	return env.String("EMAIL_DKIM_SELECTOR", "mail")
 }
 
 func CorsOrigins() string {
-	origins := []string{os.Getenv("APP_DOMAIN")}
+	origins := []string{env.String("APP_DOMAIN", "")}
 
-	orStr := strings.TrimSpace(os.Getenv("APP_CORS_ORIGINS"))
+	orStr := strings.TrimSpace(env.String("APP_CORS_ORIGINS", ""))
 
 	if len(orStr) < 1 {
 		return strings.Join(origins, ",")

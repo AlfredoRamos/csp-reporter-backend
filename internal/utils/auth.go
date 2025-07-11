@@ -10,10 +10,9 @@ import (
 	"math/big"
 	"net"
 	"net/mail"
-	"os"
-	"strconv"
 	"strings"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/jwt"
 	"github.com/ccojocar/zxcvbn-go"
@@ -84,7 +83,7 @@ func (c CustomJwtClaims) Validate() error {
 }
 
 func AccessTokenContextKey() string {
-	ctxKey := os.Getenv("JWT_ACCESS_TOKEN_CONTEXT_KEY")
+	ctxKey := env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY", "")
 	ctxKey = strings.TrimSpace(ctxKey)
 
 	if len(ctxKey) < 1 {
@@ -95,7 +94,7 @@ func AccessTokenContextKey() string {
 }
 
 func RefreshTokenContextKey() string {
-	ctxKey := os.Getenv("JWT_REFRESH_TOKEN_CONTEXT_KEY")
+	ctxKey := env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY", "")
 	ctxKey = strings.TrimSpace(ctxKey)
 
 	if len(ctxKey) < 1 {
@@ -316,19 +315,9 @@ func IsRealEmail(e string) bool {
 }
 
 func MinimumPasswordLength() int {
-	passLen, err := strconv.Atoi(os.Getenv("MIN_PASSWORD_LENGTH"))
-	if err != nil {
-		sentry.CaptureException(err)
-		passLen = defaultPassLen
-	}
-
-	if passLen < minPassLen {
-		passLen = minPassLen
-	}
-
-	if passLen > maxPassLen {
-		passLen = maxPassLen
-	}
+	passLen := env.Int("MIN_PASSWORD_LENGTH", defaultPassLen)
+	passLen = max(passLen, minPassLen)
+	passLen = min(passLen, maxPassLen)
 
 	return passLen
 }
@@ -352,13 +341,8 @@ func ValidatePasswordStrength(p string, i []string) (bool, error) {
 }
 
 func RandomPassword(n int) (string, error) {
-	if n < MinimumPasswordLength() {
-		n = defaultPassLen
-	}
-
-	if n > maxPassLen {
-		n = maxPassLen
-	}
+	n = max(n, defaultPassLen)
+	n = min(n, maxPassLen)
 
 	const charset string = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*_=+-"
 	password := make([]byte, n)
@@ -377,9 +361,9 @@ func RandomPassword(n int) (string, error) {
 }
 
 func GetJwtIssuer() (string, error) {
-	d := os.Getenv("APP_DOMAIN")
+	d := env.String("APP_DOMAIN", "")
 
-	if !IsProduction() {
+	if !env.IsProduction() {
 		return GetDomainHostname(d)
 	}
 
@@ -407,11 +391,5 @@ func IsValidIssuer(iss string) bool {
 }
 
 func CanRegisterUsers() bool {
-	canRegister, err := strconv.ParseBool(os.Getenv("ENABLE_USER_REGISTER"))
-	if err != nil {
-		sentry.CaptureException(err)
-		canRegister = true
-	}
-
-	return canRegister
+	return env.Bool("ENABLE_USER_REGISTER", false)
 }

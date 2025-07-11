@@ -2,11 +2,10 @@ package routes
 
 import (
 	"log/slog"
-	"os"
-	"strconv"
 	"time"
 
 	cspapp "alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	sentryfiber "github.com/getsentry/sentry-go/fiber"
@@ -25,12 +24,12 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	isProduction := utils.IsProduction()
+	isProduction := env.IsProduction()
 
 	sentryConfig := sentryfiber.Options{Timeout: 3 * time.Second}
 
 	recoverConfig := recover.Config{
-		EnableStackTrace: utils.IsDebug(),
+		EnableStackTrace: env.IsDebug(),
 	}
 
 	corsConfig := cors.Config{
@@ -40,11 +39,11 @@ func SetupRoutes(app *fiber.App) {
 	}
 
 	encryptedCookieConfig := encryptcookie.Config{
-		Key: os.Getenv("COOKIE_SECRET_KEY"),
+		Key: env.String("COOKIE_SECRET_KEY", ""),
 	}
 
 	sessionConfig := session.Config{
-		CookieDomain:      os.Getenv("COOKIE_DOMAIN"),
+		CookieDomain:      env.String("COOKIE_DOMAIN", ""),
 		CookiePath:        "/",
 		CookieSecure:      isProduction,
 		CookieHTTPOnly:    true,
@@ -55,7 +54,7 @@ func SetupRoutes(app *fiber.App) {
 	csrfConfig := csrf.Config{
 		KeyLookup:         "cookie:csrf_",
 		CookieName:        "csrf_",
-		CookieDomain:      os.Getenv("COOKIE_DOMAIN"),
+		CookieDomain:      env.String("COOKIE_DOMAIN", ""),
 		CookiePath:        "/",
 		CookieSecure:      isProduction,
 		CookieHTTPOnly:    true,
@@ -75,12 +74,7 @@ func SetupRoutes(app *fiber.App) {
 		},
 	}
 
-	maxRequests, err := strconv.Atoi(os.Getenv("LIMIT_REQUESTS_MAX"))
-	if err != nil {
-		sentry.CaptureException(err)
-		maxRequests = 100
-		slog.Warn("Invalid number of max requests", slog.Int("fallback", maxRequests))
-	}
+	maxRequests := env.Int("LIMIT_REQUESTS_MAX", 100)
 
 	limiterConfig := limiter.Config{
 		Max: maxRequests,
