@@ -3,11 +3,11 @@ package middlewares
 import (
 	"errors"
 	"log/slog"
-	"os"
 	"strconv"
 	"strings"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
@@ -31,11 +31,8 @@ type CaptchaResponse struct {
 
 func CaptchaProtected() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if !utils.IsProduction() {
-			disableEnv, err := strconv.ParseBool(os.Getenv("HCAPTCHA_DISABLE"))
-			if err != nil {
-				disableEnv = false
-			}
+		if !env.IsProduction() {
+			disableEnv := env.Bool("HCAPTCHA_DISABLE", false)
 
 			disableHeader, err := strconv.ParseBool(c.Get("X-Disable-Captcha"))
 			if err != nil {
@@ -99,8 +96,8 @@ func CaptchaProtected() fiber.Handler {
 		}
 
 		args := fiber.AcquireArgs()
-		args.Set("sitekey", os.Getenv("HCAPTCHA_SITE_KEY"))
-		args.Set("secret", os.Getenv("HCAPTCHA_SECRET_KEY"))
+		args.Set("sitekey", env.String("HCAPTCHA_SITE_KEY", ""))
+		args.Set("secret", env.String("HCAPTCHA_SECRET_KEY", ""))
 		args.Set("response", input.Response)
 		args.Set("remoteip", c.IP())
 
