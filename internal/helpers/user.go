@@ -25,7 +25,7 @@ func UserExists(id uuid.UUID, email string) bool {
 	cachedUser, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
-		slog.Warn(fmt.Sprintf("Could not get cached user: %v", err))
+		slog.Warn("Could not get cached user", slog.Any("error", err))
 	}
 
 	if len(cachedUser) > 0 && cachedUser == email {
@@ -40,7 +40,7 @@ func UserExists(id uuid.UUID, email string) bool {
 	if utils.IsValidUuid(user.ID) {
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(user.Email).Ex(time.Hour).Build()).Error(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not save user to cache: %v", err))
+			slog.Error("Could not save user to cache", slog.Any("error", err))
 		}
 
 		return true

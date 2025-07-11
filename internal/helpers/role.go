@@ -55,13 +55,13 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
-		slog.Warn(fmt.Sprintf("Could not get cached roles: %v", err))
+		slog.Warn("Could not get cached roles", slog.Any("error", err))
 	}
 
 	if len(cachedRoles) > 0 {
 		if err := json.Unmarshal([]byte(cachedRoles), &roles); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not decode cached roles: %v", err))
+			slog.Error("Could not decode cached roles", slog.Any("error", err))
 		}
 
 		return roles, nil
@@ -80,12 +80,12 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	if len(roles) > 0 {
 		rawRoles, err := json.Marshal(roles)
 		if err != nil {
-			slog.Error(fmt.Sprintf("Could not serialize roles for cache: %v", err))
+			slog.Error("Could not serialize roles for cache", slog.Any("error", err))
 		}
 
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not save roles to cache: %v", err))
+			slog.Error("Could not save roles to cache", slog.Any("error", err))
 		}
 	}
 
@@ -99,7 +99,7 @@ func HasPermission(id uuid.UUID, p string, m string) bool {
 
 	r, err := GetUserRoles(id)
 	if err != nil {
-		slog.Error(fmt.Sprintf("User roles error: %v", err))
+		slog.Error("User roles error", slog.Any("error", err))
 		r = []userRole{}
 	}
 
@@ -116,7 +116,7 @@ func HasPermission(id uuid.UUID, p string, m string) bool {
 	result, err := app.Auth().BatchEnforce(ps)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Enforce error: %v", err))
+		slog.Error("Enforce error", slog.Any("error", err))
 		return false
 	}
 

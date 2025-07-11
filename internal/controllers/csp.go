@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -27,7 +26,7 @@ func GetAllCSPReports(c *fiber.Ctx) error {
 func GetCSPReport(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {
-		slog.Error(fmt.Sprintf("Error parsing ID: %v", err))
+		slog.Error("Error parsing ID", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -62,7 +61,7 @@ func PostCSPReport(c *fiber.Ctx) error {
 	}, c)}})
 
 	if !slices.Contains(allowedMimeTypes, accept) {
-		slog.Error(fmt.Sprintf("The MIME type '%s' for the 'Accept' header is invalid.", accept))
+		slog.Error("The MIME type for the 'Accept' header is invalid", slog.String("mime-type", accept))
 		return defaultErr
 	}
 
@@ -73,18 +72,18 @@ func PostCSPReport(c *fiber.Ctx) error {
 	contentType := string(c.Request().Header.ContentType())
 
 	if !slices.Contains(allowedMimeTypes, contentType) {
-		slog.Error(fmt.Sprintf("The MIME type '%s' of the request is invalid.", contentType))
+		slog.Error("The MIME type of the request is invalid", slog.String("mime-type", contentType))
 		return defaultErr
 	}
 
 	input := helpers.CspReport{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 		return defaultErr
 	}
 
 	if err := tasks.NewCspReport(input); err != nil {
-		slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
+		slog.Error("Error saving CSP Report", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorCSPReportCreation",

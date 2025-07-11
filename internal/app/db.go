@@ -28,7 +28,11 @@ func DB() *gorm.DB {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 5432
-			slog.Error(fmt.Sprintf("Invalid database port. Falling back to %d: %v", port, err))
+			slog.Error(
+				"Invalid database port",
+				slog.Int("fallback", port),
+				slog.Any("error", err),
+			)
 		}
 
 		dsn := fmt.Sprintf(
@@ -53,13 +57,13 @@ func DB() *gorm.DB {
 		})
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not connect to PostgreSQL: %v", err))
+			slog.Error("Could not connect to PostgreSQL", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := database.Exec("CREATE EXTENSION IF NOT EXISTS unaccent").Error; err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not load unaccent extension: %v", err))
+			slog.Error("Could not load unaccent extension", slog.Any("error", err))
 		}
 
 		if err := database.AutoMigrate(
@@ -72,7 +76,7 @@ func DB() *gorm.DB {
 			&models.Site{},
 		); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not migrate models: %v", err))
+			slog.Error("Could not migrate models", slog.Any("error", err))
 			os.Exit(1)
 		}
 
@@ -95,7 +99,11 @@ func setupRoles() {
 		role := &models.Role{}
 
 		if err := DB().Where(&models.Role{Name: r.Name}).FirstOrCreate(&role).Error; err != nil {
-			slog.Error(fmt.Sprintf("Could not create %s role: %v", r.Name, err))
+			slog.Error(
+				"Could not create role",
+				slog.String("name", r.Name),
+				slog.Any("error", err),
+			)
 			continue
 		}
 	}
@@ -107,7 +115,7 @@ func setupSites() {
 	domain, err := utils.GetApexDomain(os.Getenv("APP_DOMAIN"))
 	if err != nil && isProduction {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not get app domain: %v", err))
+		slog.Error("Could not get app domain", slog.Any("error", err))
 		return
 	}
 
@@ -128,7 +136,11 @@ func setupSites() {
 		for _, orig := range origins {
 			domain, err := utils.GetApexDomain(orig)
 			if err != nil {
-				slog.Error(fmt.Sprintf("Could not get domain from %s: %v", orig, err))
+				slog.Error(
+					"Could not get apex domain",
+					slog.String("origin", orig),
+					slog.Any("error", err),
+				)
 				continue
 			}
 
@@ -140,7 +152,7 @@ func setupSites() {
 		if err := DB().Model(&models.Site{}).
 			Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", s.Domain)).
 			FirstOrCreate(&s).Error; err != nil {
-			slog.Error(fmt.Sprintf("Could not create default site: %v", err))
+			slog.Error("Could not create default site", slog.Any("error", err))
 		}
 	}
 }

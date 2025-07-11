@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -21,27 +20,35 @@ func Auth() *casbin.SyncedEnforcer {
 		modelFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "casbin", "model.conf")))
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not read Casbin model file at %s: %v", modelFile, err))
+			slog.Error(
+				"Could not read Casbin model",
+				slog.String("file", modelFile),
+				slog.Any("error", err),
+			)
 			os.Exit(1)
 		}
 
 		policyFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "casbin", "policy.csv")))
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not read Casbin policy file at %s: %v", policyFile, err))
+			slog.Error(
+				"Could not read Casbin policy",
+				slog.String("file", policyFile),
+				slog.Any("error", err),
+			)
 			os.Exit(1)
 		}
 
 		e, err := casbin.NewSyncedEnforcer(modelFile, policyFile)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not create enforcer: %v", err))
+			slog.Error("Could not create enforcer", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := e.LoadPolicy(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not load policy: %v", err))
+			slog.Error("Could not load policy", slog.Any("error", err))
 			os.Exit(1)
 		}
 

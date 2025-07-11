@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -66,7 +65,7 @@ func SetupRoutes(app *fiber.App) {
 		CookieSameSite:    "Strict",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("CSRF error: %v", err))
+			slog.Error("CSRF error", slog.Any("error", err))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{"error": []string{cspapp.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
 					ID:    "ErrorEndpointPermissions",
@@ -80,7 +79,7 @@ func SetupRoutes(app *fiber.App) {
 	if err != nil {
 		sentry.CaptureException(err)
 		maxRequests = 100
-		slog.Warn(fmt.Sprintf("Invalid number of max requests, using %d.", maxRequests))
+		slog.Warn("Invalid number of max requests", slog.Int("fallback", maxRequests))
 	}
 
 	limiterConfig := limiter.Config{

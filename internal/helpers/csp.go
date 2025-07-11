@@ -35,7 +35,7 @@ func NewCspReport(d CspReport) error {
 	domain, err := utils.GetApexDomain(d.Report.DocumentURI)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not get the document URI hostname: %v", err))
+		slog.Error("Could not get the document URI hostname", slog.Any("error", err))
 		return err
 	}
 
@@ -50,7 +50,7 @@ func NewCspReport(d CspReport) error {
 		if err := tx.Model(&models.Site{}).
 			Where("unaccent(lower(domain)) = unaccent(lower(@domain))", sql.Named("domain", domain)).
 			First(&site).Error; err != nil {
-			slog.Error(fmt.Sprintf("Error getting site: %v", err))
+			slog.Error("Error getting site", slog.Any("error", err))
 			return err
 		}
 
@@ -70,13 +70,13 @@ func NewCspReport(d CspReport) error {
 			ColumnNumber:       d.Report.ColumnNumber,
 		}
 		if err := tx.Where(&report).Preload("Site").FirstOrCreate(&report).Error; err != nil {
-			slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
+			slog.Error("Error saving CSP Report", slog.Any("error", err))
 			return err
 		}
 
 		return nil
 	}); err != nil {
-		slog.Error(fmt.Sprintf("Error saving CSP Report: %v", err))
+		slog.Error("Error saving CSP Report", slog.Any("error", err))
 		return err
 	}
 

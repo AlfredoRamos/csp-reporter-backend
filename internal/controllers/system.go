@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
@@ -17,12 +16,12 @@ import (
 func PurgeCache(c *fiber.Ctx) error {
 	if err := tasks.NewPurgeCachePattern("roles:*"); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error purging user roles from cache: %v", err))
+		slog.Error("Error purging user roles from cache", slog.Any("error", err))
 	}
 
 	if err := tasks.NewPurgeCachePattern("user:*"); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error purging user info from cache: %v", err))
+		slog.Error("Error purging user info from cache", slog.Any("error", err))
 	}
 
 	// ! Do not purge tokens
@@ -38,7 +37,7 @@ func PurgeCache(c *fiber.Ctx) error {
 	}
 
 	if len(errs) > 0 {
-		slog.Error(fmt.Sprintf("Error purging cache: %v", errors.Join(errs...)))
+		slog.Error("Error purging cache", slog.Any("error", errors.Join(errs...)))
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})

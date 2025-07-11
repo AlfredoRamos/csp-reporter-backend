@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -28,7 +27,7 @@ func NewTasksFileProvider() *FileBasedConfigProvider {
 	configFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "tasks", "config.yml")))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not read tasks config file at %s", configFile))
+		slog.Error("Could not read tasks config", slog.String("file", configFile))
 		return &FileBasedConfigProvider{}
 	}
 
@@ -41,14 +40,14 @@ func (p *FileBasedConfigProvider) GetConfigs() ([]*asynq.PeriodicTaskConfig, err
 	data, err := os.ReadFile(p.Filename)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not read tasks config file: %v", err))
+		slog.Error("Could not read tasks config file", slog.Any("error", err))
 		return nil, err
 	}
 
 	c := &PeriodicTaskConfigContainer{}
 	if err := yaml.Unmarshal(data, &c); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not parse tasks config file: %v", err))
+		slog.Error("Could not parse tasks config file", slog.Any("error", err))
 		return nil, err
 	}
 

@@ -31,7 +31,7 @@ func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not load .env file: %v", err))
+		slog.Error("Could not load .env file", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -48,12 +48,12 @@ func main() {
 		db, err := app.DB().DB()
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not get database interface: %v", err))
+			slog.Error("Could not get database interface", slog.Any("error", err))
 		}
 
 		if err := db.Close(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Error closing database connection: %v", err))
+			slog.Error("Error closing database connection", slog.Any("error", err))
 		}
 	}()
 
@@ -67,7 +67,7 @@ func main() {
 
 		if err := queue.Run(mux); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not run queue server: %v", err))
+			slog.Error("Could not run queue server", slog.Any("error", err))
 		}
 	}()
 	defer func() {
@@ -75,12 +75,12 @@ func main() {
 
 		if err := app.SMTP().Close(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not close SMTP server: %v", err))
+			slog.Error("Could not close SMTP server", slog.Any("error", err))
 		}
 
 		if err := tasks.AsynqClient().Close(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not close Asynq client: %v", err))
+			slog.Error("Could not close Asynq client", slog.Any("error", err))
 		}
 
 		tasks.AsynqServer().Shutdown()
@@ -95,7 +95,7 @@ func main() {
 
 		if err := manager.Run(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not run periodic tasks manager: %v", err))
+			slog.Error("Could not run periodic tasks manager", slog.Any("error", err))
 		}
 	}()
 	// defer tasks.AsynqPeriodicTaskManager().Shutdown()
@@ -105,7 +105,7 @@ func main() {
 		StrictRouting: true,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Application error handler: %v", err))
+			slog.Error("Application error handler", slog.Any("error", err))
 
 			code := fiber.StatusInternalServerError
 			msg := app.Translate(&i18n.LocalizeConfig{
@@ -138,13 +138,13 @@ func main() {
 
 		if err := http.Listen(os.Getenv("APP_ADDRESS")); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not start HTTP server: %v", err))
+			slog.Error("Could not start HTTP server", slog.Any("error", err))
 		}
 	}()
 
 	// Listen to signals
 	sig := <-sigChan
-	slog.Info(fmt.Sprintf("Received signal: %v", sig))
+	slog.Info("Received", slog.Any("signal", sig))
 
 	// Shutdown server
 	wg.Add(1)
@@ -153,11 +153,11 @@ func main() {
 
 		if err := http.Shutdown(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not close HTTP server: %v", err))
+			slog.Error("Could not close HTTP server", slog.Any("error", err))
 		}
 	}()
 
 	// Graceful shutdown
 	wg.Wait()
-	slog.Info("Gracefully shutting down the application.")
+	slog.Info("Gracefully shutting down the application")
 }

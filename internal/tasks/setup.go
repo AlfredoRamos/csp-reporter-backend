@@ -31,7 +31,11 @@ func AsynqClient() *asynq.Client {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
-			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
+			slog.Error(
+				"Invalid cache port",
+				slog.Int("fallback", port),
+				slog.Any("error", err),
+			)
 		}
 
 		client = asynq.NewClient(asynq.RedisClientOpt{
@@ -50,7 +54,11 @@ func AsynqServer() *asynq.Server {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
-			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
+			slog.Error(
+				"Invalid cache port",
+				slog.Int("fallback", port),
+				slog.Any("error", err),
+			)
 		}
 
 		server = asynq.NewServer(
@@ -91,7 +99,11 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = 6379
-			slog.Error(fmt.Sprintf("Invalid cache port. Falling back to %d: %v", port, err))
+			slog.Error(
+				"Invalid cache port",
+				slog.Int("fallback", port),
+				slog.Any("error", err),
+			)
 		}
 
 		taskManager, err = asynq.NewPeriodicTaskManager(asynq.PeriodicTaskManagerOpts{
@@ -108,7 +120,7 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 		})
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not create periodic task manager: %v", err))
+			slog.Error("Could not create periodic task manager", slog.Any("error", err))
 			os.Exit(1)
 		}
 	})
@@ -119,14 +131,24 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 func loggingMiddleware(h asynq.Handler) asynq.Handler {
 	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
 		start := time.Now()
-		slog.Info(fmt.Sprintf("Start processing [%s]", t.Type()))
+		slog.Info("Start processing task", slog.String("type", t.Type()))
 
 		if err := h.ProcessTask(ctx, t); err != nil {
-			sentry.CaptureException(fmt.Errorf("could not process task [%s] '%s': %w", t.Type(), t.Payload(), err))
+			sentry.CaptureException(err)
+			slog.Error(
+				"Could not process task",
+				slog.String("type", t.Type()),
+				slog.String("payload", string(t.Payload())),
+				slog.Any("error", err),
+			)
 			return err
 		}
 
-		slog.Info(fmt.Sprintf("Finished processing [%s]. Elapsed time: %v", t.Type(), time.Since(start)))
+		slog.Info(
+			"Finished processing task",
+			slog.String("type", t.Type()),
+			slog.Duration("duration", time.Since(start)),
+		)
 		return nil
 	})
 }

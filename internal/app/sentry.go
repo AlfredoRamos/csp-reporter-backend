@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -20,6 +19,6 @@ func SetupSentry() {
 		Environment:      utils.AppEnv(),
 	}); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Sentry initialization failed: %v", err))
+		slog.Error("Sentry initialization failed", slog.Any("error", err))
 	}
 }
