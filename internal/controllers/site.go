@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
@@ -29,7 +28,7 @@ func GetAllSites(c *fiber.Ctx) error {
 func PostSite(c *fiber.Ctx) error {
 	input := siteInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorInvalidSiteData",
@@ -42,7 +41,7 @@ func PostSite(c *fiber.Ctx) error {
 
 	d, err := utils.GetApexDomain(input.Domain)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Error getting apex domain: %v", err))
+		slog.Error("Error getting apex domain", slog.Any("error", err))
 		errs = utils.AddError(errs, "domain", app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorInvalidDomain",

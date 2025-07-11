@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -22,7 +21,11 @@ func SMTP() *mail.Client {
 		if err != nil {
 			sentry.CaptureException(err)
 			port = mail.DefaultPortTLS
-			slog.Warn(fmt.Sprintf("The SMTP port '%s' is invalid. The port %d will be used instead.", os.Getenv("EMAIL_PORT"), port))
+			slog.Warn(
+				"The SMTP port is invalid. Fallback port will be used instead",
+				slog.String("port", os.Getenv("EMAIL_PORT")),
+				slog.Int("fallback", port),
+			)
 		}
 
 		tlsPolicy := mail.TLSMandatory
@@ -49,7 +52,7 @@ func SMTP() *mail.Client {
 		)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not create email client: %v", err))
+			slog.Error("Could not create email client", slog.Any("error", err))
 			os.Exit(1)
 		}
 

@@ -44,7 +44,7 @@ func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opt
 	query, pointsNext, err := GetPaginationQuery(query, pointsNext, cursor, sortOrder, opts.TableAlias)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error paginating results: %v", err))
+		slog.Error("Error paginating results", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -56,7 +56,7 @@ func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opt
 	}
 
 	if err := query.Limit(limit + 1).Find(&items).Error; err != nil {
-		slog.Error(fmt.Sprintf("Error getting paginated results: %v", err))
+		slog.Error("Error getting paginated results", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -97,7 +97,7 @@ func GetPaginationQuery(query *gorm.DB, pointsNext bool, cursor string, sortOrde
 		decodedCursor, err := utils.DecodeCursor(cursor)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Error decoding cursor: %v", err))
+			slog.Error("Error decoding cursor", slog.Any("error", err))
 			return nil, pointsNext, err
 		}
 
@@ -173,7 +173,7 @@ func GetModelSchema(model any) *schema.Schema {
 	stmt := &gorm.Statement{DB: app.DB()}
 	if err := stmt.Parse(model); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not parse model: %v", err))
+		slog.Error("Could not parse model", slog.Any("error", err))
 		return nil
 	}
 

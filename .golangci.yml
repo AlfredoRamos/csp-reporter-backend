@@ -1,4 +1,4 @@
-version: "2"
+version: '2'
 run:
   modules-download-mode: readonly
 output:
@@ -37,6 +37,7 @@ linters:
     - sqlclosecheck
     - unparam
     - whitespace
+    - sloglint
   settings:
     cyclop:
       max-complexity: 30
@@ -103,6 +104,17 @@ linters:
     whitespace:
       multi-if: true
       multi-func: true
+    sloglint:
+      attr-only: true
+      static-msg: true
+      msg-style: capitalized
+      key-naming-case: kebab
+      args-on-sep-lines: true
+      forbidden-keys:
+        - time
+        - level
+        - msg
+        - source
   exclusions:
     generated: lax
     presets:

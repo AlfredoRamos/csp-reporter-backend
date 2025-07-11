@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
@@ -36,7 +35,7 @@ func GetAllInactiveUsers(c *fiber.Ctx) error {
 func UpdateUserActivation(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {
-		slog.Error(fmt.Sprintf("Error parsing ID: %v", err))
+		slog.Error("Error parsing ID", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -49,7 +48,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 
 	input := &userActivationInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -62,7 +61,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 
 	user := &models.User{ID: id}
 	if err := app.DB().Where(&user).First(&user).Error; err != nil {
-		slog.Error(fmt.Sprintf("Error getting user: %v", err))
+		slog.Error("Error getting user", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -107,24 +106,24 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 
 	if err := app.DB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&userActivation).Preload("User").First(&userActivation).Error; err != nil {
-			slog.Error(fmt.Sprintf("Error getting user account pending activation: %v", err))
+			slog.Error("Error getting user account pending activation", slog.Any("error", err))
 			return err
 		}
 
 		if err := tx.Model(&userActivation).Updates(&models.UserActivation{Approved: &approved, ReviewedByID: &userID}).Error; err != nil {
-			slog.Error(fmt.Sprintf("Error updating user account activation status: %v", err))
+			slog.Error("Error updating user account activation status", slog.Any("error", err))
 			return err
 		}
 
 		if err := tx.Where(&models.User{ID: userActivation.User.ID}).Updates(&models.User{Active: &approved}).Error; err != nil {
-			slog.Error(fmt.Sprintf("Error updating user account status: %v", err))
+			slog.Error("Error updating user account status", slog.Any("error", err))
 			return err
 		}
 
 		if approved {
 			role := &models.Role{}
 			if err := tx.Where("unaccent(lower(name)) = unaccent(lower(@name))", sql.Named("name", "viewer")).First(&role).Error; err != nil {
-				slog.Error(fmt.Sprintf("Error getting user role: %v", err))
+				slog.Error("Error getting user role", slog.Any("error", err))
 				return err
 			}
 
@@ -135,24 +134,24 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 				UpdatedByID: userID,
 			}
 			if err := tx.Where(&models.UserRole{UserID: userActivation.User.ID, RoleID: role.ID}).FirstOrCreate(&userRole).Error; err != nil {
-				slog.Error(fmt.Sprintf("Error assigning user role: %v", err))
+				slog.Error("Error assigning user role", slog.Any("error", err))
 				return err
 			}
 		} else {
 			if err := tx.Delete(&userActivation.User).Error; err != nil {
-				slog.Error(fmt.Sprintf("Error deleting user account: %v", err))
+				slog.Error("Error deleting user account", slog.Any("error", err))
 				return err
 			}
 
 			if err := tx.Where(&models.UserRole{UserID: userActivation.UserID}).Delete(&models.UserRole{}).Error; err != nil {
-				slog.Error(fmt.Sprintf("Error deleting user roles: %v", err))
+				slog.Error("Error deleting user roles", slog.Any("error", err))
 				return err
 			}
 		}
 
 		return nil
 	}); err != nil {
-		slog.Error(fmt.Sprintf("Error activating user account: %v", err))
+		slog.Error("Error activating user account", slog.Any("error", err))
 
 		return c.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{

@@ -234,7 +234,7 @@ func ValidateRefreshToken() fiber.Handler {
 func jwtError(c *fiber.Ctx, status int, err error) error { //nolint:unparam
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Access token error: %v", err))
+		slog.Error("Access token error", slog.Any("error", err))
 	}
 
 	if status < fiber.StatusBadRequest {

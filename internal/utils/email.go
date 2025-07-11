@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -15,7 +14,7 @@ func NewDkimMiddleware() *dkim.Middleware {
 	d, err := GetApexDomain(os.Getenv("APP_DOMAIN"))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not get application domain: %v", err))
+		slog.Error("Could not get application domain", slog.Any("error", err))
 		return &dkim.Middleware{}
 	}
 
@@ -30,21 +29,21 @@ func NewDkimMiddleware() *dkim.Middleware {
 	)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not create DKIM config: %v", err))
+		slog.Error("Could not create DKIM config", slog.Any("error", err))
 		return &dkim.Middleware{}
 	}
 
 	rsaKey, err := os.ReadFile(filepath.Clean(filepath.Join("internal", "keys", "dkim.key")))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not read private key for DKIM: %v", err))
+		slog.Error("Could not read private key for DKIM", slog.Any("error", err))
 		return &dkim.Middleware{}
 	}
 
 	mw, err := dkim.NewFromRSAKey(rsaKey, sc)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not create DKIM middleware: %v", err))
+		slog.Error("Could not create DKIM middleware", slog.Any("error", err))
 		return &dkim.Middleware{}
 	}
 

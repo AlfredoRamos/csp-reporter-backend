@@ -197,7 +197,12 @@ func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
 			fileSize := f.Size / mibMultiplier
 
 			if !utils.HasValidMimeType(f, validMIMETypes) || fileSize > maxFileSize {
-				slog.Warn(fmt.Sprintf("Ignoring invalid document: ['%s', '%s', %d MiB].", f.Filename, f.Header.Get("Content-Type"), fileSize))
+				slog.Warn(
+					"Ignoring invalid document: ['%s', '%s', %d MiB].",
+					slog.String("filename", f.Filename),
+					slog.String("content-type", f.Header.Get("Content-Type")),
+					slog.Int64("size", fileSize),
+				)
 				continue
 			}
 
@@ -219,12 +224,12 @@ func GetSuperAdminEmails() []string {
 	ce, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
-		slog.Warn(fmt.Sprintf("Could not get cached superadministrator email list: %v", err))
+		slog.Warn("Could not get cached superadministrator email list", slog.Any("error", err))
 	}
 
 	if len(ce) > 0 {
 		if err := json.Unmarshal([]byte(ce), &e); err != nil {
-			slog.Error(fmt.Sprintf("Could not decode cached superadministrator email list: %v", err))
+			slog.Error("Could not decode cached superadministrator email list", slog.Any("error", err))
 		} else {
 			return e
 		}
@@ -236,18 +241,18 @@ func GetSuperAdminEmails() []string {
 		Select("u.email").
 		Where("r.name = @role_name AND user_roles.deleted_at IS NULL AND r.deleted_at IS NULL AND u.active = @user_active AND u.deleted_at IS NULL", sql.Named("role_name", "superadmin"), sql.Named("user_active", true)).
 		Limit(5).Find(&e).Error; err != nil {
-		slog.Error(fmt.Sprintf("Could not get superadministrator emails: %v", err))
+		slog.Error("Could not get superadministrator emails", slog.Any("error", err))
 	}
 
 	if len(e) > 0 {
 		re, err := json.Marshal(e)
 		if err != nil {
-			slog.Error(fmt.Sprintf("Could not serialize superadministrator email list for cache: %v", err))
+			slog.Error("Could not serialize superadministrator email list for cache", slog.Any("error", err))
 		}
 
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(string(re)).Ex(15*time.Minute).Build()).Error(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not save superadministrator email list to cache: %v", err))
+			slog.Error("Could not save superadministrator email list to cache", slog.Any("error", err))
 		}
 	}
 
@@ -258,7 +263,7 @@ func DefaultLocale() *MessageLocale {
 	loc, err := ParseLocale(utils.ToStringPtr(app.DefaultLanguage().String()))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not parse locale: %v", err))
+		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}
 	}
 
@@ -281,7 +286,7 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 	tag, err := language.Parse(*locale)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not parse locale: %v", err))
+		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}, err
 	}
 
@@ -301,7 +306,7 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 	if !sl.IsValid() {
 		err := errors.New("could not generate valid message locale")
 		sentry.CaptureException(err)
-		slog.Error(err.Error())
+		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}, err
 	}
 
@@ -314,7 +319,7 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 	if c == nil {
 		err := errors.New("invalid context for API locale. Falling back to default locale")
 		sentry.CaptureException(err)
-		slog.Error(err.Error())
+		slog.Error("Could not parse API locale", slog.Any("error", err))
 		return defaultLocale
 	}
 
@@ -323,14 +328,18 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 	if len(langs) < 1 {
 		err := errors.New("invalid language list from API context. Falling back to default locale")
 		sentry.CaptureException(err)
-		slog.Error(err.Error())
+		slog.Error("Could not parse API locale", slog.Any("error", err))
 		return defaultLocale
 	}
 
 	loc, err := ParseLocale(utils.ToStringPtr(langs[0].String()))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not parse locale from API context. Falling back to default locale: %v", err))
+		slog.Error(
+			"Could not parse locale from API context",
+			slog.String("fallback", defaultLocale.String()),
+			slog.Any("error", err),
+		)
 		return defaultLocale
 	}
 

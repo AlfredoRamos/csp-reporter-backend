@@ -2,10 +2,10 @@ package middlewares
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/utils"
@@ -50,7 +50,7 @@ func CaptchaProtected() fiber.Handler {
 
 		input := CaptchaRequest{}
 		if err := c.BodyParser(&input); err != nil {
-			slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+			slog.Error("Error parsing input data", slog.Any("error", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -86,7 +86,7 @@ func CaptchaProtected() fiber.Handler {
 
 		if err := agent.Parse(); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not parse agent: %v", err))
+			slog.Error("Could not parse agent", slog.Any("error", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -110,7 +110,11 @@ func CaptchaProtected() fiber.Handler {
 		status, body, errList := agent.Bytes()
 		if len(errList) > 0 {
 			sentry.CaptureException(errors.Join(errList...))
-			slog.Error(fmt.Sprintf("Could not read response body and got HTTP '%d' status code: %v", status, errList))
+			slog.Error(
+				"Could not read response body and got invalid HTTP status code",
+				slog.Int("status", status),
+				slog.Any("error", errList),
+			)
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
 					DefaultMessage: &i18n.Message{
@@ -125,7 +129,7 @@ func CaptchaProtected() fiber.Handler {
 
 		response := &CaptchaResponse{}
 		if err := json.Unmarshal(body, &response); err != nil {
-			slog.Error(fmt.Sprintf("Could not decode response: %v", err))
+			slog.Error("Could not decode response", slog.Any("error", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -140,7 +144,7 @@ func CaptchaProtected() fiber.Handler {
 		if response.Success {
 			return c.Next()
 		} else if !response.Success && len(response.Errors) > 0 {
-			slog.Error(fmt.Sprintf("Could not verify captcha response: %v", response.Errors))
+			slog.Error("Could not verify captcha response", slog.Any("error", strings.Join(response.Errors, "\n")))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
 					DefaultMessage: &i18n.Message{

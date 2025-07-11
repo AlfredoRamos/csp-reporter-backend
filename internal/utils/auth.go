@@ -195,7 +195,7 @@ func ComparePasswordHash(p string, h string) bool {
 	config, salt, hash, err := decodeHash(h)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Warn(fmt.Sprintf("Could not decode hash: %v", err))
+		slog.Warn("Could not decode hash", slog.Any("error", err))
 
 		return false
 	}
@@ -211,7 +211,7 @@ func MustRehashPassword(h string) bool {
 	config, _, _, err := decodeHash(h)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Warn(fmt.Sprintf("Could not decode hash: %v", err))
+		slog.Warn("Could not decode hash", slog.Any("error", err))
 
 		return false
 	}
@@ -284,7 +284,7 @@ func IsValidEmail(e string) bool {
 
 	if _, err := mail.ParseAddress(e); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not parse email: %v", err))
+		slog.Error("Could not parse email", slog.Any("error", err))
 		return false
 	}
 
@@ -301,14 +301,14 @@ func IsRealEmail(e string) bool {
 	d, err := GetApexDomain(el[1])
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not get apex domain: %v", err))
+		slog.Error("Could not get apex domain", slog.Any("error", err))
 		return false
 	}
 
 	mx, err := net.LookupMX(d)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not read domain MX records: %v", err))
+		slog.Error("Could not read domain MX records", slog.Any("error", err))
 		return false
 	}
 

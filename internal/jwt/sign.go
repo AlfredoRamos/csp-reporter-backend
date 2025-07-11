@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -25,12 +24,12 @@ func SigningKeys() *KeyPair {
 		jwkpub := jose.JSONWebKey{}
 		pubBuffer, err := os.ReadFile(filepath.Clean(filepath.Join("internal", "keys", "signing-public.json")))
 		if err != nil {
-			slog.Error(fmt.Sprintf("Could not read signing public key: %v", err))
+			slog.Error("Could not read signing public key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := json.Unmarshal(pubBuffer, &jwkpub); err != nil {
-			slog.Error(fmt.Sprintf("Could not decode signing public key: %v", err))
+			slog.Error("Could not decode signing public key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
@@ -38,12 +37,12 @@ func SigningKeys() *KeyPair {
 		jwkkey := jose.JSONWebKey{}
 		keyBuffer, err := os.ReadFile(filepath.Clean(filepath.Join("internal", "keys", "signing-private.json")))
 		if err != nil {
-			slog.Error(fmt.Sprintf("Could not read signing private key: %v", err))
+			slog.Error("Could not read signing private key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := json.Unmarshal(keyBuffer, &jwkkey); err != nil {
-			slog.Error(fmt.Sprintf("Could not decode signing private key: %v", err))
+			slog.Error("Could not decode signing private key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
@@ -62,7 +61,7 @@ func Signer() jose.Signer {
 		)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not create signer: %v", err))
+			slog.Error("Could not create signer", slog.Any("error", err))
 			os.Exit(1)
 		}
 

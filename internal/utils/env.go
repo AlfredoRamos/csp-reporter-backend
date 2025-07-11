@@ -2,7 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"slices"
@@ -46,12 +45,12 @@ func AppEnv() string {
 	switch {
 	case len(e) < 1:
 		e = ProductionEnv
-		slog.Warn(fmt.Sprintf("Invalid environment. Falling back to '%s'.", e))
+		slog.Warn("Invalid environment", slog.String("fallback", e))
 	case strings.EqualFold(e, ProductionEnv), strings.EqualFold(e, DevelopmentEnv):
 		// * Valid environment
 	default:
 		e = DevelopmentEnv
-		slog.Warn(fmt.Sprintf("Unknown environment. Falling back to '%s'.", e))
+		slog.Warn("Unknown environment", slog.String("fallback", e))
 	}
 
 	return e
@@ -127,7 +126,7 @@ func DefaultTimeZone() string {
 	tz := os.Getenv("TZ")
 	if len(tz) < 1 {
 		tz = "UTC"
-		slog.Warn(fmt.Sprintf("Time zone not set. Falling back to '%s'.", tz))
+		slog.Warn("Time zone not set", slog.String("fallback", tz))
 	}
 
 	return tz
@@ -149,12 +148,12 @@ func InternalStaffEmail() string {
 	e := os.Getenv("INTERNAL_STAFF_EMAIL")
 
 	if len(e) < 1 {
-		slog.Error("Internal support email is empty.")
+		slog.Error("Internal support email is empty")
 		return ""
 	}
 
 	if !IsValidEmail(e) {
-		slog.Error("Internal support email is invalid.")
+		slog.Error("Internal support email is invalid")
 		return ""
 	}
 
@@ -166,7 +165,7 @@ func DefaultLang() string {
 
 	if len(l) < 1 {
 		l = "en"
-		slog.Warn(fmt.Sprintf("Empty email language. Falling back to '%s'.", l))
+		slog.Warn("Empty email language", slog.String("fallback", l))
 	}
 
 	return l
@@ -177,7 +176,7 @@ func DkimSelector() string {
 
 	if len(s) < 1 {
 		s = "mail"
-		slog.Warn(fmt.Sprintf("Empty DKIM selector. Falling back to '%s'.", s))
+		slog.Warn("Empty DKIM selector", slog.String("fallback", s))
 	}
 
 	return s

@@ -31,7 +31,7 @@ func DefaultLanguage() language.Tag {
 		lang := os.Getenv("I18N_LANG")
 		if len(lang) < 1 {
 			lang = "en-US"
-			slog.Warn(fmt.Sprintf("Default language not specified. Using fallback language '%s'.", lang))
+			slog.Warn("Default language not specified", slog.String("fallback", lang))
 		}
 
 		var err error
@@ -39,7 +39,11 @@ func DefaultLanguage() language.Tag {
 		if err != nil {
 			sentry.CaptureException(err)
 			defaultLanguage = language.AmericanEnglish
-			slog.Error(fmt.Sprintf("Could not get tag from default language: '%v'. Using fallback '%s'.", err, defaultLanguage.String()))
+			slog.Error(
+				"Could not get tag from default language",
+				slog.String("lang", defaultLanguage.String()),
+				slog.Any("error", err),
+			)
 		}
 	})
 
@@ -60,7 +64,11 @@ func AllowedLanguages() []language.Tag {
 				langTag, err := language.Parse(lang)
 				if err != nil {
 					sentry.CaptureException(err)
-					slog.Error(fmt.Sprintf("Could not get allowed tag from '%s' language: %v", lang, err))
+					slog.Error(
+						"Could not get allowed tag from language",
+						slog.String("lang", lang),
+						slog.Any("error", err),
+					)
 				}
 
 				baseLang, confidence := langTag.Base()
@@ -71,13 +79,17 @@ func AllowedLanguages() []language.Tag {
 				langFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "i18n", fmt.Sprintf("active.%s.toml", baseLang))))
 				if err != nil {
 					sentry.CaptureException(err)
-					slog.Error(fmt.Sprintf("Could not read translation file at %s: %v", langFile, err))
+					slog.Error(
+						"Could not read translation",
+						slog.String("file", langFile),
+						slog.Any("error", err),
+					)
 					continue
 				}
 
 				if _, err := langBundle.LoadMessageFile(langFile); err != nil {
 					sentry.CaptureException(err)
-					slog.Error(fmt.Sprintf("Could not load translation file: %v", err))
+					slog.Error("Could not load translation", slog.Any("error", err))
 					continue
 				}
 
@@ -117,7 +129,11 @@ func GetLanguages(langList ...string) []language.Tag {
 		langTag, err := language.Parse(lang)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not get context tag from '%s' language: %v", lang, err))
+			slog.Error(
+				"Could not get context tag from language",
+				slog.String("lang", lang),
+				slog.Any("error", err),
+			)
 			continue
 		}
 
@@ -149,7 +165,11 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
 		langTag, err := language.Parse(lang)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not get lang API tag from '%s' language: %v", lang, err))
+			slog.Error(
+				"Could not get lang API tag from language",
+				slog.String("lang", lang),
+				slog.Any("error", err),
+			)
 		}
 
 		if slices.Contains(allowed, langTag) {
@@ -163,7 +183,11 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
 		acceptTag, err := language.Parse(accept)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not get Accept-Language API tag from '%s' language: %v", accept, err))
+			slog.Error(
+				"Could not get Accept-Language API tag from language",
+				slog.String("lang", accept),
+				slog.Any("error", err),
+			)
 		}
 
 		if slices.Contains(allowed, acceptTag) {

@@ -49,18 +49,22 @@ func NewPurgeCachePattern(p string) error {
 	task, err := NewPurgeCachePatternTask(p)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not create task: %v", err))
+		slog.Error("Could not create task", slog.Any("error", err))
 		return err
 	}
 
 	info, err := AsynqClient().Enqueue(task, asynq.MaxRetry(3), asynq.ProcessIn(3*time.Second), asynq.Retention(1*time.Hour))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not enqueue task: %v", err))
+		slog.Error("Could not enqueue task", slog.Any("error", err))
 		return err
 	}
 
-	slog.Info(fmt.Sprintf("Enqueued tasks: [%s] %s", info.ID, info.Queue))
+	slog.Info(
+		"Enqueued",
+		slog.String("task-id", info.ID),
+		slog.String("queue", info.Queue),
+	)
 
 	return nil
 }

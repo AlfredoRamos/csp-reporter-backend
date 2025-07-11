@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -27,7 +26,7 @@ func PurgeCachePattern(pattern string) error {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Warn(fmt.Sprintf("Cache purge timeout: %v", ctx.Err()))
+			slog.Warn("Cache purge timeout", slog.Any("error", ctx.Err()))
 			return ctx.Err()
 		default:
 			// Continue
@@ -36,7 +35,11 @@ func PurgeCachePattern(pattern string) error {
 		result, err := app.Cache().Do(ctx, app.Cache().B().Scan().Cursor(cursor).Match(pattern).Count(batchSize).Build()).AsScanEntry()
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not scan pattern '%s': %v", pattern, err))
+			slog.Error(
+				"Could not scan keys",
+				slog.String("pattern", pattern),
+				slog.Any("error", err),
+			)
 			return err
 		}
 
@@ -59,7 +62,7 @@ func PurgeCachePattern(pattern string) error {
 			}
 
 			if len(errs) > 0 {
-				slog.Error(fmt.Sprintf("Error purging cache: %v", errors.Join(errs...)))
+				slog.Error("Error purging cache", slog.Any("error", errors.Join(errs...)))
 			}
 		}
 

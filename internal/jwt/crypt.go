@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -26,13 +25,13 @@ func EncryptionKeys() *KeyPair {
 		pubBuffer, err := os.ReadFile(filepath.Clean(filepath.Join("internal", "keys", "encryption-public.json")))
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not read encription public key: %v", err))
+			slog.Error("Could not read encription public key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := json.Unmarshal(pubBuffer, &jwkpub); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not decode encription public key: %v", err))
+			slog.Error("Could not decode encription public key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
@@ -41,13 +40,13 @@ func EncryptionKeys() *KeyPair {
 		keyBuffer, err := os.ReadFile(filepath.Clean(filepath.Join("internal", "keys", "encryption-private.json")))
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not read encription private key: %v", err))
+			slog.Error("Could not read encription private key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := json.Unmarshal(keyBuffer, &jwkkey); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not decode encription private key: %v", err))
+			slog.Error("Could not decode encription private key", slog.Any("error", err))
 			os.Exit(1)
 		}
 
@@ -66,7 +65,7 @@ func Encrypter() jose.Encrypter {
 		)
 		if err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Could not create encrypter: %v", err))
+			slog.Error("Could not create encrypter", slog.Any("error", err))
 			os.Exit(1)
 		}
 

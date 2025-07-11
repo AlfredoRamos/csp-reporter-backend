@@ -25,7 +25,7 @@ func NewEmailDeliveryTask(o *helpers.EmailOpts, d map[string]interface{}) (*asyn
 	payload, err := json.Marshal(&EmailDeliveryPayload{o, d})
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not serialize payload: %v", err))
+		slog.Error("Could not serialize payload", slog.Any("error", err))
 		return nil, err
 	}
 
@@ -36,7 +36,7 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolin
 	p := &EmailDeliveryPayload{}
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not deserialize payload: %v", err))
+		slog.Error("Could not deserialize payload", slog.Any("error", err))
 		return fmt.Errorf("could not decode payload: %w: %w", err, asynq.SkipRetry)
 	}
 
@@ -52,18 +52,22 @@ func NewEmail(o *helpers.EmailOpts, d map[string]interface{}) error {
 	task, err := NewEmailDeliveryTask(o, d)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not create task: %v", err))
+		slog.Error("Could not create task", slog.Any("error", err))
 		return err
 	}
 
 	info, err := AsynqClient().Enqueue(task, asynq.MaxRetry(3), asynq.ProcessIn(3*time.Second), asynq.Retention(1*time.Hour))
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not enqueue task: %v", err))
+		slog.Error("Could not enqueue task", slog.Any("error", err))
 		return err
 	}
 
-	slog.Info(fmt.Sprintf("Enqueued tasks: [%s] %s", info.ID, info.Queue))
+	slog.Info(
+		"Enqueued",
+		slog.String("task-id", info.ID),
+		slog.String("queue", info.Queue),
+	)
 
 	return nil
 }

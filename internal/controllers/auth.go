@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -48,7 +47,7 @@ type userRecoveryInput struct {
 func AuthLogin(c *fiber.Ctx) error {
 	input := &userLoginInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -119,7 +118,7 @@ func AuthLogin(c *fiber.Ctx) error {
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
+		slog.Error("Error generating access token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -133,7 +132,7 @@ func AuthLogin(c *fiber.Ctx) error {
 	refreshToken, err := helpers.NewRefreshToken(user)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
+		slog.Error("Error generating refresh token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -147,7 +146,7 @@ func AuthLogin(c *fiber.Ctx) error {
 	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -191,7 +190,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
+		slog.Error("Invalid access token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -207,7 +206,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	refreshJWEClaims, err := utils.ParseJWEClaims(refreshJWE)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -222,7 +221,11 @@ func AuthRefresh(c *fiber.Ctx) error {
 	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Could not check token revocation '%s': %v", refreshJWEClaims.ID, err))
+		slog.Error(
+			"Could not check token revocation",
+			slog.String("token-id", refreshJWEClaims.ID),
+			slog.Any("error", err),
+		)
 	}
 
 	if isRefreshRevoked {
@@ -267,7 +270,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	active := true
 	user := &models.User{ID: userID, Active: &active}
 	if err := app.DB().Where(&user).First(&user).Error; err != nil {
-		slog.Error(fmt.Sprintf("Error getting user information: %v", err))
+		slog.Error("Error getting user information", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -302,13 +305,13 @@ func AuthRefresh(c *fiber.Ctx) error {
 	}
 
 	if len(errs) > 0 {
-		slog.Error(fmt.Sprintf("Error revoking access and refresh tokens: %v", errors.Join(errs...)))
+		slog.Error("Error revoking access and refresh tokens", slog.Any("error", errors.Join(errs...)))
 	}
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error generating access token: %v", err))
+		slog.Error("Error generating access token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -322,7 +325,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	refreshToken, err := helpers.NewRefreshToken(user)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error generating refresh token: %v", err))
+		slog.Error("Error generating refresh token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
@@ -336,7 +339,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -375,7 +378,7 @@ func AuthRegister(c *fiber.Ctx) error {
 
 	input := &userRegisterInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -409,7 +412,7 @@ func AuthRegister(c *fiber.Ctx) error {
 
 	user := &models.User{Email: input.Email}
 	if err := app.DB().Unscoped().Where(&user).First(&user).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		slog.Error(fmt.Sprintf("Error creating user account: %v", err))
+		slog.Error("Error creating user account", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -547,7 +550,7 @@ func AuthRegister(c *fiber.Ctx) error {
 
 		return nil
 	}); err != nil {
-		slog.Error(fmt.Sprintf("Error creating user account: %v", err))
+		slog.Error("Error creating user account", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -580,7 +583,7 @@ func AuthRegister(c *fiber.Ctx) error {
 			},
 		); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Error sending email: %v", err))
+			slog.Error("Error sending email", slog.Any("error", err))
 		}
 	})
 	defer timer.Stop()
@@ -602,7 +605,7 @@ func AuthRegister(c *fiber.Ctx) error {
 		},
 	); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error sending email: %v", err))
+		slog.Error("Error sending email", slog.Any("error", err))
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
@@ -613,7 +616,7 @@ func AuthLogout(c *fiber.Ctx) error {
 	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid access token claims: %v", err))
+		slog.Error("Invalid access token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -629,7 +632,7 @@ func AuthLogout(c *fiber.Ctx) error {
 	refreshJWEClaims, err := utils.ParseJWEClaims(refreshJWE)
 	if err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Invalid refresh token claims: %v", err))
+		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -667,7 +670,7 @@ func AuthLogout(c *fiber.Ctx) error {
 	}
 
 	if len(errs) > 0 {
-		slog.Error(fmt.Sprintf("Error revoking access and refresh tokens: %v", errors.Join(errs...)))
+		slog.Error("Error revoking access and refresh tokens", slog.Any("error", errors.Join(errs...)))
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
@@ -676,7 +679,7 @@ func AuthLogout(c *fiber.Ctx) error {
 func AuthRecover(c *fiber.Ctx) error {
 	input := &userLoginInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -745,7 +748,7 @@ func AuthRecover(c *fiber.Ctx) error {
 				Password:           utils.HashPassword(password),
 				LastPasswordChange: &now,
 			}).Error; err != nil {
-				slog.Error(fmt.Sprintf("Error updating user account information: %v", err))
+				slog.Error("Error updating user account information", slog.Any("error", err))
 				return err
 			}
 		}
@@ -753,13 +756,13 @@ func AuthRecover(c *fiber.Ctx) error {
 		if err := tx.Model(&models.AccountRecovery{}).
 			Where("id IN @recovery_list", sql.Named("recovery_list", tries)).
 			Delete(&models.AccountRecovery{}).Error; err != nil {
-			slog.Error(fmt.Sprintf("Error deleting previous recovery tries: %v", err))
+			slog.Error("Error deleting previous recovery tries", slog.Any("error", err))
 			return err
 		}
 
 		randomString, err := utils.RandomString(35)
 		if err != nil || len(randomString) < 1 {
-			slog.Error(fmt.Sprintf("Error generating random string: %v", err))
+			slog.Error("Error generating random string", slog.Any("error", err))
 			return err
 		}
 
@@ -790,12 +793,12 @@ func AuthRecover(c *fiber.Ctx) error {
 			},
 		); err != nil {
 			sentry.CaptureException(err)
-			slog.Error(fmt.Sprintf("Error sending email: %v", err))
+			slog.Error("Error sending email", slog.Any("error", err))
 		}
 
 		return nil
 	}); err != nil {
-		slog.Error(fmt.Sprintf("Error recovering user account: %v", err))
+		slog.Error("Error recovering user account", slog.Any("error", err))
 
 		return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 	}
@@ -806,7 +809,7 @@ func AuthRecover(c *fiber.Ctx) error {
 func AuthRecoverValidate(c *fiber.Ctx) error {
 	input := &userRecoveryInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -843,7 +846,7 @@ func AuthRecoverValidate(c *fiber.Ctx) error {
 		Where("account_recoveries.expires_at > @now", sql.Named("now", now.Format("2006-01-02 15:04:05.000 -0700"))).
 		Where("u.active = @active AND u.deleted_at IS NULL", sql.Named("active", &active)).
 		Order("account_recoveries.created_at DESC").First(&recovery).Error; err != nil {
-		slog.Error(fmt.Sprintf("Error validating hash for password recovery: %v", err))
+		slog.Error("Error validating hash for password recovery", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": fiber.Map{"hash": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorInvalidRecoveryURL",
@@ -858,7 +861,7 @@ func AuthRecoverValidate(c *fiber.Ctx) error {
 func AuthRecoverUpdate(c *fiber.Ctx) error {
 	input := &userRecoveryInput{}
 	if err := c.BodyParser(&input); err != nil {
-		slog.Error(fmt.Sprintf("Error parsing input data: %v", err))
+		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -895,7 +898,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 		Where("account_recoveries.expires_at > @now", sql.Named("now", now.Format("2006-01-02 15:04:05.000 -0700"))).
 		Where("u.active = @active AND u.deleted_at IS NULL", sql.Named("active", &active)).
 		Order("account_recoveries.created_at DESC").Preload("User").First(&recovery).Error; err != nil {
-		slog.Error(fmt.Sprintf("Error validating hash for password recovery: %v", err))
+		slog.Error("Error validating hash for password recovery", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": fiber.Map{"hash": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorInvalidRecoveryURL",
@@ -987,7 +990,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 
 		return nil
 	}); err != nil {
-		slog.Error(fmt.Sprintf("Error updating user password: %v", err))
+		slog.Error("Error updating user password", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -1014,7 +1017,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 		},
 	); err != nil {
 		sentry.CaptureException(err)
-		slog.Error(fmt.Sprintf("Error sending email: %v", err))
+		slog.Error("Error sending email", slog.Any("error", err))
 	}
 
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
