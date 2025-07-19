@@ -15,6 +15,14 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
+// GetAllCSPReports godoc
+// @id api.csp.reports.index
+// @summary List all CSP reports
+// @security bearerauth
+// @tags Reports
+// @produce json
+// @success 204 {object} map[string]string
+// @router /reports/all [get]
 func GetAllCSPReports(c *fiber.Ctx) error {
 	reports := []models.Report{}
 	query := app.DB().Model(&models.Report{}).Preload("Site")
@@ -23,6 +31,15 @@ func GetAllCSPReports(c *fiber.Ctx) error {
 	return helpers.PaginateQuery(reports, query, c, opts)
 }
 
+// GetCSPReport godoc
+// @id api.csp.reports.get
+// @summary Get specific CSP report
+// @security bearerauth
+// @tags Reports
+// @produce json
+// @success 204 {object} map[string]string
+// @router /reports/get/{id} [get]
+// @param id path string true "Report UUID"
 func GetCSPReport(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {
@@ -50,6 +67,14 @@ func GetCSPReport(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"data": report})
 }
 
+// PostCSPReport godoc
+// @id api.csp.reports.add
+// @summary Add a new CSP report
+// @security bearerauth
+// @tags Reports
+// @produce json
+// @success 204 {object} map[string]string
+// @router /reports/add [post]
 func PostCSPReport(c *fiber.Ctx) error {
 	allowedMimeTypes := []string{"application/csp-report", "application/json"}
 	accept := c.Accepts(allowedMimeTypes...)

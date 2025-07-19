@@ -10,7 +10,7 @@ Backend for the **CSP Reporter** REST API using [Fiber](https://gofiber.io), [GO
 
 ## Requirements
 
-- [Go](https://go.dev/dl/) >= 1.24.4
+- [Go](https://go.dev/dl/) >= 1.24.5
 - [PostgreSQL](https://www.postgresql.org/download/) >= 17.2
 - [Valkey](https://valkey.io/download/) >= 8.1
 
@@ -46,37 +46,15 @@ go install golang.org/x/tools/cmd/deadcode@latest
 ## Generate key pairs
 
 ```shell
-mkdir -p internal/keys
-go install github.com/go-jose/go-jose/v4/jose-util@latest
+make keys
 ```
 
-### Sign (JWS)
-
-```shell
-(cd internal/keys && jose-util generate-key --use sig --alg EdDSA && mv jwk-sig-*-priv.json signing-private.json && mv jwk-sig-*-pub.json signing-public.json)
-```
-
-### Encrypt (JWE)
-
-```shell
-(cd internal/keys && jose-util generate-key --use enc --alg ECDH-ES+A256KW && mv jwk-enc-*-priv.json encryption-private.json && mv jwk-enc-*-pub.json encryption-public.json)
-```
-
-## Email (DKIM)
-
-```shell
-openssl genrsa -traditional -out internal/keys/dkim.key 2048
-openssl ec -in internal/keys/dkim.key -pubout -outform der | openssl base64 -A > internal/keys/dkim.pub
-```
-
-# Run app
+# Build application
 
 ## Production
 
 ```shell
-go build -ldflags='-s -w' -a -installsuffix cgo -o ./bin/csp-reporter ./cmd/api/...
-chmod +x csp-reporter
-csp-reporter
+make build
 ```
 
 ## Development
@@ -88,9 +66,7 @@ air
 ### Linters
 
 ```shell
-golangci-lint run ./...
-govulncheck -show=traces ./...
-deadcode -test ./...
+make lint
 ```
 
 ## Cache
@@ -154,13 +130,37 @@ go install github.com/nicksnyder/go-i18n/v2/goi18n@latest
 ## Extract messages
 
 ```shell
-goi18n extract -sourceLanguage=en -outdir internal/i18n -format toml
+make i18n-extract
 ```
 
 ## Update translations
 
 ```shell
-goi18n merge -outdir internal/i18n internal/i18n/active.*.toml
-goi18n merge -outdir internal/i18n internal/i18n/active.*.toml internal/i18n/translate.*.toml
-rm internal/i18n/translate.*.toml
+make i18n-update
+```
+
+## Finish translations
+
+```shell
+make i18n-finish
+```
+
+## Create new language
+
+```shell
+make lang=<lang> i18n-new
+```
+
+# Documentation
+
+## setup
+
+```shell
+go install github.com/swaggo/swag/v2/cmd/swag@latest
+```
+
+## Build documentation
+
+```shell
+make docs
 ```

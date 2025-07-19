@@ -44,6 +44,13 @@ type userRecoveryInput struct {
 	ConfirmPassword string `json:"confirm_password"`
 }
 
+// AuthLogin godoc
+// @id api.auth.login
+// @summary User login
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/login [post]
 func AuthLogin(c *fiber.Ctx) error {
 	input := &userLoginInput{}
 	if err := c.BodyParser(&input); err != nil {
@@ -173,6 +180,14 @@ func AuthLogin(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
 }
 
+// AuthCheck godoc
+// @id api.auth.check
+// @summary Check if user is valid
+// @security bearerauth
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/check [post]
 func AuthCheck(c *fiber.Ctx) error {
 	// * Real validation is handled with middlewares
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
@@ -185,6 +200,14 @@ func AuthCheck(c *fiber.Ctx) error {
 	})
 }
 
+// AuthRefresh godoc
+// @id api.auth.refresh
+// @summary Generate a new access token with a refresh token
+// @security bearerauth
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/refresh [patch]
 func AuthRefresh(c *fiber.Ctx) error {
 	accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
@@ -366,6 +389,13 @@ func AuthRefresh(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{"access_token": accessToken})
 }
 
+// AuthRegister godoc
+// @id api.auth.register
+// @summary User registration
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/register [post]
 func AuthRegister(c *fiber.Ctx) error {
 	if !utils.CanRegisterUsers() {
 		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -611,6 +641,14 @@ func AuthRegister(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
 
+// AuthLogout godoc
+// @id api.auth.logout
+// @summary User logout
+// @security bearerauth
+// @tags Auth
+// @produce json
+// @success 204
+// @router /auth/logout [post]
 func AuthLogout(c *fiber.Ctx) error {
 	accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
@@ -676,6 +714,13 @@ func AuthLogout(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
 
+// AuthRecover godoc
+// @id api.auth.recover
+// @summary Send password recovery email
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/recover [post]
 func AuthRecover(c *fiber.Ctx) error {
 	input := &userLoginInput{}
 	if err := c.BodyParser(&input); err != nil {
@@ -806,6 +851,13 @@ func AuthRecover(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
 
+// AuthRecoverValidate godoc
+// @id api.auth.recover.validate
+// @summary Validate password recovery token
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/recover/validate [post]
 func AuthRecoverValidate(c *fiber.Ctx) error {
 	input := &userRecoveryInput{}
 	if err := c.BodyParser(&input); err != nil {
@@ -858,6 +910,13 @@ func AuthRecoverValidate(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
 
+// AuthRecoverUpdate godoc
+// @id api.auth.recover.update
+// @summary Update user password
+// @tags Auth
+// @produce json
+// @success 204 {object} map[string]string
+// @router /auth/recover/update [patch]
 func AuthRecoverUpdate(c *fiber.Ctx) error {
 	input := &userRecoveryInput{}
 	if err := c.BodyParser(&input); err != nil {

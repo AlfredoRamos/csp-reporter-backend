@@ -13,6 +13,14 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
+// PurgeCache godoc
+// @id api.system.cache.purge
+// @summary Purge cache
+// @security bearerauth
+// @tags System
+// @produce json
+// @success 204
+// @router /system/cache/purge [post]
 func PurgeCache(c *fiber.Ctx) error {
 	if err := tasks.NewPurgeCachePattern("roles:*"); err != nil {
 		sentry.CaptureException(err)
@@ -43,6 +51,13 @@ func PurgeCache(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }
 
+// GetCsrf godoc
+// @id api.system.csrf
+// @summary Generate CSRF cookie
+// @tags System
+// @produce json
+// @success 204
+// @router /system/csrf [get]
 func GetCsrf(c *fiber.Ctx) error {
 	// * Used only to generate CSRF cookie
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
