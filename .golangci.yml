@@ -70,6 +70,7 @@ linters:
             - github.com/goccy/go-yaml
             - github.com/nicksnyder/go-i18n/v2/i18n
             - github.com/BurntSushi/toml
+            - github.com/swaggo/swag/v2
     errchkjson:
       check-error-free-encoding: false
       report-no-exported: true
@@ -133,6 +134,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - docs/docs.go
 formatters:
   exclusions:
     generated: lax

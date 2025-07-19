@@ -1,5 +1,6 @@
 binary_file::=./tmp/csp-reporter
 module_path::=./cmd/api/...
+entrypoint::=$(shell echo '${module_path}' | sed -E 's/\.{3}/main.go/')
 module_name::=$(shell sed -n 's/^module //p' go.mod)
 git_version::=$(shell git describe --long --tags 2>/dev/null)
 app_version::=$(shell if [ -n "${git_version}" ]; then echo "${git_version}" | sed -E 's/([^-]*)-g([0-9a-f]+)/\1+\2/'; else printf '0.0.0-%s+%s' "$(shell git rev-list --count HEAD)" "$(shell git rev-parse --short HEAD)"; fi)
@@ -7,7 +8,7 @@ keys_path::=internal/keys
 i18n_path::=internal/i18n
 docker_image::=alfredoramos/csp-reporter-backend:latest
 
-.PHONY: help deps utils build i18n-extract i18n-new i18n-update i18n-finish install keys clean docker-build docker-push
+.PHONY: help deps utils lint build i18n-extract i18n-new i18n-update i18n-finish install keys clean docs docker-build docker-push
 
 ## help: print this help message
 help:
@@ -23,9 +24,19 @@ deps:
 utils:
 	go install github.com/nicksnyder/go-i18n/v2/goi18n@latest
 	go install github.com/go-jose/go-jose/v4/jose-util@latest
+	go install github.com/swaggo/swag/v2/cmd/swag@latest
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install golang.org/x/tools/cmd/deadcode@latest
+
+## lint: run linters
+lint:
+	golangci-lint run ./...
+	govulncheck -show=traces ./...
+	deadcode -test ./...
 
 ## build: build the application for production
-build: deps
+build: clean deps
 	CGO_ENABLED=0 go build -ldflags="-s -w -X '${module_name}/internal/app.version=${app_version}'" -trimpath -a -installsuffix cgo -o "${binary_file}" "${module_path}"
 
 ## i18n-extract: extract translations
@@ -51,10 +62,10 @@ i18n-finish:
 	goi18n merge -sourceLanguage=en -outdir "${i18n_path}" "${i18n_path}"/active.*.toml "${i18n_path}"/translate.*.toml
 	rm "${i18n_path}"/translate.*.toml
 
-DESTDIR ?= ./bin
+DESTDIR ?= ./build
 ## install: install the application
 install:
-	install -Dsm755 "${binary_file}" "$(shell realpath $(DESTDIR))/$(shell basename ${binary_file})"
+	install -Dsm755 "${binary_file}" "$(shell realpath $(DESTDIR))/bin/$(shell basename ${binary_file})"
 
 ## keys: generate encryption and signing keys for JWT (JWS + JWE)
 keys:
@@ -68,6 +79,13 @@ keys:
 ## clean: cleanup tasks
 clean:
 	rm -fR "$(shell dirname ${binary_file})"
+
+## docs: build OpenAPI docs
+docs:
+	swag init --v3.1 --generalInfo "${entrypoint}" --parseInternal --generatedTime
+	install -Dm755 docs/swagger.json "$(shell realpath $(DESTDIR))/docs/swagger.json"
+	install -Dm755 docs/swagger.yaml "$(shell realpath $(DESTDIR))/docs/swagger.yaml"
+	sed -Ei "s/\[\[API_VERSION\]\]/${app_version}/gi" "$(shell realpath $(DESTDIR))/docs/swagger.json" "$(shell realpath $(DESTDIR))/docs/swagger.yaml"
 
 ## docker-build: build Docker image
 docker-build:

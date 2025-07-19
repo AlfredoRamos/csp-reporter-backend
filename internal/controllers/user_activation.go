@@ -21,6 +21,14 @@ type userActivationInput struct {
 	Reason   *string `json:"reason"`
 }
 
+// GetAllInactiveUsers godoc
+// @id api.activations.users.index
+// @summary List all inactive users pending activation
+// @security bearerauth
+// @tags User activation
+// @produce json
+// @success 204 {object} map[string]string
+// @router /activations/users/all [get]
 func GetAllInactiveUsers(c *fiber.Ctx) error {
 	users := []models.UserActivation{}
 	query := app.DB().Model(&models.UserActivation{}).
@@ -32,6 +40,15 @@ func GetAllInactiveUsers(c *fiber.Ctx) error {
 	return helpers.PaginateQuery(users, query, c, opts)
 }
 
+// GetAllInactiveUsers godoc
+// @id api.activations.review
+// @summary Review user activation
+// @security bearerauth
+// @tags User activation
+// @produce json
+// @success 204 {object} map[string]string
+// @router /activations/review/{id} [patch]
+// @param id path string true "User UUID"
 func UpdateUserActivation(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {

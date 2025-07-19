@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "alfredoramos.mx/csp-reporter/docs"
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/routes"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
@@ -22,6 +23,21 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
+// @title CSP Reporter API
+// @version [[API_VERSION]]
+// @description RESTful API backend for CSP Reporter
+
+// @contact.name Alfredo Ramos
+// @contact.url https://alfredoramos.mx
+// @contact.email alfredoramos@duck.com
+
+// @license.name AGPL-3.0-or-later
+// @license.url https://spdx.org/licenses/AGPL-3.0-or-later.html
+
+// @servers.url http://localhost:3000/api/v1
+// @servers.description Development
+
+// @securityDefinitions.bearerauth
 func main() {
 	// Setup shutdown and signal channel
 	wg := sync.WaitGroup{}

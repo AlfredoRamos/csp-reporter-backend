@@ -17,6 +17,14 @@ type siteInput struct {
 	Domain string  `json:"domain"`
 }
 
+// GetAllSites godoc
+// @id api.sites.index
+// @summary List all allowed sites
+// @security bearerauth
+// @tags Sites
+// @produce json
+// @success 204 {object} map[string]string
+// @router /sites/all [get]
 func GetAllSites(c *fiber.Ctx) error {
 	sites := []models.Site{}
 	query := app.DB().Model(&models.Site{})
@@ -25,6 +33,14 @@ func GetAllSites(c *fiber.Ctx) error {
 	return helpers.PaginateQuery(sites, query, c, opts)
 }
 
+// PostSite godoc
+// @id api.sites.add
+// @summary Add a new allowed site
+// @security bearerauth
+// @tags Sites
+// @produce json
+// @success 204 {object} map[string]string
+// @router /sites/add [post]
 func PostSite(c *fiber.Ctx) error {
 	input := siteInput{}
 	if err := c.BodyParser(&input); err != nil {

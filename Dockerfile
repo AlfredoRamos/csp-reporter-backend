@@ -12,7 +12,7 @@ WORKDIR /srv/http/backend
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/ go env -w GOCACHE=/.cache/go-build && go mod tidy
 COPY ./ ./
-RUN --mount=type=cache,target=/go/pkg/mod/ --mount=type=cache,target="/.cache/go-build" make build && make DESTDIR=/usr/local/bin install && chmod a+x /usr/local/bin/csp-reporter; \
+RUN --mount=type=cache,target=/go/pkg/mod/ --mount=type=cache,target="/.cache/go-build" make build && make DESTDIR=/usr/local install && chmod a+x /usr/local/bin/csp-reporter; \
 	go install github.com/hibiken/asynq/tools/asynq@latest; \
 	apk del .build-backend; \
 	rm -fR .git

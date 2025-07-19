@@ -1,0 +1,298 @@
+components:
+  securitySchemes:
+    bearerauth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+externalDocs:
+  description: ""
+  url: ""
+info:
+  contact:
+    email: alfredoramos@duck.com
+    name: Alfredo Ramos
+    url: https://alfredoramos.mx
+  description: RESTful API backend for CSP Reporter
+  license:
+    name: AGPL-3.0-or-later
+    url: https://spdx.org/licenses/AGPL-3.0-or-later.html
+  title: CSP Reporter API
+  version: '[[API_VERSION]]'
+openapi: 3.1.0
+paths:
+  /activations/review/{id}:
+    patch:
+      operationId: api.activations.review
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Review user activation
+      tags:
+      - User activation
+  /activations/users/all:
+    get:
+      operationId: api.activations.users.index
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: List all inactive users pending activation
+      tags:
+      - User activation
+  /auth/check:
+    post:
+      operationId: api.auth.check
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Check if user is valid
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      operationId: api.auth.login
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      summary: User login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      operationId: api.auth.logout
+      responses:
+        "204":
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: User logout
+      tags:
+      - Auth
+  /auth/recover:
+    post:
+      operationId: api.auth.recover
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      summary: Send password recovery email
+      tags:
+      - Auth
+  /auth/recover/update:
+    patch:
+      operationId: api.auth.recover.update
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      summary: Update user password
+      tags:
+      - Auth
+  /auth/recover/validate:
+    post:
+      operationId: api.auth.recover.validate
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      summary: Validate password recovery token
+      tags:
+      - Auth
+  /auth/refresh:
+    patch:
+      operationId: api.auth.refresh
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Generate a new access token with a refresh token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      operationId: api.auth.register
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      summary: User registration
+      tags:
+      - Auth
+  /reports/add:
+    post:
+      operationId: api.csp.reports.add
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Add a new CSP report
+      tags:
+      - Reports
+  /reports/all:
+    get:
+      operationId: api.csp.reports.index
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: List all CSP reports
+      tags:
+      - Reports
+  /reports/get/{id}:
+    get:
+      operationId: api.csp.reports.get
+      parameters:
+      - description: Report UUID
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Get specific CSP report
+      tags:
+      - Reports
+  /sites/add:
+    post:
+      operationId: api.sites.add
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Add a new allowed site
+      tags:
+      - Sites
+  /sites/all:
+    get:
+      operationId: api.sites.index
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: List all allowed sites
+      tags:
+      - Sites
+  /system/cache/purge:
+    post:
+      operationId: api.system.cache.purge
+      responses:
+        "204":
+          description: No Content
+      security:
+      - bearerauth: []
+      summary: Purge cache
+      tags:
+      - System
+  /system/csrf:
+    get:
+      operationId: api.system.csrf
+      responses:
+        "204":
+          description: No Content
+      summary: Generate CSRF cookie
+      tags:
+      - System
+servers:
+- description: Development
+  url: http://localhost:3000/api/v1
