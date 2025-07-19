@@ -83,7 +83,7 @@ func AuthLogin(c *fiber.Ctx) error {
 				ID:    "ErrorShortPassword",
 				Other: "The password must be at least {{.MinLength}} characters long.",
 			},
-			TemplateData: map[string]interface{}{
+			TemplateData: map[string]any{
 				"MinLength": utils.MinimumPasswordLength(),
 			},
 		}, c))
@@ -483,7 +483,7 @@ func AuthRegister(c *fiber.Ctx) error {
 				ID:    "ErrorShortPassword",
 				Other: "The password must be at least {{.MinLength}} characters long.",
 			},
-			TemplateData: map[string]interface{}{
+			TemplateData: map[string]any{
 				"MinLength": utils.MinimumPasswordLength(),
 			},
 		}, c))
@@ -508,7 +508,7 @@ func AuthRegister(c *fiber.Ctx) error {
 					ID:    "ErrorShortPassword",
 					Other: "The password must be at least {{.MinLength}} characters long.",
 				},
-				TemplateData: map[string]interface{}{
+				TemplateData: map[string]any{
 					"MinLength": utils.MinimumPasswordLength(),
 				},
 			}, c)
@@ -607,7 +607,7 @@ func AuthRegister(c *fiber.Ctx) error {
 				ToList:       []string{utils.SupportEmail()},
 				Locale:       helpers.ParseApiLocale(c),
 			},
-			map[string]interface{}{
+			map[string]any{
 				"UserName":  userName,
 				"UserEmail": user.Email,
 			},
@@ -630,7 +630,7 @@ func AuthRegister(c *fiber.Ctx) error {
 			ToList:       []string{user.Email},
 			Locale:       helpers.ParseApiLocale(c),
 		},
-		map[string]interface{}{
+		map[string]any{
 			"UserName": userName,
 		},
 	); err != nil {
@@ -832,7 +832,7 @@ func AuthRecover(c *fiber.Ctx) error {
 				ToList:       []string{user.Email},
 				Locale:       helpers.ParseApiLocale(c),
 			},
-			map[string]interface{}{
+			map[string]any{
 				"UserName":    user.GetFullName(),
 				"RecoveryURL": recovery.URL(),
 			},
@@ -972,7 +972,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 				ID:    "ErrorShortPassword",
 				Other: "The password must be at least {{.MinLength}} characters long.",
 			},
-			TemplateData: map[string]interface{}{
+			TemplateData: map[string]any{
 				"MinLength": utils.MinimumPasswordLength(),
 			},
 		}, c))
@@ -997,7 +997,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 					ID:    "ErrorShortPassword",
 					Other: "The password must be at least {{.MinLength}} characters long.",
 				},
-				TemplateData: map[string]interface{}{
+				TemplateData: map[string]any{
 					"MinLength": utils.MinimumPasswordLength(),
 				},
 			}, c)
@@ -1071,7 +1071,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 			ToList:       []string{recovery.User.Email},
 			Locale:       helpers.ParseApiLocale(c),
 		},
-		map[string]interface{}{
+		map[string]any{
 			"UserName": recovery.User.GetFullName(),
 		},
 	); err != nil {

@@ -20,7 +20,7 @@ type PaginationInfo struct {
 	PrevCursor *string `json:"prev"`
 }
 
-type Cursor map[string]interface{}
+type Cursor map[string]any
 
 const (
 	maxPageSize     int = 150
