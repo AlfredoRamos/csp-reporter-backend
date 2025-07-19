@@ -38,7 +38,7 @@ type MessageLocale struct {
 
 // Custom marshaling for MessageLocale
 func (m *MessageLocale) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
+	return json.Marshal(map[string]any{
 		"language": m.Language(),
 		"region":   m.Region(),
 	})
@@ -101,7 +101,7 @@ func (e *EmailOpts) IsValid() bool {
 	return len(e.Subject) > 0 && len(e.TemplateName) > 0 && len(e.ToList) > 0
 }
 
-func SendEmail(opts *EmailOpts, data map[string]interface{}) error {
+func SendEmail(opts *EmailOpts, data map[string]any) error {
 	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
 		return errors.New("the from email address is invalid")
 	}

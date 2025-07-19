@@ -121,9 +121,9 @@ func setupSites() {
 	}
 
 	if len(utils.CorsOrigins()) > 0 {
-		origins := strings.Split(utils.CorsOrigins(), ",")
+		origins := strings.SplitSeq(utils.CorsOrigins(), ",")
 
-		for _, orig := range origins {
+		for orig := range origins {
 			domain, err := utils.GetApexDomain(orig)
 			if err != nil {
 				slog.Error(

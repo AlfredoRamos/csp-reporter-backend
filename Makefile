@@ -8,7 +8,7 @@ keys_path::=internal/keys
 i18n_path::=internal/i18n
 docker_image::=alfredoramos/csp-reporter-backend:latest
 
-.PHONY: help deps utils lint build i18n-extract i18n-new i18n-update i18n-finish install keys clean docs docker-build docker-push
+.PHONY: help deps utils lint lint-bin build i18n-extract i18n-new i18n-update i18n-finish install keys clean docs docker-build docker-push
 
 ## help: print this help message
 help:
@@ -28,12 +28,18 @@ utils:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 	go install golang.org/x/tools/cmd/deadcode@latest
+	go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest
 
 ## lint: run linters
 lint:
 	golangci-lint run ./...
 	govulncheck -show=traces ./...
 	deadcode -test ./...
+	modernize -fix -test ./...
+
+## lint-bin: run binary linters
+lint-bin: build
+	govulncheck -mode=binary -show=traces "${binary_file}"
 
 ## build: build the application for production
 build: clean deps

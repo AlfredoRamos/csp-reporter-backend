@@ -180,7 +180,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 		})
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"UserName": user.GetFullName(),
 		"Approved": approved,
 	}
