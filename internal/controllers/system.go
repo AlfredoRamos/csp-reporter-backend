@@ -18,6 +18,7 @@ import (
 // @summary Purge cache
 // @security bearerauth
 // @tags System
+// @accept json
 // @produce json
 // @success 204
 // @router /system/cache/purge [post]

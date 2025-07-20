@@ -38,9 +38,12 @@ func GetAllSites(c *fiber.Ctx) error {
 // @summary Add a new allowed site
 // @security bearerauth
 // @tags Sites
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /sites/add [post]
+// @param title body string false "Title" SchemaExample({\r\n\t"title": "Example Website"\r\n})
+// @param domain body string true "Domain" SchemaExample({\r\n\t"domain": "server.tld"\r\n})
 func PostSite(c *fiber.Ctx) error {
 	input := siteInput{}
 	if err := c.BodyParser(&input); err != nil {
