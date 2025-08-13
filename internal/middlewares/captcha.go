@@ -96,8 +96,8 @@ func CaptchaProtected() fiber.Handler {
 		}
 
 		args := fiber.AcquireArgs()
-		args.Set("sitekey", env.String("HCAPTCHA_SITE_KEY", ""))
-		args.Set("secret", env.String("HCAPTCHA_SECRET_KEY", ""))
+		args.Set("sitekey", env.String("HCAPTCHA_SITE_KEY"))
+		args.Set("secret", env.String("HCAPTCHA_SECRET_KEY"))
 		args.Set("response", input.Response)
 		args.Set("remoteip", c.IP())
 

@@ -12,7 +12,7 @@ import (
 )
 
 func NewDkimMiddleware() *dkim.Middleware {
-	d, err := GetApexDomain(env.String("APP_DOMAIN", ""))
+	d, err := GetApexDomain(env.String("APP_DOMAIN"))
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error("Could not get application domain", slog.Any("error", err))

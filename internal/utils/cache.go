@@ -30,9 +30,8 @@ func Blake2s128Hash(input string, key []byte) (string, error) {
 	}
 
 	hash.Write([]byte(input))
-	sum := hash.Sum(nil)
 
-	return hex.EncodeToString(sum), nil
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
 func CacheKey(key string) string {
@@ -42,10 +41,10 @@ func CacheKey(key string) string {
 		return ""
 	}
 
-	appName := env.String("APP_NAME", "")
-	appEnv := env.AppEnv()
+	appName := env.String("APP_NAME")
+	appEnv := env.Name()
 
-	prefix, err := Blake2s128Hash(appName, env.AppKey())
+	prefix, err := Blake2s128Hash(appName, AppKey())
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error("Error generating cache key prefix", slog.Any("error", err))

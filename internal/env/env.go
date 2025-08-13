@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"github.com/getsentry/sentry-go"
 )
 
@@ -15,80 +16,154 @@ const (
 	DevelopmentEnv string = "development"
 )
 
-func String(k string, d string) string {
+func String(k string, d ...string) string {
+	if len(d) > 1 {
+		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		d = d[:1]
+	}
+
 	k = strings.TrimSpace(k)
 
 	if len(k) < 1 {
 		sentry.CaptureException(errors.New("invalid environment key"))
-		return d
+
+		if len(d) > 0 {
+			return strings.TrimSpace(d[0])
+		}
+
+		return ""
 	}
 
-	return strings.TrimSpace(os.Getenv(k))
+	v := strings.TrimSpace(os.Getenv(k))
+
+	if len(v) < 1 && len(d) > 0 {
+		return strings.TrimSpace(d[0])
+	}
+
+	return v
 }
 
-func Bool(k string, d bool) bool {
-	keyStr := String(k, "")
+func Bool(k string, d ...bool) bool {
+	if len(d) > 1 {
+		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		d = d[:1]
+	}
+
+	keyStr := String(k)
 
 	if len(keyStr) < 1 {
-		return d
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return false
 	}
 
 	key, err := strconv.ParseBool(keyStr)
 	if err != nil {
 		sentry.CaptureException(err)
-		return d
+
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return false
 	}
 
 	return key
 }
 
-func Float64(k string, d float64) float64 {
-	keyStr := String(k, "")
+func Float64(k string, d ...float64) float64 {
+	if len(d) > 1 {
+		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		d = d[:1]
+	}
+
+	keyStr := String(k)
 
 	if len(keyStr) < 1 {
-		return d
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return 0.0
 	}
 
 	key, err := strconv.ParseFloat(keyStr, 64)
 	if err != nil {
 		sentry.CaptureException(err)
-		return d
+
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return 0.0
 	}
 
 	return key
 }
 
-func Int64(k string, d int64) int64 {
-	keyStr := String(k, "")
+func Int64(k string, d ...int64) int64 {
+	if len(d) > 1 {
+		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		d = d[:1]
+	}
+
+	keyStr := String(k)
 
 	if len(keyStr) < 1 {
-		return d
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return 0
 	}
 
 	key, err := strconv.ParseInt(keyStr, 10, 64)
 	if err != nil {
 		sentry.CaptureException(err)
-		return d
+
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return 0
 	}
 
 	return key
 }
 
-func Int(k string, d int) int {
-	return int(Int64(k, int64(d)))
-}
-
-func AppKey() []byte {
-	key := String("APP_KEY", "")
-
-	if len(key) < 1 {
-		panic(errors.New("invalid application key").Error())
+func Int(k string, d ...int) int {
+	if len(d) > 1 {
+		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		d = d[:1]
 	}
 
-	return []byte(key)
+	keyStr := String(k)
+
+	if len(keyStr) < 1 {
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return 0
+	}
+
+	key, err := strconv.Atoi(keyStr)
+	if err != nil {
+		sentry.CaptureException(err)
+
+		if len(d) > 0 {
+			return d[0]
+		}
+
+		return 0
+	}
+
+	return key
 }
 
-func AppEnv() string {
+func Name() string {
 	e := String("APP_ENV", ProductionEnv)
 
 	switch {
@@ -103,7 +178,7 @@ func AppEnv() string {
 }
 
 func IsProduction() bool {
-	return strings.EqualFold(AppEnv(), ProductionEnv)
+	return strings.EqualFold(Name(), ProductionEnv)
 }
 
 func IsDebug() bool {

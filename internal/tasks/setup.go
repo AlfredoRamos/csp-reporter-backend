@@ -28,8 +28,8 @@ var (
 func AsynqClient() *asynq.Client {
 	onceTasks.Do(func() {
 		client = asynq.NewClient(asynq.RedisClientOpt{
-			Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379)),
-			Password: env.String("CACHE_PASS", ""),
+			Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST"), env.Int("CACHE_PORT", 6379)),
+			Password: env.String("CACHE_PASS"),
 			DB:       0,
 		})
 	})
@@ -41,8 +41,8 @@ func AsynqServer() *asynq.Server {
 	onceServer.Do(func() {
 		server = asynq.NewServer(
 			asynq.RedisClientOpt{
-				Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379)),
-				Password: env.String("CACHE_PASS", ""),
+				Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST"), env.Int("CACHE_PORT", 6379)),
+				Password: env.String("CACHE_PASS"),
 				DB:       0,
 			},
 			asynq.Config{
@@ -75,8 +75,8 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 	onceTaskManager.Do(func() {
 		manager, err := asynq.NewPeriodicTaskManager(asynq.PeriodicTaskManagerOpts{
 			RedisConnOpt: asynq.RedisClientOpt{
-				Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379)),
-				Password: env.String("CACHE_PASS", ""),
+				Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST"), env.Int("CACHE_PORT", 6379)),
+				Password: env.String("CACHE_PASS"),
 				DB:       0,
 			},
 			PeriodicTaskConfigProvider: NewTasksFileProvider(),

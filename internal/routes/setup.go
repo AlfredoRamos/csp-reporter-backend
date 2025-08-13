@@ -39,11 +39,11 @@ func SetupRoutes(app *fiber.App) {
 	}
 
 	encryptedCookieConfig := encryptcookie.Config{
-		Key: env.String("COOKIE_SECRET_KEY", ""),
+		Key: env.String("COOKIE_SECRET_KEY"),
 	}
 
 	sessionConfig := session.Config{
-		CookieDomain:      env.String("COOKIE_DOMAIN", ""),
+		CookieDomain:      env.String("COOKIE_DOMAIN"),
 		CookiePath:        "/",
 		CookieSecure:      isProduction,
 		CookieHTTPOnly:    true,
@@ -54,7 +54,7 @@ func SetupRoutes(app *fiber.App) {
 	csrfConfig := csrf.Config{
 		KeyLookup:         "cookie:csrf_",
 		CookieName:        "csrf_",
-		CookieDomain:      env.String("COOKIE_DOMAIN", ""),
+		CookieDomain:      env.String("COOKIE_DOMAIN"),
 		CookiePath:        "/",
 		CookieSecure:      isProduction,
 		CookieHTTPOnly:    true,

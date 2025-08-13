@@ -28,7 +28,7 @@ var (
 
 func DefaultLanguage() language.Tag {
 	onceDefaultLang.Do(func() {
-		lang := env.String("I18N_LANG", "en-US")
+		lang := env.String("I18N_DEFAULT_LANG", "en-US")
 
 		var err error
 		defaultLanguage, err = language.Parse(lang)
@@ -49,7 +49,7 @@ func DefaultLanguage() language.Tag {
 func AllowedLanguages() []language.Tag {
 	onceAllowedLanguages.Do(func() {
 		defaultLang := DefaultLanguage()
-		allowedLangsStr := env.String("I18N_ALLOWED_LANGS", "")
+		allowedLangsStr := env.String("I18N_ALLOWED_LANGS", env.String("I18N_DEFAULT_LANG", "en-US"))
 
 		if len(allowedLangsStr) > 0 {
 			langList := utils.CleanStringList(utils.SplitAny(allowedLangsStr, utils.SplitChars))

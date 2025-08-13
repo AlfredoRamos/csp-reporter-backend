@@ -86,11 +86,7 @@ func DecodeCursor(cursor string) (Cursor, error) {
 }
 
 func GetPaginationSize(p string) int {
-	perPage := env.String("PAGINATE_PER_PAGE", "")
-
-	if len(p) > 0 {
-		perPage = p
-	}
+	perPage := env.String("PAGINATE_PER_PAGE", p)
 
 	limit, err := strconv.Atoi(perPage)
 	if err != nil {

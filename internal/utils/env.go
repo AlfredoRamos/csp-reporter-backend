@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"log/slog"
 	"slices"
 	"strings"
@@ -20,8 +21,18 @@ const (
 	maxRefreshTokenExpiration     int64 = 12
 )
 
+func AppKey() []byte {
+	key := env.String("APP_KEY", "")
+
+	if len(key) < 1 {
+		panic(errors.New("invalid application key").Error())
+	}
+
+	return []byte(key)
+}
+
 func SupportEmail() string {
-	e := env.String("SUPPORT_EMAIL", "")
+	e := env.String("SUPPORT_EMAIL")
 
 	if len(e) < 1 {
 		slog.Error("Support email is empty.")
@@ -70,7 +81,7 @@ func DefaultLocation() *time.Location {
 }
 
 func InternalStaffEmail() string {
-	e := env.String("INTERNAL_STAFF_EMAIL", "")
+	e := env.String("INTERNAL_STAFF_EMAIL")
 
 	if len(e) < 1 {
 		slog.Error("Internal support email is empty")
@@ -85,18 +96,14 @@ func InternalStaffEmail() string {
 	return e
 }
 
-func DefaultLang() string {
-	return env.String("I18N_DEFAULT_LANG", "en")
-}
-
 func DkimSelector() string {
 	return env.String("EMAIL_DKIM_SELECTOR", "mail")
 }
 
 func CorsOrigins() string {
-	origins := []string{env.String("APP_DOMAIN", "")}
+	origins := []string{env.String("APP_DOMAIN")}
 
-	orStr := strings.TrimSpace(env.String("APP_CORS_ORIGINS", ""))
+	orStr := strings.TrimSpace(env.String("APP_CORS_ORIGINS"))
 
 	if len(orStr) < 1 {
 		return strings.Join(origins, ",")
