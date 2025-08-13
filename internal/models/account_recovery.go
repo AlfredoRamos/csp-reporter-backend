@@ -2,9 +2,9 @@ package models
 
 import (
 	"fmt"
-	"os"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -21,5 +21,5 @@ type AccountRecovery struct {
 }
 
 func (ar AccountRecovery) URL() string {
-	return fmt.Sprintf("%s/auth/recover?hash=%s", os.Getenv("APP_DOMAIN"), ar.Hash)
+	return fmt.Sprintf("%s/auth/recover?hash=%s", env.String("APP_DOMAIN", ""), ar.Hash)
 }

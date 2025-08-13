@@ -13,6 +13,7 @@ import (
 
 	_ "alfredoramos.mx/csp-reporter/docs"
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/routes"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
 	"alfredoramos.mx/csp-reporter/internal/utils"
@@ -139,7 +140,7 @@ func main() {
 
 			return c.Status(code).JSON(&fiber.Map{"error": []string{msg}})
 		},
-		AppName:     strings.TrimSpace(fmt.Sprintf("%s v%s", os.Getenv("APP_NAME"), app.Version())),
+		AppName:     strings.TrimSpace(fmt.Sprintf("%s v%s", env.String("APP_NAME", ""), app.Version())),
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
 	})
@@ -152,7 +153,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 
-		if err := http.Listen(os.Getenv("APP_ADDRESS")); err != nil {
+		if err := http.Listen(env.String("APP_ADDRESS", "")); err != nil {
 			sentry.CaptureException(err)
 			slog.Error("Could not start HTTP server", slog.Any("error", err))
 		}

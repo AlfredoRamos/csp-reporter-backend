@@ -3,9 +3,9 @@ package app
 import (
 	"log/slog"
 	"os"
-	"strconv"
 	"sync"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/getsentry/sentry-go"
 	"github.com/wneessen/go-mail"
 )
@@ -17,25 +17,9 @@ var (
 
 func SMTP() *mail.Client {
 	onceEmail.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("EMAIL_PORT"))
-		if err != nil {
-			sentry.CaptureException(err)
-			port = mail.DefaultPortTLS
-			slog.Warn(
-				"The SMTP port is invalid. Fallback port will be used instead",
-				slog.String("port", os.Getenv("EMAIL_PORT")),
-				slog.Int("fallback", port),
-			)
-		}
-
 		tlsPolicy := mail.TLSMandatory
 		smtpAuth := mail.SMTPAuthCramMD5
-
-		useTls, err := strconv.ParseBool(os.Getenv("EMAIL_TLS"))
-		if err != nil {
-			sentry.CaptureException(err)
-			useTls = true
-		}
+		useTls := env.Bool("EMAIL_TLS", true)
 
 		if !useTls {
 			tlsPolicy = mail.TLSOpportunistic
@@ -43,12 +27,12 @@ func SMTP() *mail.Client {
 		}
 
 		client, err := mail.NewClient(
-			os.Getenv("EMAIL_HOST"),
+			env.String("EMAIL_HOST", ""),
 			mail.WithSMTPAuth(smtpAuth),
 			mail.WithTLSPortPolicy(tlsPolicy),
-			mail.WithPort(port),
-			mail.WithUsername(os.Getenv("EMAIL_USERNAME")),
-			mail.WithPassword(os.Getenv("EMAIL_PASSWORD")),
+			mail.WithPort(env.Int("EMAIL_PORT", mail.DefaultPortTLS)),
+			mail.WithUsername(env.String("EMAIL_USERNAME", "")),
+			mail.WithPassword(env.String("EMAIL_PASSWORD", "")),
 		)
 		if err != nil {
 			sentry.CaptureException(err)

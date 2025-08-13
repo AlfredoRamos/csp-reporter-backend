@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
 	"sync"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/getsentry/sentry-go"
 	"github.com/valkey-io/valkey-go"
 )
@@ -19,20 +19,9 @@ var (
 
 func Cache() valkey.Client {
 	onceCache.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
-		if err != nil {
-			sentry.CaptureException(err)
-			port = 6379
-			slog.Error(
-				"Invalid cache port",
-				slog.Int("fallback", port),
-				slog.Any("error", err),
-			)
-		}
-
 		client, err := valkey.NewClient(valkey.ClientOption{
-			InitAddress: []string{fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port)},
-			Password:    os.Getenv("CACHE_PASS"),
+			InitAddress: []string{fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379))},
+			Password:    env.String("CACHE_PASS", ""),
 			SelectDB:    0,
 		})
 		if err != nil && !errors.Is(err, valkey.Nil) {
