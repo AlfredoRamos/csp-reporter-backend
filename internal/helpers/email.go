@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"mime/multipart"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +15,7 @@ import (
 	text_tpl "text/template"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
@@ -102,12 +102,19 @@ func (e *EmailOpts) IsValid() bool {
 }
 
 func SendEmail(opts *EmailOpts, data map[string]any) error {
-	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
-		return errors.New("the from email address is invalid")
+	appName := env.String("APP_NAME", "")
+	emailFrom := env.String("EMAIL_FROM", "")
+
+	if !utils.IsValidEmail(emailFrom) {
+		err := errors.New("the from email address is invalid")
+		sentry.CaptureException(err)
+		return err
 	}
 
 	if !opts.IsValid() {
-		return errors.New("missing information to send email")
+		err := errors.New("missing information to send email")
+		sentry.CaptureException(err)
+		return err
 	}
 
 	if opts.Locale == nil || !opts.Locale.IsValid() {
@@ -136,16 +143,10 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 	msg.SetMessageID()
 	msg.SetDate()
 	msg.SetBulk()
-	msg.Subject(opts.Subject + " • " + os.Getenv("APP_NAME"))
+	msg.Subject(opts.Subject + " • " + appName)
 	msg.SetGenHeader(mail.HeaderContentLang, lang)
 
-	if !utils.IsValidEmail(os.Getenv("EMAIL_FROM")) {
-		err := errors.New("the from email address is invalid")
-		sentry.CaptureException(err)
-		return err
-	}
-
-	if err := msg.FromFormat(os.Getenv("APP_NAME"), os.Getenv("EMAIL_FROM")); err != nil {
+	if err := msg.FromFormat(appName, emailFrom); err != nil {
 		sentry.CaptureException(err)
 		return fmt.Errorf("could not set the from email address: %w", err)
 	}
@@ -159,12 +160,12 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 
 	// Default values
 	data["Lang"] = lang
-	data["AppName"] = os.Getenv("APP_NAME")
-	data["AppDescription"] = os.Getenv("APP_DESCRIPTION")
-	data["AppLogo"] = os.Getenv("APP_LOGO")
-	data["AppDomain"] = os.Getenv("APP_DOMAIN")
-	data["CompanyName"] = os.Getenv("COMPANY_NAME")
-	data["CompanyURL"] = os.Getenv("COMPANY_URL")
+	data["AppName"] = appName
+	data["AppDescription"] = env.String("APP_DESCRIPTION", "")
+	data["AppLogo"] = env.String("APP_LOGO", "")
+	data["AppDomain"] = env.String("APP_DOMAIN", "")
+	data["CompanyName"] = env.String("COMPANY_NAME", "")
+	data["CompanyURL"] = env.String("COMPANY_URL", "")
 	data["Subject"] = opts.Subject
 	data["Now"] = time.Now().In(utils.DefaultLocation())
 

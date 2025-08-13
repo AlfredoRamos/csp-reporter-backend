@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/hibiken/asynq"
@@ -27,20 +27,9 @@ var (
 
 func AsynqClient() *asynq.Client {
 	onceTasks.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
-		if err != nil {
-			sentry.CaptureException(err)
-			port = 6379
-			slog.Error(
-				"Invalid cache port",
-				slog.Int("fallback", port),
-				slog.Any("error", err),
-			)
-		}
-
 		client = asynq.NewClient(asynq.RedisClientOpt{
-			Addr:     fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port),
-			Password: os.Getenv("CACHE_PASS"),
+			Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379)),
+			Password: env.String("CACHE_PASS", ""),
 			DB:       0,
 		})
 	})
@@ -50,21 +39,10 @@ func AsynqClient() *asynq.Client {
 
 func AsynqServer() *asynq.Server {
 	onceServer.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
-		if err != nil {
-			sentry.CaptureException(err)
-			port = 6379
-			slog.Error(
-				"Invalid cache port",
-				slog.Int("fallback", port),
-				slog.Any("error", err),
-			)
-		}
-
 		server = asynq.NewServer(
 			asynq.RedisClientOpt{
-				Addr:     fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port),
-				Password: os.Getenv("CACHE_PASS"),
+				Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379)),
+				Password: env.String("CACHE_PASS", ""),
 				DB:       0,
 			},
 			asynq.Config{
@@ -95,21 +73,10 @@ func AsynqServeMux() *asynq.ServeMux {
 
 func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 	onceTaskManager.Do(func() {
-		port, err := strconv.Atoi(os.Getenv("CACHE_PORT"))
-		if err != nil {
-			sentry.CaptureException(err)
-			port = 6379
-			slog.Error(
-				"Invalid cache port",
-				slog.Int("fallback", port),
-				slog.Any("error", err),
-			)
-		}
-
-		taskManager, err = asynq.NewPeriodicTaskManager(asynq.PeriodicTaskManagerOpts{
+		manager, err := asynq.NewPeriodicTaskManager(asynq.PeriodicTaskManagerOpts{
 			RedisConnOpt: asynq.RedisClientOpt{
-				Addr:     fmt.Sprintf("%s:%d", os.Getenv("CACHE_HOST"), port),
-				Password: os.Getenv("CACHE_PASS"),
+				Addr:     fmt.Sprintf("%s:%d", env.String("CACHE_HOST", ""), env.Int("CACHE_PORT", 6379)),
+				Password: env.String("CACHE_PASS", ""),
 				DB:       0,
 			},
 			PeriodicTaskConfigProvider: NewTasksFileProvider(),
@@ -123,6 +90,8 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 			slog.Error("Could not create periodic task manager", slog.Any("error", err))
 			os.Exit(1)
 		}
+
+		taskManager = manager
 	})
 
 	return taskManager

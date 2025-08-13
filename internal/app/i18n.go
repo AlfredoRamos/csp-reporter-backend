@@ -3,12 +3,12 @@ package app
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/BurntSushi/toml"
 	"github.com/getsentry/sentry-go"
@@ -28,11 +28,7 @@ var (
 
 func DefaultLanguage() language.Tag {
 	onceDefaultLang.Do(func() {
-		lang := os.Getenv("I18N_LANG")
-		if len(lang) < 1 {
-			lang = "en-US"
-			slog.Warn("Default language not specified", slog.String("fallback", lang))
-		}
+		lang := env.String("I18N_LANG", "en-US")
 
 		var err error
 		defaultLanguage, err = language.Parse(lang)
@@ -53,7 +49,7 @@ func DefaultLanguage() language.Tag {
 func AllowedLanguages() []language.Tag {
 	onceAllowedLanguages.Do(func() {
 		defaultLang := DefaultLanguage()
-		allowedLangsStr := strings.TrimSpace(os.Getenv("I18N_ALLOWED_LANGS"))
+		allowedLangsStr := env.String("I18N_ALLOWED_LANGS", "")
 
 		if len(allowedLangsStr) > 0 {
 			langList := utils.CleanStringList(utils.SplitAny(allowedLangsStr, utils.SplitChars))

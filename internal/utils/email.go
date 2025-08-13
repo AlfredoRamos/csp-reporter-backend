@@ -5,13 +5,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/getsentry/sentry-go"
 	"github.com/wneessen/go-mail"
 	"github.com/wneessen/go-mail-middleware/dkim"
 )
 
 func NewDkimMiddleware() *dkim.Middleware {
-	d, err := GetApexDomain(os.Getenv("APP_DOMAIN"))
+	d, err := GetApexDomain(env.String("APP_DOMAIN", ""))
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error("Could not get application domain", slog.Any("error", err))

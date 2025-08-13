@@ -24,11 +24,10 @@ var (
 
 func DB() *gorm.DB {
 	onceDB.Do(func() {
-		port := env.Int("DB_PORT", 5432)
 		dsn := fmt.Sprintf(
 			"postgres://%[4]s:%[5]s@%[1]s:%[2]d/%[3]s",
 			env.String("DB_HOST", ""),
-			port,
+			env.Int("DB_PORT", 5432),
 			env.String("DB_NAME", ""),
 			env.String("DB_USER", ""),
 			env.String("DB_PASS", ""),

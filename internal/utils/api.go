@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"mime/multipart"
 	"net/url"
-	"os"
 	"slices"
 	"strconv"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/internal/env"
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -86,7 +86,7 @@ func DecodeCursor(cursor string) (Cursor, error) {
 }
 
 func GetPaginationSize(p string) int {
-	perPage := os.Getenv("PAGINATE_PER_PAGE")
+	perPage := env.String("PAGINATE_PER_PAGE", "")
 
 	if len(p) > 0 {
 		perPage = p
@@ -98,13 +98,8 @@ func GetPaginationSize(p string) int {
 		limit = defaultPageSize
 	}
 
-	if limit < minPageSize {
-		limit = minPageSize
-	}
-
-	if limit > maxPageSize {
-		limit = maxPageSize
-	}
+	limit = max(limit, minPageSize)
+	limit = min(limit, maxPageSize)
 
 	return limit
 }
