@@ -98,13 +98,8 @@ func GetPaginationSize(p string) int {
 		limit = defaultPageSize
 	}
 
-	if limit < minPageSize {
-		limit = minPageSize
-	}
-
-	if limit > maxPageSize {
-		limit = maxPageSize
-	}
+	limit = max(limit, minPageSize)
+	limit = min(limit, maxPageSize)
 
 	return limit
 }
