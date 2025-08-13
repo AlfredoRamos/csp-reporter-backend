@@ -26,11 +26,11 @@ func DB() *gorm.DB {
 	onceDB.Do(func() {
 		dsn := fmt.Sprintf(
 			"postgres://%[4]s:%[5]s@%[1]s:%[2]d/%[3]s",
-			env.String("DB_HOST", ""),
+			env.String("DB_HOST"),
 			env.Int("DB_PORT", 5432),
-			env.String("DB_NAME", ""),
-			env.String("DB_USER", ""),
-			env.String("DB_PASS", ""),
+			env.String("DB_NAME"),
+			env.String("DB_USER"),
+			env.String("DB_PASS"),
 		)
 
 		logLevel := logger.Warn
@@ -101,7 +101,7 @@ func setupRoles() {
 func setupSites() {
 	isProduction := env.IsProduction()
 
-	domain, err := utils.GetApexDomain(env.String("APP_DOMAIN", ""))
+	domain, err := utils.GetApexDomain(env.String("APP_DOMAIN"))
 	if err != nil && isProduction {
 		sentry.CaptureException(err)
 		slog.Error("Could not get app domain", slog.Any("error", err))
@@ -114,7 +114,7 @@ func setupSites() {
 
 	sites := []models.Site{
 		{
-			Title:  utils.ToStringPtr(env.String("APP_NAME", "")),
+			Title:  utils.ToStringPtr(env.String("APP_NAME")),
 			Domain: domain,
 		},
 	}

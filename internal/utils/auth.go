@@ -83,7 +83,7 @@ func (c CustomJwtClaims) Validate() error {
 }
 
 func AccessTokenContextKey() string {
-	ctxKey := env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY", "")
+	ctxKey := env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY")
 	ctxKey = strings.TrimSpace(ctxKey)
 
 	if len(ctxKey) < 1 {
@@ -94,7 +94,7 @@ func AccessTokenContextKey() string {
 }
 
 func RefreshTokenContextKey() string {
-	ctxKey := env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY", "")
+	ctxKey := env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY")
 	ctxKey = strings.TrimSpace(ctxKey)
 
 	if len(ctxKey) < 1 {
@@ -361,7 +361,7 @@ func RandomPassword(n int) (string, error) {
 }
 
 func GetJwtIssuer() (string, error) {
-	d := env.String("APP_DOMAIN", "")
+	d := env.String("APP_DOMAIN")
 
 	if !env.IsProduction() {
 		return GetDomainHostname(d)

@@ -102,8 +102,8 @@ func (e *EmailOpts) IsValid() bool {
 }
 
 func SendEmail(opts *EmailOpts, data map[string]any) error {
-	appName := env.String("APP_NAME", "")
-	emailFrom := env.String("EMAIL_FROM", "")
+	appName := env.String("APP_NAME")
+	emailFrom := env.String("EMAIL_FROM")
 
 	if !utils.IsValidEmail(emailFrom) {
 		err := errors.New("the from email address is invalid")
@@ -161,11 +161,11 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 	// Default values
 	data["Lang"] = lang
 	data["AppName"] = appName
-	data["AppDescription"] = env.String("APP_DESCRIPTION", "")
-	data["AppLogo"] = env.String("APP_LOGO", "")
-	data["AppDomain"] = env.String("APP_DOMAIN", "")
-	data["CompanyName"] = env.String("COMPANY_NAME", "")
-	data["CompanyURL"] = env.String("COMPANY_URL", "")
+	data["AppDescription"] = env.String("APP_DESCRIPTION")
+	data["AppLogo"] = env.String("APP_LOGO")
+	data["AppDomain"] = env.String("APP_DOMAIN")
+	data["CompanyName"] = env.String("COMPANY_NAME")
+	data["CompanyURL"] = env.String("COMPANY_URL")
 	data["Subject"] = opts.Subject
 	data["Now"] = time.Now().In(utils.DefaultLocation())
 

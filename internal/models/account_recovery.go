@@ -21,5 +21,5 @@ type AccountRecovery struct {
 }
 
 func (ar AccountRecovery) URL() string {
-	return fmt.Sprintf("%s/auth/recover?hash=%s", env.String("APP_DOMAIN", ""), ar.Hash)
+	return fmt.Sprintf("%s/auth/recover?hash=%s", env.String("APP_DOMAIN"), ar.Hash)
 }
