@@ -29,10 +29,10 @@ github.com/emersion/go-msgauth v0.7.0 h1:vj2hMn6KhFtW41kshIBTXvp6KgYSqpA/ZN9Pv4g
 github.com/emersion/go-msgauth v0.7.0/go.mod h1:mmS9I6HkSovrNgq0HNXTeu8l3sRAAuQ9RMvbM4KU7Ck=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
-github.com/getsentry/sentry-go v0.35.0 h1:+FJNlnjJsZMG3g0/rmmP7GiKjQoUF5EXfEtBwtPtkzY=
-github.com/getsentry/sentry-go v0.35.0/go.mod h1:C55omcY9ChRQIUcVcGcs+Zdy4ZpQGvNJ7JYHIoSWOtE=
-github.com/getsentry/sentry-go/fiber v0.35.0 h1:LHQXjO8M9w1koWxgXAXQRtcA5ZesISe2hOh3i8wleJ8=
-github.com/getsentry/sentry-go/fiber v0.35.0/go.mod h1:Wlt9F+h5bbKcgCDyz6WGqam53kXCuvWF1aVFIdSJLec=
+github.com/getsentry/sentry-go v0.35.1 h1:iopow6UVLE2aXu46xKVIs8Z9D/YZkJrHkgozrxa+tOQ=
+github.com/getsentry/sentry-go v0.35.1/go.mod h1:C55omcY9ChRQIUcVcGcs+Zdy4ZpQGvNJ7JYHIoSWOtE=
+github.com/getsentry/sentry-go/fiber v0.35.1 h1:LMXsGn4+FpAAhOjGmOgRMdecx0U5ZRsRcTU/fVfXdio=
+github.com/getsentry/sentry-go/fiber v0.35.1/go.mod h1:VcaqrlFfHoYVInUmQ4l9YeCL29J9Ph6Br95kIGIjA7M=
 github.com/go-errors/errors v1.4.2 h1:J6MZopCL4uSllY1OfXM374weqZFFItUbrImctkmUxIA=
 github.com/go-errors/errors v1.4.2/go.mod h1:sIVyrIiJhuEF+Pj9Ebtd6P/rEYROXFi3BopGUQ5a5Og=
 github.com/go-jose/go-jose/v4 v4.1.2 h1:TK/7NqRQZfgAh+Td8AlsrvtPoUyiHh0LqVvokh+1vHI=
