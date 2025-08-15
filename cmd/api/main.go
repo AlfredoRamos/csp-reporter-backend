@@ -75,10 +75,7 @@ func main() {
 	}()
 
 	// Asynq server
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		queue := tasks.AsynqServer()
 		mux := tasks.AsynqServeMux()
 
@@ -86,7 +83,7 @@ func main() {
 			sentry.CaptureException(err)
 			slog.Error("Could not run queue server", slog.Any("error", err))
 		}
-	}()
+	})
 	defer func() {
 		app.Cache().Close()
 
@@ -104,17 +101,14 @@ func main() {
 	}()
 
 	// Periodic tasks
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		manager := tasks.AsynqPeriodicTaskManager()
 
 		if err := manager.Run(); err != nil {
 			sentry.CaptureException(err)
 			slog.Error("Could not run periodic tasks manager", slog.Any("error", err))
 		}
-	}()
+	})
 	// defer tasks.AsynqPeriodicTaskManager().Shutdown()
 
 	// Setup app
@@ -149,30 +143,24 @@ func main() {
 	routes.SetupRoutes(http)
 
 	// Setup server
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		if err := http.Listen(env.String("APP_ADDRESS")); err != nil {
 			sentry.CaptureException(err)
 			slog.Error("Could not start HTTP server", slog.Any("error", err))
 		}
-	}()
+	})
 
 	// Listen to signals
 	sig := <-sigChan
 	slog.Info("Received", slog.Any("signal", sig))
 
 	// Shutdown server
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		if err := http.Shutdown(); err != nil {
 			sentry.CaptureException(err)
 			slog.Error("Could not close HTTP server", slog.Any("error", err))
 		}
-	}()
+	})
 
 	// Graceful shutdown
 	wg.Wait()

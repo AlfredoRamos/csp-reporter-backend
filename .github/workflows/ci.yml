@@ -17,7 +17,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '^1.24.6'
+          go-version: '^1.25.0'
 
       - name: Install dependencies
         run: go mod tidy
@@ -36,7 +36,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '^1.24.6'
+          go-version: '^1.25.0'
 
       - name: Install dependencies
         run: go mod tidy
@@ -72,7 +72,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '^1.24.6'
+          go-version: '^1.25.0'
 
       - name: Install utils
         run: make utils

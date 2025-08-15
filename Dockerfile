@@ -1,6 +1,6 @@
 # ---[ Arguments ]---
 ARG ALPINE_VERSION=3.22
-ARG GO_VERSION=1.24-alpine
+ARG GO_VERSION=1.25-alpine
 
 # ---[ Backend ]---
 FROM golang:${GO_VERSION} AS backend-build
