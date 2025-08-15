@@ -1,10 +1,10 @@
 module alfredoramos.mx/csp-reporter
 
-go 1.24.6
+go 1.25.0
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/casbin/casbin/v2 v2.119.0
+	github.com/casbin/casbin/v2 v2.120.0
 	github.com/ccojocar/zxcvbn-go v1.0.4
 	github.com/getsentry/sentry-go v0.35.1
 	github.com/getsentry/sentry-go/fiber v0.35.1
@@ -53,14 +53,14 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/redis/go-redis/v9 v9.12.0 // indirect
+	github.com/redis/go-redis/v9 v9.12.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/sv-tools/openapi v0.2.1 // indirect
 	github.com/tinylib/msgp v1.3.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.64.0 // indirect
+	github.com/valyala/fasthttp v1.65.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
