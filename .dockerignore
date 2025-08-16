@@ -27,7 +27,6 @@
 **/*_test.go
 
 # Exceptions
-!.env
 !.git/refs/
 !.git/objects/
 !.git/HEAD

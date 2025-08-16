@@ -3,9 +3,10 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-args_bin = []
-bin = "./tmp/csp-reporter"
 cmd = "go build -o ./tmp/csp-reporter ./cmd/api/..."
+bin = "./tmp/csp-reporter"
+full_bin = "godotenv -f ./.env -- ./tmp/csp-reporter"
+args_bin = []
 delay = 1000
 exclude_dir = [
 	"assets",
@@ -21,7 +22,6 @@ exclude_file = []
 exclude_regex = ["_test.go"]
 exclude_unchanged = false
 follow_symlink = false
-full_bin = ""
 include_dir = []
 include_ext = ["go", "tpl", "tmpl", "html", "env", "csv"]
 include_file = []
