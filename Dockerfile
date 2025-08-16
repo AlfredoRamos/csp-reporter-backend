@@ -27,7 +27,6 @@ RUN apk upgrade --no-cache && apk add --no-cache tzdata curl
 # App setup
 WORKDIR /srv/http/backend
 RUN adduser -D -H -g http http
-COPY --from=backend-build /srv/http/backend/.env ./
 COPY --from=backend-build /usr/local/bin/csp-reporter /go/bin/asynq /usr/local/bin/
 COPY --from=backend-build /srv/http/backend/internal/keys/ internal/keys/
 COPY --from=backend-build /srv/http/backend/internal/casbin/ internal/casbin/

@@ -44,7 +44,7 @@ func (p *FileBasedConfigProvider) GetConfigs() ([]*asynq.PeriodicTaskConfig, err
 		return nil, err
 	}
 
-	c := &PeriodicTaskConfigContainer{}
+	c := PeriodicTaskConfigContainer{}
 	if err := yaml.Unmarshal(data, &c); err != nil {
 		sentry.CaptureException(err)
 		slog.Error("Could not parse tasks config file", slog.Any("error", err))

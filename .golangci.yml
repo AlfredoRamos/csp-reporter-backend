@@ -58,7 +58,6 @@ linters:
             - github.com/aws/aws-sdk-go-v2
             - github.com/valkey-io/valkey-go
             - github.com/go-jose/go-jose/v4
-            - github.com/joho/godotenv
             - github.com/goccy/go-json
             - github.com/casbin/casbin/v2
             - github.com/ccojocar/zxcvbn-go

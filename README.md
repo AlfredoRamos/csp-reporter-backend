@@ -35,6 +35,12 @@ go mod tidy
 go install github.com/air-verse/air@latest
 ```
 
+## Setup environment helper
+
+```shell
+go install github.com/joho/godotenv/cmd/godotenv@latest
+```
+
 ## Setup linters
 
 ```shell

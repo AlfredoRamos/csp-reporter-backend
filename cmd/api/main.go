@@ -20,7 +20,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -44,13 +43,6 @@ func main() {
 	wg := sync.WaitGroup{}
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		sentry.CaptureException(err)
-		slog.Error("Could not load .env file", slog.Any("error", err))
-		os.Exit(1)
-	}
 
 	// Set default timezone
 	time.Local = utils.DefaultLocation()

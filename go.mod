@@ -14,7 +14,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
-	github.com/joho/godotenv v1.5.1
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/swaggo/swag/v2 v2.0.0-rc4
 	github.com/valkey-io/valkey-go v1.0.64
