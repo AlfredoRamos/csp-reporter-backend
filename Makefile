@@ -6,7 +6,7 @@ git_version::=$(shell git describe --long --tags 2>/dev/null)
 app_version::=$(shell if [ -n "${git_version}" ]; then echo "${git_version}" | sed -E 's/([^-]*)-g([0-9a-f]+)/\1+\2/'; else printf '0.0.0-%s+%s' "$(shell git rev-list --count HEAD)" "$(shell git rev-parse --short HEAD)"; fi)
 keys_path::=internal/keys
 i18n_path::=internal/i18n
-docker_image::=alfredoramos/csp-reporter-backend:latest
+docker_image::=alfredoramos/csp-reporter-backend:latest-alpine
 
 .PHONY: help deps utils lint lint-bin build i18n-extract i18n-new i18n-update i18n-finish install keys clean docs docker-build docker-push
 

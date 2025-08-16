@@ -31,10 +31,4 @@
 !.git/objects/
 !.git/HEAD
 !.git/packed-refs
-!internal/keys/signing-private.json
-!internal/keys/signing-public.json
-!internal/keys/encryption-private.json
-!internal/keys/encryption-public.json
-!internal/keys/dkim.key
-!internal/keys/dkim.pub
 !internal/templates/**/*.md
