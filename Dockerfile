@@ -41,7 +41,7 @@ RUN set -eux; \
 WORKDIR /srv/http/backend
 RUN set -eux; \
 	addgroup -g 1500 -S http; \
-	adduser -u 1500 -S -D -G http -H -h /srv/http/backend http;
+	adduser -u 1500 -S -D -G http -H -h /srv/http http
 COPY --from=backend-build /usr/local/bin/csp-reporter /go/bin/asynq /usr/local/bin/
 COPY --from=backend-build /srv/http/backend/internal/casbin/ internal/casbin/
 COPY --from=backend-build /srv/http/backend/internal/templates/ internal/templates/
