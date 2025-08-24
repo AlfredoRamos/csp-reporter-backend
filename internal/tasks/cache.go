@@ -28,7 +28,7 @@ func NewPurgeCachePatternTask(p string) (*asynq.Task, error) {
 		return nil, err
 	}
 
-	return asynq.NewTask(TaskPurgeCachePattern, payload), nil
+	return asynq.NewTask(cache.Key(TaskPurgeCachePattern), payload), nil
 }
 
 func HandlePurgeCachePatternTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
@@ -64,7 +64,7 @@ func NewPurgeCachePattern(p string) error {
 	slog.Info(
 		"Enqueued",
 		slog.String("task-id", info.ID),
-		slog.String("queue", info.Queue),
+		slog.String("queue", cache.RemoveKey(info.Queue)),
 	)
 
 	return nil

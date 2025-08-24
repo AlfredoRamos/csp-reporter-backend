@@ -30,7 +30,7 @@ func NewEmailDeliveryTask(o *helpers.EmailOpts, d map[string]any) (*asynq.Task, 
 		return nil, err
 	}
 
-	return asynq.NewTask(TaskEmailDelivery, payload), nil
+	return asynq.NewTask(cache.Key(TaskEmailDelivery), payload), nil
 }
 
 func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
@@ -67,7 +67,7 @@ func NewEmail(o *helpers.EmailOpts, d map[string]any) error {
 	slog.Info(
 		"Enqueued",
 		slog.String("task-id", info.ID),
-		slog.String("queue", info.Queue),
+		slog.String("queue", cache.RemoveKey(info.Queue)),
 	)
 
 	return nil
