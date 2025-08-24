@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-json"
@@ -53,7 +54,7 @@ func NewCspReport(d helpers.CspReport) error {
 		return err
 	}
 
-	info, err := AsynqClient().Enqueue(task, asynq.MaxRetry(3), asynq.ProcessIn(3*time.Second), asynq.Retention(1*time.Hour))
+	info, err := AsynqClient().Enqueue(task, asynq.Queue(cache.Key("default")), asynq.MaxRetry(3), asynq.ProcessIn(3*time.Second), asynq.Retention(1*time.Hour))
 	if err != nil {
 		sentry.CaptureException(err)
 		slog.Error("Could not enqueue task", slog.Any("error", err))

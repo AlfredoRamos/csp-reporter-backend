@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
-	"alfredoramos.mx/csp-reporter/internal/utils"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"github.com/getsentry/sentry-go"
 	"github.com/valkey-io/valkey-go"
 )
@@ -17,7 +17,7 @@ const (
 )
 
 func PurgeCachePattern(pattern string) error {
-	pattern = utils.CacheKey(pattern)
+	pattern = cache.Key(pattern)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
@@ -48,9 +49,9 @@ func AsynqServer() *asynq.Server {
 			asynq.Config{
 				Concurrency: 10,
 				Queues: map[string]int{
-					"critical": 6,
-					"default":  3,
-					"low":      1,
+					cache.Key("critical"): 6,
+					cache.Key("default"):  3,
+					cache.Key("low"):      1,
 				},
 			},
 		)

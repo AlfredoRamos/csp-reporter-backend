@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/env"
 	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/helpers"
@@ -241,7 +242,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 		})
 	}
 
-	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
+	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(cache.Key("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
 		slog.Error(
@@ -317,8 +318,8 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	errs := []error{}
 	cmds := valkey.Commands{
-		app.Cache().B().Sadd().Key(utils.CacheKey("access-tokens:revoked")).Member(accessJWEClaims.ID).Build(),
-		app.Cache().B().Sadd().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(cache.Key("access-tokens:revoked")).Member(accessJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(cache.Key("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Build(),
 	}
 
 	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {
@@ -697,8 +698,8 @@ func AuthLogout(c *fiber.Ctx) error {
 
 	errs := []error{}
 	cmds := valkey.Commands{
-		app.Cache().B().Sadd().Key(utils.CacheKey("access-tokens:revoked")).Member(accessJWEClaims.ID).Build(),
-		app.Cache().B().Sadd().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(cache.Key("access-tokens:revoked")).Member(accessJWEClaims.ID).Build(),
+		app.Cache().B().Sadd().Key(cache.Key("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Build(),
 	}
 
 	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {

@@ -1,0 +1,8 @@
+# configs:
+#   - cronspec: "* * * * *"
+#     task_type: email:deliver
+#     queue: critical
+#
+#   - cronspec: "*/5 * * * *"
+#     task_type: image:resize
+#     queue: default

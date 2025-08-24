@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"github.com/getsentry/sentry-go"
 	"github.com/goccy/go-yaml"
 	"github.com/hibiken/asynq"
@@ -17,6 +18,7 @@ type FileBasedConfigProvider struct {
 type TasksConfig struct {
 	Cronspec string `yaml:"cronspec"`
 	TaskType string `yaml:"task_type"`
+	Queue    string `yaml:"queue"`
 }
 
 type PeriodicTaskConfigContainer struct {
@@ -54,9 +56,18 @@ func (p *FileBasedConfigProvider) GetConfigs() ([]*asynq.PeriodicTaskConfig, err
 	configs := []*asynq.PeriodicTaskConfig{}
 
 	for _, cfg := range c.Configs {
+		opts := []asynq.Option{asynq.MaxRetry(3)}
+
+		if len(cfg.Queue) < 1 {
+			cfg.Queue = "default"
+		}
+
+		opts = append(opts, asynq.Queue(cache.Key(cfg.Queue)))
+
 		configs = append(configs, &asynq.PeriodicTaskConfig{
 			Cronspec: cfg.Cronspec,
-			Task:     asynq.NewTask(cfg.TaskType, nil),
+			Task:     asynq.NewTask(cache.Key(cfg.TaskType), nil, opts...),
+			Opts:     opts,
 		})
 	}
 
