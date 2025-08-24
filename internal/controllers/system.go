@@ -6,8 +6,8 @@ import (
 	"log/slog"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
-	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valkey-io/valkey-go"
@@ -35,7 +35,7 @@ func PurgeCache(c *fiber.Ctx) error {
 	// ! Do not purge tokens
 	errs := []error{}
 	cmds := valkey.Commands{
-		app.Cache().B().Del().Key(utils.CacheKey("email:superadmin:list")).Build(),
+		app.Cache().B().Del().Key(cache.Key("email:superadmin:list")).Build(),
 	}
 
 	for _, res := range app.Cache().DoMulti(context.Background(), cmds...) {

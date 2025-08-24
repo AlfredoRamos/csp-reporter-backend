@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"alfredoramos.mx/csp-reporter/internal/jwt"
@@ -108,7 +109,7 @@ func ValidateAccessToken() fiber.Handler {
 			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid access token issuer: %v", accessClaims.Issuer))
 		}
 
-		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(utils.CacheKey("access-tokens:revoked")).Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
+		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(cache.Key("access-tokens:revoked")).Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, valkey.Nil) {
 			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", accessClaims.ID, err))
 		}
@@ -177,7 +178,7 @@ func ValidateRefreshToken() fiber.Handler {
 			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid access token issuer: %v", accessClaims.Issuer))
 		}
 
-		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(utils.CacheKey("access-tokens:revoked")).Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
+		isAccessRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(cache.Key("access-tokens:revoked")).Member(accessClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, valkey.Nil) {
 			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", accessClaims.ID, err))
 		}
@@ -200,7 +201,7 @@ func ValidateRefreshToken() fiber.Handler {
 			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("invalid refresh token issuer: %v", refreshClaims.Issuer))
 		}
 
-		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(utils.CacheKey("refresh-tokens:revoked")).Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
+		isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(cache.Key("refresh-tokens:revoked")).Member(refreshClaims.ID).Cache(), 5*time.Minute).AsBool()
 		if err != nil && !errors.Is(err, valkey.Nil) {
 			return jwtError(c, fiber.StatusUnauthorized, fmt.Errorf("could not check token revocation '%v': %w", refreshClaims.ID, err))
 		}

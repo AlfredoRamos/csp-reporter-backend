@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
@@ -51,7 +52,7 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 
 	roles := []userRole{}
 
-	cacheKey := utils.CacheKey(fmt.Sprintf("roles:%s", id.String()))
+	cacheKey := cache.Key(fmt.Sprintf("roles:%s", id.String()))
 	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)

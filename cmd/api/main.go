@@ -13,6 +13,7 @@ import (
 
 	_ "alfredoramos.mx/csp-reporter/docs"
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/routes"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
@@ -50,6 +51,13 @@ func main() {
 	// Sentry
 	app.SetupSentry()
 	defer sentry.Flush(3 * time.Second)
+
+	cachePrefix, err := cache.Prefix()
+	if err != nil {
+		slog.Error("Could not generate cache prefix", slog.Any("error", err))
+	}
+
+	slog.Info("Setup cache", slog.String("prefix", cachePrefix))
 
 	// Application initialization
 	app.SetupDefaultData()

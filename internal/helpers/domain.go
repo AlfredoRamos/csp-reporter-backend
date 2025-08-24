@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/app"
+	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/getsentry/sentry-go"
@@ -24,7 +25,7 @@ func IsAllowedDomain(d string) bool {
 		return false
 	}
 
-	cacheKey := utils.CacheKey(fmt.Sprintf("domain:%s", domain))
+	cacheKey := cache.Key(fmt.Sprintf("domain:%s", domain))
 	cachedDomain, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
 		sentry.CaptureException(err)
