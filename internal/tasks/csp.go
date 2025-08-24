@@ -28,7 +28,7 @@ func NewReportAddTask(d helpers.CspReport) (*asynq.Task, error) {
 		return nil, err
 	}
 
-	return asynq.NewTask(TaskReportAdd, payload), nil
+	return asynq.NewTask(cache.Key(TaskReportAdd), payload), nil
 }
 
 func HandleReportAddTask(ctx context.Context, t *asynq.Task) error { //nolint:unused
@@ -64,7 +64,7 @@ func NewCspReport(d helpers.CspReport) error {
 	slog.Info(
 		"Enqueued",
 		slog.String("task-id", info.ID),
-		slog.String("queue", info.Queue),
+		slog.String("queue", cache.RemoveKey(info.Queue)),
 	)
 
 	return nil

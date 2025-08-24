@@ -64,9 +64,9 @@ func AsynqServeMux() *asynq.ServeMux {
 	onceServeMux.Do(func() {
 		serveMux = asynq.NewServeMux()
 		serveMux.Use(loggingMiddleware)
-		serveMux.HandleFunc(TaskEmailDelivery, HandleEmailDeliveryTask)
-		serveMux.HandleFunc(TaskReportAdd, HandleReportAddTask)
-		serveMux.HandleFunc(TaskPurgeCachePattern, HandlePurgeCachePatternTask)
+		serveMux.HandleFunc(cache.Key(TaskEmailDelivery), HandleEmailDeliveryTask)
+		serveMux.HandleFunc(cache.Key(TaskReportAdd), HandleReportAddTask)
+		serveMux.HandleFunc(cache.Key(TaskPurgeCachePattern), HandlePurgeCachePatternTask)
 	})
 
 	return serveMux
@@ -101,13 +101,13 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 func loggingMiddleware(h asynq.Handler) asynq.Handler {
 	return asynq.HandlerFunc(func(ctx context.Context, t *asynq.Task) error {
 		start := time.Now()
-		slog.Info("Start processing task", slog.String("type", t.Type()))
+		slog.Info("Start processing task", slog.String("type", cache.RemoveKey(t.Type())))
 
 		if err := h.ProcessTask(ctx, t); err != nil {
 			sentry.CaptureException(err)
 			slog.Error(
 				"Could not process task",
-				slog.String("type", t.Type()),
+				slog.String("type", cache.Key(t.Type())),
 				slog.String("payload", string(t.Payload())),
 				slog.Any("error", err),
 			)
@@ -116,7 +116,7 @@ func loggingMiddleware(h asynq.Handler) asynq.Handler {
 
 		slog.Info(
 			"Finished processing task",
-			slog.String("type", t.Type()),
+			slog.String("type", cache.RemoveKey(t.Type())),
 			slog.Duration("duration", time.Since(start)),
 		)
 		return nil

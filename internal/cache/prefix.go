@@ -75,3 +75,29 @@ func Key(key string) string {
 
 	return prefix + ":" + key
 }
+
+func RemoveKey(key string) string {
+	key = strings.TrimSpace(key)
+
+	if len(key) < 1 {
+		return ""
+	}
+
+	prefix, err := Prefix()
+	if err != nil {
+		sentry.CaptureException(err)
+		slog.Error("Error generating cache key prefix", slog.Any("error", err))
+		return key
+	}
+
+	if !strings.HasPrefix(key, prefix) {
+		slog.Warn(
+			"Cache key does not include the prefix",
+			slog.String("key", key),
+			slog.String("prefix", prefix),
+		)
+		return key
+	}
+
+	return strings.Replace(key, prefix+":", "", 1)
+}
