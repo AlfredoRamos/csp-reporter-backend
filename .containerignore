@@ -11,7 +11,9 @@
 **/*.crt
 **/*.cer
 **/*.cert
+**/*.containerfile
 **/*.dockerfile
+**/Containerfile
 **/Dockerfile
 
 # Server
