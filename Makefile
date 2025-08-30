@@ -6,9 +6,9 @@ git_version::=$(shell git describe --long --tags 2>/dev/null)
 app_version::=$(shell if [ -n "${git_version}" ]; then echo "${git_version}" | sed -E 's/([^-]*)-g([0-9a-f]+)/\1+\2/'; else printf '0.0.0-%s+%s' "$(shell git rev-list --count HEAD)" "$(shell git rev-parse --short HEAD)"; fi)
 keys_path::=internal/keys
 i18n_path::=internal/i18n
-docker_image::=alfredoramos/csp-reporter-backend:latest-alpine
+container_image::=alfredoramos/csp-reporter-backend:latest-alpine
 
-.PHONY: help deps utils lint lint-bin build i18n-extract i18n-new i18n-update i18n-finish install keys clean docs docker-build docker-push
+.PHONY: help deps utils lint lint-bin build i18n-extract i18n-new i18n-update i18n-finish install keys clean docs docker-build docker-push container-build container-push
 
 ## help: print this help message
 help:
@@ -32,6 +32,7 @@ utils:
 
 ## lint: run linters
 lint:
+	go vet ./...
 	golangci-lint run ./...
 	govulncheck -show=traces ./...
 	deadcode -test ./...
@@ -84,7 +85,7 @@ keys:
 
 ## clean: cleanup tasks
 clean:
-	rm -fR "$(shell dirname ${binary_file})"
+	rm -fR "$(shell dirname ${binary_file})" tmp
 
 ## docs: build OpenAPI docs
 docs:
@@ -95,8 +96,18 @@ docs:
 
 ## docker-build: build Docker image
 docker-build:
-	sudo docker buildx build --output type=image,compression=zstd --pull --tag "${docker_image}" .
+	sudo docker buildx build --output type=image,force-compression=true,compression=zstd,compression-level=22 --pull --tag "${container_image}" .
+	sudo docker image prune -f
 
 ## docker-push: publish Docker image
 docker-push:
-	sudo docker image push "${docker_image}"
+	sudo docker image push "${container_image}"
+
+## container-build: build Podman image
+container-build:
+	podman build --omit-history --disable-compression=false --force-rm --created-annotation --pull=always --rm --security-opt=no-new-privileges --tag "${container_image}" .
+	podman image prune -f
+
+## container-push: publish Podman image
+container-push:
+	podman image push --force-compression --compression-format=zstd --compression-level=20 "${container_image}"
