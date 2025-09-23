@@ -1,4 +1,37 @@
 components:
+  schemas:
+    helpers.CspReport:
+      properties:
+        csp-report:
+          $ref: '#/components/schemas/helpers.cspReportFields'
+      type: object
+    helpers.cspReportFields:
+      properties:
+        blocked-uri:
+          type: string
+        column-number:
+          type: integer
+        disposition:
+          type: string
+        document-uri:
+          type: string
+        effective-directive:
+          type: string
+        line-number:
+          type: integer
+        original-policy:
+          type: string
+        referrer:
+          type: string
+        script-sample:
+          type: string
+        source-file:
+          type: string
+        status-code:
+          type: integer
+        violated-directive:
+          type: string
+      type: object
   securitySchemes:
     bearerauth:
       bearerFormat: JWT
@@ -30,6 +63,13 @@ paths:
         required: true
         schema:
           type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"reason\": \"Duplicated account\"\r\n}"
+              type: string
+        description: Rejection reason
       responses:
         "204":
           content:
@@ -64,6 +104,11 @@ paths:
   /auth/check:
     post:
       operationId: api.auth.check
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "204":
           content:
@@ -81,6 +126,14 @@ paths:
   /auth/login:
     post:
       operationId: api.auth.login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+              type: string
+        description: Password
+        required: true
       responses:
         "204":
           content:
@@ -96,6 +149,11 @@ paths:
   /auth/logout:
     post:
       operationId: api.auth.logout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "204":
           description: No Content
@@ -107,6 +165,14 @@ paths:
   /auth/recover:
     post:
       operationId: api.auth.recover
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"email\": \"name@server.tld\"\r\n}"
+              type: string
+        description: User email
+        required: true
       responses:
         "204":
           content:
@@ -122,6 +188,14 @@ paths:
   /auth/recover/update:
     patch:
       operationId: api.auth.recover.update
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"confirm_password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+              type: string
+        description: Password confirmation
+        required: true
       responses:
         "204":
           content:
@@ -137,6 +211,14 @@ paths:
   /auth/recover/validate:
     post:
       operationId: api.auth.recover.validate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"hash\": \"xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN\"\r\n}"
+              type: string
+        description: Recovery hash
+        required: true
       responses:
         "204":
           content:
@@ -152,6 +234,11 @@ paths:
   /auth/refresh:
     patch:
       operationId: api.auth.refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "204":
           content:
@@ -169,6 +256,14 @@ paths:
   /auth/register:
     post:
       operationId: api.auth.register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"confirm_password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+              type: string
+        description: Password confirmation
+        required: true
       responses:
         "204":
           content:
@@ -184,6 +279,13 @@ paths:
   /reports/add:
     post:
       operationId: api.csp.reports.add
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/helpers.CspReport'
+        description: CSP Report
+        required: true
       responses:
         "204":
           content:
@@ -242,6 +344,14 @@ paths:
   /sites/add:
     post:
       operationId: api.sites.add
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example: "{\r\n\t\"domain\": \"server.tld\"\r\n}"
+              type: string
+        description: Domain
+        required: true
       responses:
         "204":
           content:
@@ -276,6 +386,11 @@ paths:
   /system/cache/purge:
     post:
       operationId: api.system.cache.purge
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "204":
           description: No Content

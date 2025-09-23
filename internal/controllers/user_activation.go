@@ -45,10 +45,13 @@ func GetAllInactiveUsers(c *fiber.Ctx) error {
 // @summary Review user activation
 // @security bearerauth
 // @tags User activation
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /activations/review/{id} [patch]
 // @param id path string true "User UUID"
+// @param approved body bool true "Approved status" SchemaExample({\r\n\t"approved": false\r\n})
+// @param reason body string false "Rejection reason" SchemaExample({\r\n\t"reason": "Duplicated account"\r\n})
 func UpdateUserActivation(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {

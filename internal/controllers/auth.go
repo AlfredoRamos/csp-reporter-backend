@@ -49,9 +49,12 @@ type userRecoveryInput struct {
 // @id api.auth.login
 // @summary User login
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/login [post]
+// @param email body string true "Email" SchemaExample({\r\n\t"email": "name@server.tld"\r\n})
+// @param password body string true "Password" SchemaExample({\r\n\t"password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
 func AuthLogin(c *fiber.Ctx) error {
 	input := &userLoginInput{}
 	if err := c.BodyParser(&input); err != nil {
@@ -186,6 +189,7 @@ func AuthLogin(c *fiber.Ctx) error {
 // @summary Check if user is valid
 // @security bearerauth
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/check [post]
@@ -206,6 +210,7 @@ func AuthCheck(c *fiber.Ctx) error {
 // @summary Generate a new access token with a refresh token
 // @security bearerauth
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/refresh [patch]
@@ -394,9 +399,15 @@ func AuthRefresh(c *fiber.Ctx) error {
 // @id api.auth.register
 // @summary User registration
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/register [post]
+// @param first_name body string false "First name" SchemaExample({\r\n\t"first_name": "John"\r\n})
+// @param last_name body string false "Last name" SchemaExample({\r\n\t"last_name": "Doe"\r\n})
+// @param email body string true "Email" SchemaExample({\r\n\t"email": "name@server.tld"\r\n})
+// @param password body string true "Password" SchemaExample({\r\n\t"password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
+// @param confirm_password body string true "Password confirmation" SchemaExample({\r\n\t"confirm_password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
 func AuthRegister(c *fiber.Ctx) error {
 	if !utils.CanRegisterUsers() {
 		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -647,6 +658,7 @@ func AuthRegister(c *fiber.Ctx) error {
 // @summary User logout
 // @security bearerauth
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204
 // @router /auth/logout [post]
@@ -719,9 +731,11 @@ func AuthLogout(c *fiber.Ctx) error {
 // @id api.auth.recover
 // @summary Send password recovery email
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/recover [post]
+// @param email body string true "User email" SchemaExample({\r\n\t"email": "name@server.tld"\r\n})
 func AuthRecover(c *fiber.Ctx) error {
 	input := &userLoginInput{}
 	if err := c.BodyParser(&input); err != nil {
@@ -856,9 +870,11 @@ func AuthRecover(c *fiber.Ctx) error {
 // @id api.auth.recover.validate
 // @summary Validate password recovery token
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/recover/validate [post]
+// @param hash body string true "Recovery hash" SchemaExample({\r\n\t"hash": "xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN"\r\n})
 func AuthRecoverValidate(c *fiber.Ctx) error {
 	input := &userRecoveryInput{}
 	if err := c.BodyParser(&input); err != nil {
@@ -915,9 +931,13 @@ func AuthRecoverValidate(c *fiber.Ctx) error {
 // @id api.auth.recover.update
 // @summary Update user password
 // @tags Auth
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/recover/update [patch]
+// @param hash body string true "Recovery hash" SchemaExample({\r\n\t"hash": "xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN"\r\n})
+// @param password body string true "Password" SchemaExample({\r\n\t"password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
+// @param confirm_password body string true "Password confirmation" SchemaExample({\r\n\t"confirm_password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
 func AuthRecoverUpdate(c *fiber.Ctx) error {
 	input := &userRecoveryInput{}
 	if err := c.BodyParser(&input); err != nil {

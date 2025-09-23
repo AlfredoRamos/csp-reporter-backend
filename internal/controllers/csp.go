@@ -72,9 +72,11 @@ func GetCSPReport(c *fiber.Ctx) error {
 // @summary Add a new CSP report
 // @security bearerauth
 // @tags Reports
+// @accept json
 // @produce json
 // @success 204 {object} map[string]string
 // @router /reports/add [post]
+// @param csp-report body helpers.CspReport true "CSP Report"
 func PostCSPReport(c *fiber.Ctx) error {
 	allowedMimeTypes := []string{"application/csp-report", "application/json"}
 	accept := c.Accepts(allowedMimeTypes...)
