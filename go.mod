@@ -18,7 +18,7 @@ require (
 	github.com/swaggo/swag/v2 v2.0.0-rc4
 	github.com/valkey-io/valkey-go v1.0.66
 	github.com/wneessen/go-mail v0.7.2
-	github.com/wneessen/go-mail-middleware v0.1.0
+	github.com/wneessen/go-mail-middleware v0.1.1
 	golang.org/x/crypto v0.42.0
 	golang.org/x/net v0.44.0
 	golang.org/x/text v0.29.0
