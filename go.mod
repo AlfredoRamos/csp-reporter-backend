@@ -7,7 +7,7 @@ require (
 	github.com/casbin/casbin/v2 v2.128.0
 	github.com/ccojocar/zxcvbn-go v1.0.4
 	github.com/getsentry/sentry-go v0.36.1
-	github.com/getsentry/sentry-go/fiber v0.36.0
+	github.com/getsentry/sentry-go/fiber v0.36.1
 	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/goccy/go-json v0.10.5
 	github.com/goccy/go-yaml v1.18.0
