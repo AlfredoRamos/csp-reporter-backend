@@ -143,8 +143,8 @@ github.com/swaggo/swag/v2 v2.0.0-rc4 h1:SZ8cK68gcV6cslwrJMIOqPkJELRwq4gmjvk77Mrv
 github.com/swaggo/swag/v2 v2.0.0-rc4/go.mod h1:Ow7Y8gF16BTCDn8YxZbyKn8FkMLRUHekv1kROJZpbvE=
 github.com/tinylib/msgp v1.4.0 h1:SYOeDRiydzOw9kSiwdYp9UcBgPFtLU2WDHaJXyHruf8=
 github.com/tinylib/msgp v1.4.0/go.mod h1:cvjFkb4RiC8qSBOPMGPSzSAx47nAsfhLVTCZZNuHv5o=
-github.com/valkey-io/valkey-go v1.0.67 h1:QPaRcuBmazhyoWTxk7I2XcSALhoL7UhAReR5o/rh1Po=
-github.com/valkey-io/valkey-go v1.0.67/go.mod h1:bHmwjIEOrGq/ubOJfh5uMRs7Xj6mV3mQ/ZXUbmqpjqY=
+github.com/valkey-io/valkey-go v1.0.68 h1:bTbfonp49b41DqrF30q+y2JL3gcbjd2IiacFAtO4JBA=
+github.com/valkey-io/valkey-go v1.0.68/go.mod h1:bHmwjIEOrGq/ubOJfh5uMRs7Xj6mV3mQ/ZXUbmqpjqY=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasthttp v1.66.0 h1:M87A0Z7EayeyNaV6pfO3tUTUiYO0dZfEJnRGXTVNuyU=
