@@ -20,7 +20,7 @@ require (
 	github.com/wneessen/go-mail v0.7.2
 	github.com/wneessen/go-mail-middleware v0.1.1
 	golang.org/x/crypto v0.44.0
-	golang.org/x/net v0.46.0
+	golang.org/x/net v0.47.0
 	golang.org/x/text v0.31.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
