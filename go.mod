@@ -3,7 +3,7 @@ module alfredoramos.mx/csp-reporter
 go 1.25.5
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/casbin/casbin/v2 v2.135.0
 	github.com/ccojocar/zxcvbn-go v1.0.4
 	github.com/getsentry/sentry-go v0.40.0
@@ -14,7 +14,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.10
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.1
-	github.com/nicksnyder/go-i18n/v2 v2.6.0
+	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/swaggo/swag/v2 v2.0.0-rc4
 	github.com/valkey-io/valkey-go v1.0.70
 	github.com/wneessen/go-mail v0.7.2
