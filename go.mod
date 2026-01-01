@@ -3,7 +3,7 @@ module alfredoramos.mx/csp-reporter
 go 1.25.5
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/casbin/casbin/v2 v2.135.0
 	github.com/ccojocar/zxcvbn-go v1.0.4
 	github.com/getsentry/sentry-go v0.40.0
