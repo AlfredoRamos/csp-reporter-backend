@@ -200,7 +200,7 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
 }
 
 func Translate(conf *i18n.LocalizeConfig, c *fiber.Ctx, langs ...string) string {
-	langList := []string{}
+	langList := make([]string, 0, len(langs))
 
 	for _, tag := range GetApiLanguages(c, langs...) {
 		langList = append(langList, tag.String())

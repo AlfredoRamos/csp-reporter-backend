@@ -56,7 +56,8 @@ func (p *FileBasedConfigProvider) GetConfigs() ([]*asynq.PeriodicTaskConfig, err
 	configs := []*asynq.PeriodicTaskConfig{}
 
 	for _, cfg := range c.Configs {
-		opts := []asynq.Option{asynq.MaxRetry(3)}
+		opts := make([]asynq.Option, 0, 2)
+		opts = append(opts, asynq.MaxRetry(3))
 
 		if len(cfg.Queue) < 1 {
 			cfg.Queue = "default"

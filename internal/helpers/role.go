@@ -26,7 +26,7 @@ type userRole struct {
 type userRoleList []userRole
 
 func (l userRoleList) Names() []string {
-	names := []string{}
+	names := make([]string, 0, len(l))
 
 	for _, r := range l {
 		names = append(names, r.Name)
@@ -36,7 +36,7 @@ func (l userRoleList) Names() []string {
 }
 
 func (l userRoleList) IDs() []uuid.UUID {
-	ids := []uuid.UUID{}
+	ids := make([]uuid.UUID, 0, len(l))
 
 	for _, r := range l {
 		ids = append(ids, r.ID)
