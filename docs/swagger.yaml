@@ -33,8 +33,7 @@ components:
           type: string
       type: object
   securitySchemes:
-    bearerauth:
-      bearerFormat: JWT
+    '@securityDefinitions.bearerauth':
       scheme: bearer
       type: http
 externalDocs:
@@ -67,9 +66,16 @@ paths:
         content:
           application/json:
             schema:
-              example: "{\r\n\t\"reason\": \"Duplicated account\"\r\n}"
-              type: string
-        description: Rejection reason
+              type: object
+          text/plain:
+            schema:
+              oneOf:
+              - title: approved
+                type: boolean
+              - example: "{\r\n\t\"reason\": \"Duplicated account\"\r\n}"
+                title: reason
+                type: string
+        description: Approved status | Rejection reason
       responses:
         "204":
           content:
@@ -130,9 +136,17 @@ paths:
         content:
           application/json:
             schema:
-              example: "{\r\n\t\"password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
-              type: string
-        description: Password
+              type: object
+          text/plain:
+            schema:
+              oneOf:
+              - example: "{\r\n\t\"email\": \"name@server.tld\"\r\n}"
+                title: email
+                type: string
+              - example: "{\r\n\t\"password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+                title: password
+                type: string
+        description: Email | Password
         required: true
       responses:
         "204":
@@ -169,7 +183,11 @@ paths:
         content:
           application/json:
             schema:
+              type: object
+          text/plain:
+            schema:
               example: "{\r\n\t\"email\": \"name@server.tld\"\r\n}"
+              title: email
               type: string
         description: User email
         required: true
@@ -192,9 +210,20 @@ paths:
         content:
           application/json:
             schema:
-              example: "{\r\n\t\"confirm_password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
-              type: string
-        description: Password confirmation
+              type: object
+          text/plain:
+            schema:
+              oneOf:
+              - example: "{\r\n\t\"hash\": \"xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN\"\r\n}"
+                title: hash
+                type: string
+              - example: "{\r\n\t\"password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+                title: password
+                type: string
+              - example: "{\r\n\t\"confirm_password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+                title: confirm_password
+                type: string
+        description: Recovery hash | Password | Password confirmation
         required: true
       responses:
         "204":
@@ -215,7 +244,11 @@ paths:
         content:
           application/json:
             schema:
+              type: object
+          text/plain:
+            schema:
               example: "{\r\n\t\"hash\": \"xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN\"\r\n}"
+              title: hash
               type: string
         description: Recovery hash
         required: true
@@ -260,9 +293,26 @@ paths:
         content:
           application/json:
             schema:
-              example: "{\r\n\t\"confirm_password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
-              type: string
-        description: Password confirmation
+              type: object
+          text/plain:
+            schema:
+              oneOf:
+              - example: "{\r\n\t\"first_name\": \"John\"\r\n}"
+                title: first_name
+                type: string
+              - example: "{\r\n\t\"last_name\": \"Doe\"\r\n}"
+                title: last_name
+                type: string
+              - example: "{\r\n\t\"email\": \"name@server.tld\"\r\n}"
+                title: email
+                type: string
+              - example: "{\r\n\t\"password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+                title: password
+                type: string
+              - example: "{\r\n\t\"confirm_password\": \"4sUp3rS3cUr3P4$$w0rD\"\r\n}"
+                title: confirm_password
+                type: string
+        description: First name | Last name | Email | Password | Password confirmation
         required: true
       responses:
         "204":
@@ -283,7 +333,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/helpers.CspReport'
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/helpers.CspReport'
+                description: CSP Report
+                summary: csp-report
         description: CSP Report
         required: true
       responses:
@@ -348,9 +402,17 @@ paths:
         content:
           application/json:
             schema:
-              example: "{\r\n\t\"domain\": \"server.tld\"\r\n}"
-              type: string
-        description: Domain
+              type: object
+          text/plain:
+            schema:
+              oneOf:
+              - example: "{\r\n\t\"title\": \"Example Website\"\r\n}"
+                title: title
+                type: string
+              - example: "{\r\n\t\"domain\": \"server.tld\"\r\n}"
+                title: domain
+                type: string
+        description: Title | Domain
         required: true
       responses:
         "204":
