@@ -28,20 +28,20 @@ const maxRecoveryTries int = 3
 
 type userLoginInput struct {
 	Email    string `json:"email"`
-	Password string `json:"password"`
+	Password string `json:"password"` // #nosec G117 -- Password is not stored
 }
 
 type userRegisterInput struct {
 	FirstName       *string `json:"first_name,omitempty"`
 	LastName        *string `json:"last_name,omitempty"`
 	Email           string  `json:"email"`
-	Password        string  `json:"password"`
+	Password        string  `json:"password"` // #nosec G117 -- Password is hashed
 	ConfirmPassword string  `json:"confirm_password"`
 }
 
 type userRecoveryInput struct {
 	Hash            string `json:"hash"`
-	Password        string `json:"password"`
+	Password        string `json:"password"` // #nosec G117 -- Password is hashed and not stored
 	ConfirmPassword string `json:"confirm_password"`
 }
 
