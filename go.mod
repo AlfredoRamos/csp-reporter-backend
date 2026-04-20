@@ -16,7 +16,7 @@ require (
 	github.com/hibiken/asynq v0.26.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/swaggo/swag/v2 v2.0.0-rc5
-	github.com/valkey-io/valkey-go v1.0.73
+	github.com/valkey-io/valkey-go v1.0.74
 	github.com/wneessen/go-mail v0.7.2
 	github.com/wneessen/go-mail-middleware v0.1.1
 	golang.org/x/crypto v0.50.0
