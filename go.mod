@@ -11,7 +11,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/goccy/go-json v0.10.6
 	github.com/goccy/go-yaml v1.19.2
-	github.com/gofiber/fiber/v2 v2.52.12
+	github.com/gofiber/fiber/v2 v2.52.13
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.26.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
