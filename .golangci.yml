@@ -50,7 +50,7 @@ linters:
             - golang.org/x/crypto
             - golang.org/x/net
             - alfredoramos.mx/csp-reporter
-            - github.com/gofiber/fiber/v2
+            - github.com/gofiber/fiber/v3
             - github.com/gofiber/contrib/jwt
             - gorm.io/gorm
             - gorm.io/driver/postgres
@@ -58,18 +58,17 @@ linters:
             - github.com/aws/aws-sdk-go-v2
             - github.com/valkey-io/valkey-go
             - github.com/go-jose/go-jose/v4
-            - github.com/goccy/go-json
             - github.com/casbin/casbin/v2
             - github.com/ccojocar/zxcvbn-go
             - github.com/xuri/excelize/v2
             - github.com/hibiken/asynq
             - github.com/wneessen/go-mail
-            - github.com/getsentry/sentry-go
-            - github.com/goccy/go-json
+            # - github.com/getsentry/sentry-go
             - github.com/goccy/go-yaml
             - github.com/nicksnyder/go-i18n/v2/i18n
             - github.com/BurntSushi/toml
             - github.com/swaggo/swag/v2
+            - github.com/zeebo/xxh3
     errchkjson:
       check-error-free-encoding: false
       report-no-exported: true

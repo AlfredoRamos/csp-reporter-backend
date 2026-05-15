@@ -8,8 +8,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -22,14 +21,14 @@ import (
 // @produce json
 // @success 204
 // @router /system/cache/purge [post]
-func PurgeCache(c *fiber.Ctx) error {
+func PurgeCache(c fiber.Ctx) error {
 	if err := tasks.NewPurgeCachePattern("roles:*"); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error purging user roles from cache", slog.Any("error", err))
 	}
 
 	if err := tasks.NewPurgeCachePattern("user:*"); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error purging user info from cache", slog.Any("error", err))
 	}
 
@@ -59,7 +58,7 @@ func PurgeCache(c *fiber.Ctx) error {
 // @produce json
 // @success 204
 // @router /system/csrf [get]
-func GetCsrf(c *fiber.Ctx) error {
+func GetCsrf(c fiber.Ctx) error {
 	// * Used only to generate CSRF cookie
 	return c.Status(fiber.StatusNoContent).JSON(&fiber.Map{})
 }

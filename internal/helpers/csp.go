@@ -8,7 +8,6 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"gorm.io/gorm"
 )
 
@@ -34,14 +33,14 @@ type CspReport struct {
 func NewCspReport(d CspReport) error {
 	domain, err := utils.GetApexDomain(d.Report.DocumentURI)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not get the document URI hostname", slog.Any("error", err))
 		return err
 	}
 
 	if !IsAllowedDomain(domain) {
 		err := fmt.Errorf("the document URI '%s' is not within the allowed domains", domain)
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return err
 	}
 

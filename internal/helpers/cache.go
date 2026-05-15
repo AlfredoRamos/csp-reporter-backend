@@ -8,7 +8,6 @@ import (
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/cache"
-	"github.com/getsentry/sentry-go"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -34,7 +33,7 @@ func PurgeCachePattern(pattern string) error {
 
 		result, err := app.Cache().Do(ctx, app.Cache().B().Scan().Cursor(cursor).Match(pattern).Count(batchSize).Build()).AsScanEntry()
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not scan keys",
 				slog.String("pattern", pattern),

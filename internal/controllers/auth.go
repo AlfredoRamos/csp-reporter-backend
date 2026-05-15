@@ -16,8 +16,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/valkey-io/valkey-go"
@@ -55,9 +54,9 @@ type userRecoveryInput struct {
 // @router /auth/login [post]
 // @param email body string true "Email" SchemaExample({\r\n\t"email": "name@server.tld"\r\n})
 // @param password body string true "Password" SchemaExample({\r\n\t"password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
-func AuthLogin(c *fiber.Ctx) error {
+func AuthLogin(c fiber.Ctx) error {
 	input := &userLoginInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -128,7 +127,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating access token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -142,7 +141,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	refreshToken, err := helpers.NewRefreshToken(user)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating refresh token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -156,7 +155,7 @@ func AuthLogin(c *fiber.Ctx) error {
 
 	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -193,7 +192,7 @@ func AuthLogin(c *fiber.Ctx) error {
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/check [post]
-func AuthCheck(c *fiber.Ctx) error {
+func AuthCheck(c fiber.Ctx) error {
 	// * Real validation is handled with middlewares
 	return c.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"message": []string{app.Translate(&i18n.LocalizeConfig{
@@ -214,11 +213,11 @@ func AuthCheck(c *fiber.Ctx) error {
 // @produce json
 // @success 204 {object} map[string]string
 // @router /auth/refresh [patch]
-func AuthRefresh(c *fiber.Ctx) error {
+func AuthRefresh(c fiber.Ctx) error {
 	accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Invalid access token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -234,7 +233,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 	refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
 	refreshJWEClaims, err := utils.ParseJWEClaims(refreshJWE)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -249,7 +248,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	isRefreshRevoked, err := app.Cache().DoCache(context.Background(), app.Cache().B().Sismember().Key(cache.Key("refresh-tokens:revoked")).Member(refreshJWEClaims.ID).Cache(), 5*time.Minute).AsBool()
 	if err != nil && !errors.Is(err, valkey.Nil) {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error(
 			"Could not check token revocation",
 			slog.String("token-id", refreshJWEClaims.ID),
@@ -339,7 +338,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	accessToken, err := helpers.NewAccessToken(user)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating access token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -353,7 +352,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	refreshToken, err := helpers.NewRefreshToken(user)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating refresh token", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -367,7 +366,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 
 	refreshClaims, err := utils.ParseJWEClaims(refreshToken)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -408,7 +407,7 @@ func AuthRefresh(c *fiber.Ctx) error {
 // @param email body string true "Email" SchemaExample({\r\n\t"email": "name@server.tld"\r\n})
 // @param password body string true "Password" SchemaExample({\r\n\t"password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
 // @param confirm_password body string true "Password confirmation" SchemaExample({\r\n\t"confirm_password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
-func AuthRegister(c *fiber.Ctx) error {
+func AuthRegister(c fiber.Ctx) error {
 	if !utils.CanRegisterUsers() {
 		return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
@@ -419,7 +418,7 @@ func AuthRegister(c *fiber.Ctx) error {
 	}
 
 	input := &userRegisterInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -509,7 +508,7 @@ func AuthRegister(c *fiber.Ctx) error {
 	}
 
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(input.Email, "@")[0]}); env.IsProduction() && !strong && err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 
 		msg := ""
 
@@ -624,7 +623,7 @@ func AuthRegister(c *fiber.Ctx) error {
 				"UserEmail": user.Email,
 			},
 		); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Error sending email", slog.Any("error", err))
 		}
 	})
@@ -646,7 +645,7 @@ func AuthRegister(c *fiber.Ctx) error {
 			"UserName": userName,
 		},
 	); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error sending email", slog.Any("error", err))
 	}
 
@@ -662,11 +661,11 @@ func AuthRegister(c *fiber.Ctx) error {
 // @produce json
 // @success 204
 // @router /auth/logout [post]
-func AuthLogout(c *fiber.Ctx) error {
+func AuthLogout(c fiber.Ctx) error {
 	accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 	accessJWEClaims, err := utils.ParseJWEClaims(accessJWE)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Invalid access token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -682,7 +681,7 @@ func AuthLogout(c *fiber.Ctx) error {
 	refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
 	refreshJWEClaims, err := utils.ParseJWEClaims(refreshJWE)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Invalid refresh token claims", slog.Any("error", err))
 
 		return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -736,9 +735,9 @@ func AuthLogout(c *fiber.Ctx) error {
 // @success 204 {object} map[string]string
 // @router /auth/recover [post]
 // @param email body string true "User email" SchemaExample({\r\n\t"email": "name@server.tld"\r\n})
-func AuthRecover(c *fiber.Ctx) error {
+func AuthRecover(c fiber.Ctx) error {
 	input := &userLoginInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -852,7 +851,7 @@ func AuthRecover(c *fiber.Ctx) error {
 				"RecoveryURL": recovery.URL(),
 			},
 		); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Error sending email", slog.Any("error", err))
 		}
 
@@ -875,9 +874,9 @@ func AuthRecover(c *fiber.Ctx) error {
 // @success 204 {object} map[string]string
 // @router /auth/recover/validate [post]
 // @param hash body string true "Recovery hash" SchemaExample({\r\n\t"hash": "xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN"\r\n})
-func AuthRecoverValidate(c *fiber.Ctx) error {
+func AuthRecoverValidate(c fiber.Ctx) error {
 	input := &userRecoveryInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -938,9 +937,9 @@ func AuthRecoverValidate(c *fiber.Ctx) error {
 // @param hash body string true "Recovery hash" SchemaExample({\r\n\t"hash": "xp7GESkD3Dzbm4Pb3Mtn8xc453KHJeXQvdN"\r\n})
 // @param password body string true "Password" SchemaExample({\r\n\t"password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
 // @param confirm_password body string true "Password confirmation" SchemaExample({\r\n\t"confirm_password": "4sUp3rS3cUr3P4$$w0rD"\r\n})
-func AuthRecoverUpdate(c *fiber.Ctx) error {
+func AuthRecoverUpdate(c fiber.Ctx) error {
 	input := &userRecoveryInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -1007,7 +1006,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 	}
 
 	if strong, err := utils.ValidatePasswordStrength(input.Password, []string{strings.Split(recovery.User.Email, "@")[0]}); env.IsProduction() && !strong && err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 
 		msg := ""
 
@@ -1096,7 +1095,7 @@ func AuthRecoverUpdate(c *fiber.Ctx) error {
 			"UserName": recovery.User.GetFullName(),
 		},
 	); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error sending email", slog.Any("error", err))
 	}
 

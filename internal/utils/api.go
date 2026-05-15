@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"mime/multipart"
 	"net/url"
 	"slices"
@@ -9,9 +10,7 @@ import (
 	"time"
 
 	"alfredoramos.mx/csp-reporter/internal/env"
-	"github.com/getsentry/sentry-go"
-	"github.com/goccy/go-json"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 )
 
@@ -36,7 +35,7 @@ func CreateCursor(id uuid.UUID, createdAt time.Time, pointsNext bool) Cursor {
 	}
 }
 
-func GeneratePager(next Cursor, prev Cursor, routeName string, ctx *fiber.Ctx) PaginationInfo {
+func GeneratePager(next Cursor, prev Cursor, routeName string, ctx fiber.Ctx) PaginationInfo {
 	routeParams := fiber.Map{}
 	route := ctx.Route()
 
@@ -59,7 +58,7 @@ func encodeCursor(cursor Cursor) *string {
 
 	serializedCursor, err := json.Marshal(cursor)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return nil
 	}
 
@@ -71,14 +70,14 @@ func encodeCursor(cursor Cursor) *string {
 func DecodeCursor(cursor string) (Cursor, error) {
 	decodedCursor, err := base64.RawStdEncoding.Strict().DecodeString(cursor)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return nil, err
 	}
 
 	cur := Cursor{}
 
 	if err := json.Unmarshal(decodedCursor, &cur); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return nil, err
 	}
 
@@ -90,7 +89,7 @@ func GetPaginationSize(p string) int {
 
 	limit, err := strconv.Atoi(perPage)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		limit = defaultPageSize
 	}
 
@@ -110,7 +109,7 @@ func HasValidMimeType(fh *multipart.FileHeader, mtl []string) bool {
 	return slices.Contains(mtl, mt)
 }
 
-func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c *fiber.Ctx) *string {
+func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c fiber.Ctx) *string {
 	if cur == nil {
 		return nil
 	}
@@ -118,21 +117,21 @@ func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c *fiber.Ctx) *string
 	// Base URL
 	u, err := url.Parse(c.BaseURL())
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return cur
 	}
 
 	// Route URL
 	route, err := c.GetRouteURL(n, p)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return cur
 	}
 
 	// Parse route URL
 	ru, err := url.ParseRequestURI(route)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return cur
 	}
 
@@ -158,5 +157,5 @@ func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c *fiber.Ctx) *string
 }
 
 func IsValidUuid(id uuid.UUID) bool {
-	return id.Version() == 4 && id != uuid.Nil
+	return (id.Version() == 4 || id.Version() == 7) && id != uuid.Nil
 }

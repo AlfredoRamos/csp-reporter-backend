@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"errors"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -9,28 +8,30 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/goccy/go-json"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/client"
+	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
-const hcaptchaApiUrl string = "https://api.hcaptcha.com/siteverify"
-
-type CaptchaRequest struct {
+type turnstileRequest struct {
 	Response string `json:"captcha"`
 }
 
-type CaptchaResponse struct {
+type turnstileResponse struct {
 	Success       bool     `json:"success"`
-	Credit        bool     `json:"credit,omitempty"`
-	Hostname      string   `json:"hostname,omitempty"`
 	ChallengeTime string   `json:"challenge_ts,omitempty"`
+	Hostname      string   `json:"hostname,omitempty"`
 	Errors        []string `json:"error-codes,omitempty"`
+	Action        string   `json:"action,omitempty"`
+	CData         string   `json:"cdata,omitempty"`
+	Metadata      struct {
+		EphemeralID string `json:"ephemeral_id,omitempty"`
+	} `json:"metadata,omitzero"`
 }
 
-func CaptchaProtected() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+func TurnstileProtected() fiber.Handler {
+	return func(c fiber.Ctx) error {
 		if !env.IsProduction() {
 			disableEnv := env.Bool("CAPTCHA_DISABLE", false)
 
@@ -45,8 +46,8 @@ func CaptchaProtected() fiber.Handler {
 			}
 		}
 
-		input := CaptchaRequest{}
-		if err := c.BodyParser(&input); err != nil {
+		input := turnstileRequest{}
+		if err := c.Bind().Body(&input); err != nil {
 			slog.Error("Error parsing input data", slog.Any("error", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -76,41 +77,23 @@ func CaptchaProtected() fiber.Handler {
 			})
 		}
 
-		agent := fiber.AcquireAgent()
-		agent.Request().Header.SetMethod("POST")
-		agent.Request().SetRequestURI(hcaptchaApiUrl)
-		agent.Request().Header.SetUserAgent(c.Get("User-Agent"))
+		client := client.New()
+		client.SetBaseURL("https://challenges.cloudflare.com/turnstile/v0")
+		client.SetUserAgent(c.Get("User-Agent"))
 
-		if err := agent.Parse(); err != nil {
-			sentry.CaptureException(err)
-			slog.Error("Could not parse agent", slog.Any("error", err))
+		request := client.R()
+		request.SetFormData("secret", env.String("TURNSTILE_SECRET_KEY"))
+		request.SetFormData("response", input.Response)
+		request.SetFormData("remoteip", c.IP())
+		request.SetFormData("idempotency_key", uuid.NewString())
 
-			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
-				"error": []string{app.Translate(&i18n.LocalizeConfig{
-					DefaultMessage: &i18n.Message{
-						ID:    "ErrorValidateCaptchaResponse",
-						Other: "Could not validate captcha response.",
-					},
-				}, c)},
-			})
-		}
-
-		args := fiber.AcquireArgs()
-		args.Set("sitekey", env.String("HCAPTCHA_SITE_KEY"))
-		args.Set("secret", env.String("HCAPTCHA_SECRET_KEY"))
-		args.Set("response", input.Response)
-		args.Set("remoteip", c.IP())
-
-		agent.Form(args)
-		defer fiber.ReleaseArgs(args)
-
-		status, body, errList := agent.Bytes()
-		if len(errList) > 0 {
-			sentry.CaptureException(errors.Join(errList...))
+		response, err := request.Post("/siteverify")
+		if err != nil {
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not read response body and got invalid HTTP status code",
-				slog.Int("status", status),
-				slog.Any("error", errList),
+				slog.Int("status", response.StatusCode()),
+				slog.Any("error", err),
 			)
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -122,10 +105,10 @@ func CaptchaProtected() fiber.Handler {
 			})
 		}
 
-		defer fiber.ReleaseAgent(agent)
+		defer response.Close()
 
-		response := &CaptchaResponse{}
-		if err := json.Unmarshal(body, &response); err != nil {
+		res := &turnstileResponse{}
+		if err := response.JSON(&res); err != nil {
 			slog.Error("Could not decode response", slog.Any("error", err))
 
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
@@ -138,10 +121,10 @@ func CaptchaProtected() fiber.Handler {
 			})
 		}
 
-		if response.Success {
+		if res.Success {
 			return c.Next()
-		} else if !response.Success && len(response.Errors) > 0 {
-			slog.Error("Could not verify captcha response", slog.Any("error", strings.Join(response.Errors, "\n")))
+		} else if !res.Success && len(res.Errors) > 0 {
+			slog.Error("Could not verify captcha response", slog.Any("error", strings.Join(res.Errors, "\n")))
 			return c.Status(fiber.StatusForbidden).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
 					DefaultMessage: &i18n.Message{

@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 	"sync"
 
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -45,13 +43,13 @@ func DB() *gorm.DB {
 			Logger:                 logger.Default.LogMode(logLevel),
 		})
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not connect to PostgreSQL", slog.Any("error", err))
 			os.Exit(1)
 		}
 
 		if err := database.Exec("CREATE EXTENSION IF NOT EXISTS unaccent").Error; err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not load unaccent extension", slog.Any("error", err))
 		}
 
@@ -64,7 +62,7 @@ func DB() *gorm.DB {
 			&models.Report{},
 			&models.Site{},
 		); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not migrate models", slog.Any("error", err))
 			os.Exit(1)
 		}
@@ -103,7 +101,7 @@ func setupSites() {
 
 	domain, err := utils.GetApexDomain(env.String("APP_DOMAIN"))
 	if err != nil && isProduction {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not get app domain", slog.Any("error", err))
 		return
 	}
@@ -120,9 +118,9 @@ func setupSites() {
 	}
 
 	if len(utils.CorsOrigins()) > 0 {
-		origins := strings.SplitSeq(utils.CorsOrigins(), ",")
+		origins := utils.CorsOrigins()
 
-		for orig := range origins {
+		for _, orig := range origins {
 			domain, err := utils.GetApexDomain(orig)
 			if err != nil {
 				slog.Error(

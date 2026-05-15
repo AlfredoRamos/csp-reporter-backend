@@ -13,17 +13,16 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"alfredoramos.mx/csp-reporter/internal/jwt"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/limiter"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/valkey-io/valkey-go"
 )
 
 func AuthProtected() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		if len(c.Get("Authorization")) <= 7 {
 			return c.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
 				"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -38,7 +37,7 @@ func AuthProtected() fiber.Handler {
 		tokenStr := c.Get("Authorization")[7:]
 
 		if len(tokenStr) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyAccessToken)
 		}
 
 		jwe, err := jose.ParseEncryptedCompact(
@@ -76,7 +75,7 @@ func AuthProtected() fiber.Handler {
 }
 
 func ValidateAccessToken() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 
 		if len(accessJWE) < 1 || len(c.Get("Authorization")) <= 7 {
@@ -93,11 +92,11 @@ func ValidateAccessToken() fiber.Handler {
 		jwe := c.Get("Authorization")[7:]
 
 		if len(jwe) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyAccessToken)
 		}
 
 		if accessJWE != jwe {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrInvalidAccessToken)
 		}
 
 		accessClaims, err := utils.ParseJWEClaims(accessJWE)
@@ -145,7 +144,7 @@ func ValidateAccessToken() fiber.Handler {
 }
 
 func ValidateRefreshToken() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		accessJWE := c.Locals(utils.AccessTokenContextKey()).(string)
 
 		if len(accessJWE) < 1 || len(c.Get("Authorization")) <= 7 {
@@ -162,11 +161,11 @@ func ValidateRefreshToken() fiber.Handler {
 		jwe := c.Get("Authorization")[7:]
 
 		if len(jwe) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyAccessToken)
 		}
 
 		if accessJWE != jwe {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrInvalidAccessToken)
 		}
 
 		accessClaims, err := utils.ParseJWEClaims(accessJWE)
@@ -189,7 +188,7 @@ func ValidateRefreshToken() fiber.Handler {
 
 		refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
 		if len(refreshJWE) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("the refresh token is not valid"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyRefreshToken)
 		}
 
 		refreshClaims, err := utils.ParseJWEClaims(refreshJWE)
@@ -232,9 +231,9 @@ func ValidateRefreshToken() fiber.Handler {
 	}
 }
 
-func jwtError(c *fiber.Ctx, status int, err error) error { //nolint:unparam
+func jwtError(c fiber.Ctx, status int, err error) error { //nolint:unparam
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Access token error", slog.Any("error", err))
 	}
 
@@ -278,12 +277,12 @@ func jwtError(c *fiber.Ctx, status int, err error) error { //nolint:unparam
 	}, c)}})
 }
 
-func jwtSuccess(c *fiber.Ctx) error {
+func jwtSuccess(c fiber.Ctx) error {
 	return c.Next()
 }
 
 func CheckPermissions() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		id := helpers.GetUserID(c)
 
 		if helpers.HasPermission(id, c.Path(), c.Method()) {
@@ -305,7 +304,7 @@ func AuthLimiter() fiber.Handler {
 	cfg := limiter.Config{
 		Max:        25,
 		Expiration: 5 * time.Minute,
-		LimitReached: func(c *fiber.Ctx) error {
+		LimitReached: func(c fiber.Ctx) error {
 			return c.Status(fiber.StatusTooManyRequests).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 				DefaultMessage: &i18n.Message{
 					ID:    "ErrorEndpointRateLimited",

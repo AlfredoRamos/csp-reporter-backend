@@ -3,7 +3,7 @@ package routes
 import (
 	"alfredoramos.mx/csp-reporter/internal/controllers"
 	"alfredoramos.mx/csp-reporter/internal/middlewares"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 func RegisterSiteRoutes(g fiber.Router) {

@@ -1,11 +1,16 @@
 package utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"errors"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/big"
 	"net"
@@ -16,12 +21,12 @@ import (
 	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/jwt"
 	"github.com/ccojocar/zxcvbn-go"
-	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
 	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
-	"github.com/goccy/go-json"
 	"github.com/google/uuid"
+	"github.com/zeebo/xxh3"
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/hkdf"
 )
 
 const (
@@ -55,93 +60,80 @@ type CustomJwtClaims struct {
 
 func (c CustomJwtClaims) Validate() error {
 	if !IsValidIssuer(c.Issuer) {
-		return errors.New("the issuer is invalid")
+		return csperrors.ErrJwtInvalidIssuer
 	}
 
 	sub, err := uuid.Parse(c.Subject)
 	if err != nil || !IsValidUuid(sub) {
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
+			return csperrors.ErrJwtInvalidSubject
 		}
 
-		return errors.New("the subject is invalid")
+		return csperrors.ErrJwtInvalidSubject
 	}
 
 	if !IsValidUuid(c.User.ID) || sub != c.User.ID {
-		return errors.New("the user ID is invalid")
+		return csperrors.ErrJwtInvalidUserID
 	}
 
 	if !IsValidEmail(c.User.Email) {
-		return errors.New("the user email is invalid")
+		return csperrors.ErrJwtInvalidUserEmail
 	}
 
 	if len(c.User.Roles) < 1 {
-		return errors.New("the user roles are invalid")
+		return csperrors.ErrJwtInvalidUserRoles
 	}
 
 	return nil
 }
 
 func AccessTokenContextKey() string {
-	ctxKey := env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY")
-	ctxKey = strings.TrimSpace(ctxKey)
-
-	if len(ctxKey) < 1 {
-		ctxKey = "access_token"
-	}
-
-	return ctxKey
+	return env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY", "access_token")
 }
 
 func RefreshTokenContextKey() string {
-	ctxKey := env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY")
-	ctxKey = strings.TrimSpace(ctxKey)
-
-	if len(ctxKey) < 1 {
-		ctxKey = "refresh_token"
-	}
-
-	return ctxKey
+	return env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY", "refresh_token")
 }
 
 func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
 	if len(token) < 1 {
-		err := errors.New("error parsing empty JWE")
-		sentry.CaptureException(err)
+		err := csperrors.ErrJwtEmptyJwe
+		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Parse JWE
 	jwe, err := jose.ParseEncryptedCompact(token, []jose.KeyAlgorithm{jose.ECDH_ES_A256KW}, []jose.ContentEncryption{jose.A256GCM})
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Decrypt JWE
 	decrypted, err := jwe.Decrypt(jwt.EncryptionKeys().Private)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Verify and parse JWT
 	parsedJWT, err := jose.ParseSigned(string(decrypted), []jose.SignatureAlgorithm{jose.SignatureAlgorithm(jwt.SigningKeys().Private.Algorithm)})
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	// Access the payload
 	payload, err := parsedJWT.Verify(jwt.SigningKeys().Public)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
 	claims := &CustomJwtClaims{}
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
 
@@ -164,7 +156,7 @@ func HashString(p string) string {
 
 	s, err := generateRandomBytes(a.saltLength)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		panic(fmt.Sprintf("Could not generate secure salt: %v", err))
 	}
 
@@ -179,7 +171,7 @@ func HashPassword(p string) string {
 	a := NewArgon2Config()
 	s, err := generateRandomBytes(a.saltLength)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		panic(fmt.Sprintf("Could not generate secure salt: %v", err))
 	}
 
@@ -193,7 +185,7 @@ func HashPassword(p string) string {
 func ComparePasswordHash(p string, h string) bool {
 	config, salt, hash, err := decodeHash(h)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Could not decode hash", slog.Any("error", err))
 
 		return false
@@ -209,7 +201,7 @@ func MustRehashPassword(h string) bool {
 
 	config, _, _, err := decodeHash(h)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Could not decode hash", slog.Any("error", err))
 
 		return false
@@ -230,24 +222,24 @@ func MustRehashPassword(h string) bool {
 func decodeHash(h string) (argon2Config, []byte, []byte, error) {
 	vals := strings.Split(h, "$")
 	if len(vals) != 6 {
-		return argon2Config{}, nil, nil, errors.New("invalid encoded hash format")
+		return argon2Config{}, nil, nil, csperrors.ErrArgonInvalidHashFormat
 	}
 
 	var av int
 	if _, err := fmt.Sscanf(vals[2], "v=%d", &av); err != nil {
-		sentry.CaptureException(err)
-		return argon2Config{}, nil, nil, errors.New("the version of the Argon2 algorithm is not compatible")
+		//sentry.CaptureException(err)
+		return argon2Config{}, nil, nil, csperrors.ErrArgonInvalidAlgorithm
 	}
 
 	config := argon2Config{}
 	if _, err := fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &config.memory, &config.iterations, &config.parallelism); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return argon2Config{}, nil, nil, err
 	}
 
 	salt, err := base64.RawStdEncoding.Strict().DecodeString(vals[4])
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return argon2Config{}, nil, nil, err
 	}
 
@@ -255,7 +247,7 @@ func decodeHash(h string) (argon2Config, []byte, []byte, error) {
 
 	hash, err := base64.RawStdEncoding.Strict().DecodeString(vals[5])
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return argon2Config{}, nil, nil, err
 	}
 
@@ -267,7 +259,7 @@ func decodeHash(h string) (argon2Config, []byte, []byte, error) {
 func generateRandomBytes(n uint32) ([]byte, error) {
 	b := make([]byte, n)
 	if _, err := rand.Read(b); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return nil, err
 	}
 
@@ -282,7 +274,7 @@ func IsValidEmail(e string) bool {
 	}
 
 	if _, err := mail.ParseAddress(e); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse email", slog.Any("error", err))
 		return false
 	}
@@ -299,14 +291,14 @@ func IsRealEmail(e string) bool {
 
 	d, err := GetApexDomain(el[1])
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not get apex domain", slog.Any("error", err))
 		return false
 	}
 
 	mx, err := net.LookupMX(d)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not read domain MX records", slog.Any("error", err))
 		return false
 	}
@@ -347,10 +339,10 @@ func RandomPassword(n int) (string, error) {
 	const charset string = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*_=+-"
 	password := make([]byte, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			return "", err
 		}
 
@@ -381,7 +373,9 @@ func IsValidIssuer(iss string) bool {
 	d, err := GetJwtIssuer()
 	if err != nil || len(d) < 1 {
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
+			slog.Warn("Invalid issuer given.")
+			return false
 		}
 
 		return false
@@ -392,4 +386,91 @@ func IsValidIssuer(iss string) bool {
 
 func CanRegisterUsers() bool {
 	return env.Bool("ENABLE_USER_REGISTER", false)
+}
+
+func XXHashString(input string) (string, error) {
+	h := xxh3.New()
+
+	if _, err := h.WriteString(input); err != nil {
+		slog.Error("Error generating hash", slog.Any("error", err))
+		return "", err
+	}
+
+	hash := h.Sum(nil)
+	return hex.EncodeToString(hash), nil
+}
+
+func EncryptString(key []byte, p string) (string, error) {
+	// AES block cipher
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	// GCM mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	// Random nonce
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	// Encrypt
+	ciphertext := gcm.Seal(nonce, nonce, []byte(p), nil)
+
+	// Base64 encode for storage/transmission
+	return base64.RawStdEncoding.EncodeToString(ciphertext), nil
+}
+
+func DecryptString(key []byte, e string) (string, error) {
+	// Decode base64
+	data, err := base64.RawStdEncoding.Strict().DecodeString(e)
+	if err != nil {
+		return "", err
+	}
+
+	// AES block cipher
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	// GCM mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+
+	if len(data) < nonceSize {
+		return "", csperrors.ErrDecryptShortCipherText
+	}
+
+	// Split nonce + ciphertext
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+
+	// Decrypt + authenticate
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
+}
+
+func DeriveKey(key []byte) ([]byte, error) {
+	h := hkdf.New(sha256.New, key, nil, []byte("AES-GCM key"))
+
+	subkey := make([]byte, 32)
+
+	if _, err := io.ReadFull(h, subkey); err != nil {
+		return nil, err
+	}
+
+	return subkey, nil
 }

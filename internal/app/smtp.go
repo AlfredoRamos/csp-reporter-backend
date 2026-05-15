@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"alfredoramos.mx/csp-reporter/internal/env"
-	"github.com/getsentry/sentry-go"
 	"github.com/wneessen/go-mail"
 )
 
@@ -35,7 +34,7 @@ func SMTP() *mail.Client {
 			mail.WithPassword(env.String("EMAIL_PASSWORD")),
 		)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not create email client", slog.Any("error", err))
 			os.Exit(1)
 		}

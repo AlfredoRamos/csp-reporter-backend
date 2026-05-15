@@ -8,8 +8,7 @@ import (
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gorm.io/gorm"
@@ -31,7 +30,7 @@ type PaginatedItemOpts struct {
 	TableAlias string
 }
 
-func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opts PaginatedItemOpts) error {
+func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c fiber.Ctx, opts PaginatedItemOpts) error {
 	perPage := c.Query("per_page")
 	sortOrder := c.Query("sort_order", "desc")
 	cursor := c.Query("cursor")
@@ -43,7 +42,7 @@ func PaginateQuery[T PaginatedItem](items []T, query *gorm.DB, c *fiber.Ctx, opt
 
 	query, pointsNext, err := GetPaginationQuery(query, pointsNext, cursor, sortOrder, opts.TableAlias)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error paginating results", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -96,7 +95,7 @@ func GetPaginationQuery(query *gorm.DB, pointsNext bool, cursor string, sortOrde
 	if len(cursor) > 0 {
 		decodedCursor, err := utils.DecodeCursor(cursor)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Error decoding cursor", slog.Any("error", err))
 			return nil, pointsNext, err
 		}
@@ -136,7 +135,7 @@ func getPaginationOperator(pointsNext bool, sortOrder string) (string, string) {
 	return "", ""
 }
 
-func CalculatePagination[T PaginatedItem](isFirstPage bool, hasPagination bool, limit int, items []T, pointsNext bool, routeName string, ctx *fiber.Ctx) utils.PaginationInfo {
+func CalculatePagination[T PaginatedItem](isFirstPage bool, hasPagination bool, limit int, items []T, pointsNext bool, routeName string, ctx fiber.Ctx) utils.PaginationInfo {
 	nextCur := utils.Cursor{}
 	prevCur := utils.Cursor{}
 
@@ -172,7 +171,7 @@ func CalculatePagination[T PaginatedItem](isFirstPage bool, hasPagination bool, 
 func GetModelSchema(model any) *schema.Schema {
 	stmt := &gorm.Statement{DB: app.DB()}
 	if err := stmt.Parse(model); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse model", slog.Any("error", err))
 		return nil
 	}

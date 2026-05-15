@@ -8,7 +8,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/helpers"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -25,7 +25,7 @@ type siteInput struct {
 // @produce json
 // @success 204 {object} map[string]string
 // @router /sites/all [get]
-func GetAllSites(c *fiber.Ctx) error {
+func GetAllSites(c fiber.Ctx) error {
 	sites := []models.Site{}
 	query := app.DB().Model(&models.Site{})
 	opts := helpers.PaginatedItemOpts{RouteName: "api.sites.index"}
@@ -44,9 +44,9 @@ func GetAllSites(c *fiber.Ctx) error {
 // @router /sites/add [post]
 // @param title body string false "Title" SchemaExample({\r\n\t"title": "Example Website"\r\n})
 // @param domain body string true "Domain" SchemaExample({\r\n\t"domain": "server.tld"\r\n})
-func PostSite(c *fiber.Ctx) error {
+func PostSite(c fiber.Ctx) error {
 	input := siteInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 		return c.Status(fiber.StatusOK).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{

@@ -10,7 +10,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
@@ -23,7 +23,7 @@ import (
 // @produce json
 // @success 204 {object} map[string]string
 // @router /reports/all [get]
-func GetAllCSPReports(c *fiber.Ctx) error {
+func GetAllCSPReports(c fiber.Ctx) error {
 	reports := []models.Report{}
 	query := app.DB().Model(&models.Report{}).Preload("Site")
 	opts := helpers.PaginatedItemOpts{RouteName: "api.csp.reports.index"}
@@ -40,7 +40,7 @@ func GetAllCSPReports(c *fiber.Ctx) error {
 // @success 204 {object} map[string]string
 // @router /reports/get/{id} [get]
 // @param id path string true "Report UUID"
-func GetCSPReport(c *fiber.Ctx) error {
+func GetCSPReport(c fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {
 		slog.Error("Error parsing ID", slog.Any("error", err))
@@ -77,7 +77,7 @@ func GetCSPReport(c *fiber.Ctx) error {
 // @success 204 {object} map[string]string
 // @router /reports/add [post]
 // @param csp-report body helpers.CspReport true "CSP Report"
-func PostCSPReport(c *fiber.Ctx) error {
+func PostCSPReport(c fiber.Ctx) error {
 	allowedMimeTypes := []string{"application/csp-report", "application/json"}
 	accept := c.Accepts(allowedMimeTypes...)
 	defaultErr := c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"errors": []string{app.Translate(&i18n.LocalizeConfig{
@@ -104,7 +104,7 @@ func PostCSPReport(c *fiber.Ctx) error {
 	}
 
 	input := helpers.CspReport{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 		return defaultErr
 	}

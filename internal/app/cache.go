@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"alfredoramos.mx/csp-reporter/internal/env"
-	"github.com/getsentry/sentry-go"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -25,7 +24,7 @@ func Cache() valkey.Client {
 			SelectDB:    0,
 		})
 		if err != nil && !errors.Is(err, valkey.Nil) {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not connect to Valkey", slog.Any("error", err))
 			os.Exit(1)
 		}

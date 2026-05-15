@@ -11,8 +11,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/valkey-io/valkey-go"
 )
@@ -25,7 +24,7 @@ func UserExists(id uuid.UUID, email string) bool {
 	cacheKey := cache.Key(fmt.Sprintf("user:%s", id.String()))
 	cachedUser, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Could not get cached user", slog.Any("error", err))
 	}
 
@@ -40,7 +39,7 @@ func UserExists(id uuid.UUID, email string) bool {
 
 	if utils.IsValidUuid(user.ID) {
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(user.Email).Ex(time.Hour).Build()).Error(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not save user to cache", slog.Any("error", err))
 		}
 
@@ -50,7 +49,7 @@ func UserExists(id uuid.UUID, email string) bool {
 	return false
 }
 
-func GetUserID(c *fiber.Ctx) uuid.UUID {
+func GetUserID(c fiber.Ctx) uuid.UUID {
 	jwe := c.Locals(utils.AccessTokenContextKey())
 
 	if jwe == nil {
@@ -59,7 +58,7 @@ func GetUserID(c *fiber.Ctx) uuid.UUID {
 
 	claims, err := utils.ParseJWEClaims(jwe.(string))
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		panic(err)
 	}
 

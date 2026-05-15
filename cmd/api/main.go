@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -18,9 +19,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/routes"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/goccy/go-json"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
@@ -49,8 +48,8 @@ func main() {
 	time.Local = utils.DefaultLocation()
 
 	// Sentry
-	app.SetupSentry()
-	defer sentry.Flush(3 * time.Second)
+	//app.SetupSentry()
+	//defer sentry.Flush(3 * time.Second)
 
 	cachePrefix, err := cache.Prefix()
 	if err != nil {
@@ -64,12 +63,12 @@ func main() {
 	defer func() {
 		db, err := app.DB().DB()
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not get database interface", slog.Any("error", err))
 		}
 
 		if err := db.Close(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Error closing database connection", slog.Any("error", err))
 		}
 	}()
@@ -80,7 +79,7 @@ func main() {
 		mux := tasks.AsynqServeMux()
 
 		if err := queue.Run(mux); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not run queue server", slog.Any("error", err))
 		}
 	})
@@ -88,12 +87,12 @@ func main() {
 		app.Cache().Close()
 
 		if err := app.SMTP().Close(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not close SMTP server", slog.Any("error", err))
 		}
 
 		if err := tasks.AsynqClient().Close(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not close Asynq client", slog.Any("error", err))
 		}
 
@@ -105,7 +104,7 @@ func main() {
 		manager := tasks.AsynqPeriodicTaskManager()
 
 		if err := manager.Run(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not run periodic tasks manager", slog.Any("error", err))
 		}
 	})
@@ -114,8 +113,8 @@ func main() {
 	// Setup app
 	http := fiber.New(fiber.Config{
 		StrictRouting: true,
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			sentry.CaptureException(err)
+		ErrorHandler: func(c fiber.Ctx, err error) error {
+			//sentry.CaptureException(err)
 			slog.Error("Application error handler", slog.Any("error", err))
 
 			code := fiber.StatusInternalServerError
@@ -145,7 +144,7 @@ func main() {
 	// Setup server
 	wg.Go(func() {
 		if err := http.Listen(env.String("APP_ADDRESS")); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not start HTTP server", slog.Any("error", err))
 		}
 	})
@@ -157,7 +156,7 @@ func main() {
 	// Shutdown server
 	wg.Go(func() {
 		if err := http.Shutdown(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not close HTTP server", slog.Any("error", err))
 		}
 	})
