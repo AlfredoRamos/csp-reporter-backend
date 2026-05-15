@@ -69,7 +69,7 @@ func encodeCursor(cursor Cursor) *string {
 }
 
 func DecodeCursor(cursor string) (Cursor, error) {
-	decodedCursor, err := base64.RawStdEncoding.DecodeString(cursor)
+	decodedCursor, err := base64.RawStdEncoding.Strict().DecodeString(cursor)
 	if err != nil {
 		sentry.CaptureException(err)
 		return nil, err

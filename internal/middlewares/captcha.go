@@ -32,7 +32,7 @@ type CaptchaResponse struct {
 func CaptchaProtected() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if !env.IsProduction() {
-			disableEnv := env.Bool("HCAPTCHA_DISABLE", false)
+			disableEnv := env.Bool("CAPTCHA_DISABLE", false)
 
 			disableHeader, err := strconv.ParseBool(c.Get("X-Disable-Captcha"))
 			if err != nil {

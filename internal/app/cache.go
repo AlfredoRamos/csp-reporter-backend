@@ -2,8 +2,8 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"sync"
 
@@ -20,7 +20,7 @@ var (
 func Cache() valkey.Client {
 	onceCache.Do(func() {
 		client, err := valkey.NewClient(valkey.ClientOption{
-			InitAddress: []string{fmt.Sprintf("%s:%d", env.String("CACHE_HOST"), env.Int("CACHE_PORT", 6379))},
+			InitAddress: []string{net.JoinHostPort(env.String("CACHE_HOST"), env.String("CACHE_PORT", "6379"))},
 			Password:    env.String("CACHE_PASS"),
 			SelectDB:    0,
 		})
