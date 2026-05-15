@@ -63,11 +63,12 @@ linters:
             - github.com/xuri/excelize/v2
             - github.com/hibiken/asynq
             - github.com/wneessen/go-mail
-            - github.com/getsentry/sentry-go
+            # - github.com/getsentry/sentry-go
             - github.com/goccy/go-yaml
             - github.com/nicksnyder/go-i18n/v2/i18n
             - github.com/BurntSushi/toml
             - github.com/swaggo/swag/v2
+            - github.com/zeebo/xxh3
     errchkjson:
       check-error-free-encoding: false
       report-no-exported: true

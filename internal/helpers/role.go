@@ -11,6 +11,7 @@ import (
 
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/cache"
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/google/uuid"
@@ -46,7 +47,7 @@ func (l userRoleList) IDs() []uuid.UUID {
 
 func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	if !utils.IsValidUuid(id) {
-		return []userRole{}, errors.New("invalid user ID")
+		return []userRole{}, csperrors.ErrAuthInvalidUserID
 	}
 
 	roles := []userRole{}

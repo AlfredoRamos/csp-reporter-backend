@@ -21,7 +21,7 @@ func String(k string, d ...string) string {
 	k = strings.TrimSpace(k)
 
 	if len(k) < 1 {
-		//sentry.CaptureException(errors.New("invalid environment key"))
+		//sentry.CaptureException(csperrors.ErrInvalidEnvKey)
 
 		if len(d) > 0 {
 			return strings.TrimSpace(d[0])

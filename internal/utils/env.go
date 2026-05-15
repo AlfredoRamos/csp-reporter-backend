@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"log/slog"
 	"slices"
 	"strings"
@@ -9,6 +8,7 @@ import (
 	_ "time/tzdata"
 
 	"alfredoramos.mx/csp-reporter/internal/env"
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 )
 
 const (
@@ -24,7 +24,7 @@ func AppKey() []byte {
 	key := env.String("APP_KEY", "")
 
 	if len(key) < 1 {
-		panic(errors.New("invalid application key").Error())
+		panic(csperrors.ErrInvalidAppKey.Error())
 	}
 
 	return []byte(key)

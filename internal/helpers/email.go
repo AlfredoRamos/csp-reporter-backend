@@ -18,6 +18,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/env"
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/gofiber/fiber/v3"
@@ -106,13 +107,13 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 	emailFrom := env.String("EMAIL_FROM")
 
 	if !utils.IsValidEmail(emailFrom) {
-		err := errors.New("the from email address is invalid")
+		err := csperrors.ErrEmailInvalidFromAddress
 		//sentry.CaptureException(err)
 		return err
 	}
 
 	if !opts.IsValid() {
-		err := errors.New("missing information to send email")
+		err := csperrors.ErrEmailMissingData
 		//sentry.CaptureException(err)
 		return err
 	}
@@ -273,7 +274,7 @@ func DefaultLocale() *MessageLocale {
 
 func ParseLocale(locale *string) (*MessageLocale, error) {
 	if locale == nil {
-		return &MessageLocale{}, errors.New("invalid message locale")
+		return &MessageLocale{}, csperrors.ErrEmailInvalidLocale
 	}
 
 	// * Custom locale overwrite
@@ -305,7 +306,7 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 
 	// ! Must not get here
 	if !sl.IsValid() {
-		err := errors.New("could not generate valid message locale")
+		err := csperrors.ErrEmailInvalidLocale
 		//sentry.CaptureException(err)
 		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}, err
@@ -318,7 +319,7 @@ func ParseApiLocale(c fiber.Ctx) *MessageLocale {
 	defaultLocale := DefaultLocale()
 
 	if c == nil {
-		err := errors.New("invalid context for API locale. Falling back to default locale")
+		err := csperrors.ErrI18nInvalidContext
 		//sentry.CaptureException(err)
 		slog.Error("Could not parse API locale", slog.Any("error", err))
 		return defaultLocale
@@ -327,7 +328,7 @@ func ParseApiLocale(c fiber.Ctx) *MessageLocale {
 	langs := app.GetApiLanguages(c)
 
 	if len(langs) < 1 {
-		err := errors.New("invalid language list from API context. Falling back to default locale")
+		err := csperrors.ErrI18nInvalidLanguageList
 		//sentry.CaptureException(err)
 		slog.Error("Could not parse API locale", slog.Any("error", err))
 		return defaultLocale

@@ -157,5 +157,5 @@ func CursorAbsoluteURL(cur *string, n string, p fiber.Map, c fiber.Ctx) *string 
 }
 
 func IsValidUuid(id uuid.UUID) bool {
-	return id.Version() == 4 && id != uuid.Nil
+	return (id.Version() == 4 || id.Version() == 7) && id != uuid.Nil
 }

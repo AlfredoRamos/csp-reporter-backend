@@ -19,7 +19,6 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/routes"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v3"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
@@ -49,8 +48,8 @@ func main() {
 	time.Local = utils.DefaultLocation()
 
 	// Sentry
-	app.SetupSentry()
-	defer sentry.Flush(3 * time.Second)
+	//app.SetupSentry()
+	//defer sentry.Flush(3 * time.Second)
 
 	cachePrefix, err := cache.Prefix()
 	if err != nil {

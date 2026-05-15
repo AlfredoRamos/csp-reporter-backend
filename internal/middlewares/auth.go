@@ -37,7 +37,7 @@ func AuthProtected() fiber.Handler {
 		tokenStr := c.Get("Authorization")[7:]
 
 		if len(tokenStr) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyAccessToken)
 		}
 
 		jwe, err := jose.ParseEncryptedCompact(
@@ -92,11 +92,11 @@ func ValidateAccessToken() fiber.Handler {
 		jwe := c.Get("Authorization")[7:]
 
 		if len(jwe) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyAccessToken)
 		}
 
 		if accessJWE != jwe {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrInvalidAccessToken)
 		}
 
 		accessClaims, err := utils.ParseJWEClaims(accessJWE)
@@ -161,11 +161,11 @@ func ValidateRefreshToken() fiber.Handler {
 		jwe := c.Get("Authorization")[7:]
 
 		if len(jwe) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("empty access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyAccessToken)
 		}
 
 		if accessJWE != jwe {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("invalid provided access token"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrInvalidAccessToken)
 		}
 
 		accessClaims, err := utils.ParseJWEClaims(accessJWE)
@@ -188,7 +188,7 @@ func ValidateRefreshToken() fiber.Handler {
 
 		refreshJWE := c.Cookies(utils.RefreshTokenContextKey())
 		if len(refreshJWE) < 1 {
-			return jwtError(c, fiber.StatusUnauthorized, errors.New("the refresh token is not valid"))
+			return jwtError(c, fiber.StatusUnauthorized, csperrors.ErrEmptyRefreshToken)
 		}
 
 		refreshClaims, err := utils.ParseJWEClaims(refreshJWE)

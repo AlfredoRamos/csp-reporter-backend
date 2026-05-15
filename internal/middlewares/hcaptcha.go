@@ -8,7 +8,6 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/app"
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/client"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -85,7 +84,7 @@ func HCaptchaProtected() fiber.Handler {
 
 		response, err := request.Post("/siteverify")
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not read response body and got invalid HTTP status code",
 				slog.Int("status", response.StatusCode()),

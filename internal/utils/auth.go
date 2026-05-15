@@ -1,12 +1,16 @@
 package utils
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/big"
 	"net"
@@ -20,7 +24,9 @@ import (
 	"github.com/go-jose/go-jose/v4"
 	jose_jwt "github.com/go-jose/go-jose/v4/jwt"
 	"github.com/google/uuid"
+	"github.com/zeebo/xxh3"
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/hkdf"
 )
 
 const (
@@ -54,59 +60,45 @@ type CustomJwtClaims struct {
 
 func (c CustomJwtClaims) Validate() error {
 	if !IsValidIssuer(c.Issuer) {
-		return errors.New("the issuer is invalid")
+		return csperrors.ErrJwtInvalidIssuer
 	}
 
 	sub, err := uuid.Parse(c.Subject)
 	if err != nil || !IsValidUuid(sub) {
 		if err != nil {
 			//sentry.CaptureException(err)
-			return errors.New("the subject is invalid")
+			return csperrors.ErrJwtInvalidSubject
 		}
 
-		return errors.New("the subject is invalid")
+		return csperrors.ErrJwtInvalidSubject
 	}
 
 	if !IsValidUuid(c.User.ID) || sub != c.User.ID {
-		return errors.New("the user ID is invalid")
+		return csperrors.ErrJwtInvalidUserID
 	}
 
 	if !IsValidEmail(c.User.Email) {
-		return errors.New("the user email is invalid")
+		return csperrors.ErrJwtInvalidUserEmail
 	}
 
 	if len(c.User.Roles) < 1 {
-		return errors.New("the user roles are invalid")
+		return csperrors.ErrJwtInvalidUserRoles
 	}
 
 	return nil
 }
 
 func AccessTokenContextKey() string {
-	ctxKey := env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY")
-	ctxKey = strings.TrimSpace(ctxKey)
-
-	if len(ctxKey) < 1 {
-		ctxKey = "access_token"
-	}
-
-	return ctxKey
+	return env.String("JWT_ACCESS_TOKEN_CONTEXT_KEY", "access_token")
 }
 
 func RefreshTokenContextKey() string {
-	ctxKey := env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY")
-	ctxKey = strings.TrimSpace(ctxKey)
-
-	if len(ctxKey) < 1 {
-		ctxKey = "refresh_token"
-	}
-
-	return ctxKey
+	return env.String("JWT_REFRESH_TOKEN_CONTEXT_KEY", "refresh_token")
 }
 
 func ParseJWEClaims(token string) (*CustomJwtClaims, error) {
 	if len(token) < 1 {
-		err := errors.New("error parsing empty JWE")
+		err := csperrors.ErrJwtEmptyJwe
 		//sentry.CaptureException(err)
 		return &CustomJwtClaims{}, err
 	}
@@ -230,13 +222,13 @@ func MustRehashPassword(h string) bool {
 func decodeHash(h string) (argon2Config, []byte, []byte, error) {
 	vals := strings.Split(h, "$")
 	if len(vals) != 6 {
-		return argon2Config{}, nil, nil, errors.New("invalid encoded hash format")
+		return argon2Config{}, nil, nil, csperrors.ErrArgonInvalidHashFormat
 	}
 
 	var av int
 	if _, err := fmt.Sscanf(vals[2], "v=%d", &av); err != nil {
 		//sentry.CaptureException(err)
-		return argon2Config{}, nil, nil, errors.New("the version of the Argon2 algorithm is not compatible")
+		return argon2Config{}, nil, nil, csperrors.ErrArgonInvalidAlgorithm
 	}
 
 	config := argon2Config{}
@@ -347,7 +339,7 @@ func RandomPassword(n int) (string, error) {
 	const charset string = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*_=+-"
 	password := make([]byte, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
 		if err != nil {
 			//sentry.CaptureException(err)
@@ -394,4 +386,91 @@ func IsValidIssuer(iss string) bool {
 
 func CanRegisterUsers() bool {
 	return env.Bool("ENABLE_USER_REGISTER", false)
+}
+
+func XXHashString(input string) (string, error) {
+	h := xxh3.New()
+
+	if _, err := h.WriteString(input); err != nil {
+		slog.Error("Error generating hash", slog.Any("error", err))
+		return "", err
+	}
+
+	hash := h.Sum(nil)
+	return hex.EncodeToString(hash), nil
+}
+
+func EncryptString(key []byte, p string) (string, error) {
+	// AES block cipher
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	// GCM mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	// Random nonce
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	// Encrypt
+	ciphertext := gcm.Seal(nonce, nonce, []byte(p), nil)
+
+	// Base64 encode for storage/transmission
+	return base64.RawStdEncoding.EncodeToString(ciphertext), nil
+}
+
+func DecryptString(key []byte, e string) (string, error) {
+	// Decode base64
+	data, err := base64.RawStdEncoding.Strict().DecodeString(e)
+	if err != nil {
+		return "", err
+	}
+
+	// AES block cipher
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	// GCM mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+
+	if len(data) < nonceSize {
+		return "", csperrors.ErrDecryptShortCipherText
+	}
+
+	// Split nonce + ciphertext
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+
+	// Decrypt + authenticate
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
+}
+
+func DeriveKey(key []byte) ([]byte, error) {
+	h := hkdf.New(sha256.New, key, nil, []byte("AES-GCM key"))
+
+	subkey := make([]byte, 32)
+
+	if _, err := io.ReadFull(h, subkey); err != nil {
+		return nil, err
+	}
+
+	return subkey, nil
 }

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"math/big"
 	"net/url"
@@ -10,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/net/idna"
 	"golang.org/x/net/publicsuffix"
@@ -57,7 +57,7 @@ func GetDomainHostname(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	if len(d) < 1 {
-		return "", errors.New("invalid domain")
+		return "", csperrors.ErrInvalidDomain
 	}
 
 	if !strings.HasPrefix(d, "http") {
@@ -81,7 +81,7 @@ func CleanDomain(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	if len(d) < 1 {
-		return "", errors.New("invalid domain")
+		return "", csperrors.ErrInvalidDomain
 	}
 
 	return idna.Lookup.ToASCII(d)
@@ -91,7 +91,7 @@ func GetApexDomain(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	if len(d) < 1 {
-		return "", errors.New("invalid domain")
+		return "", csperrors.ErrInvalidDomain
 	}
 
 	h, err := GetDomainHostname(d)
