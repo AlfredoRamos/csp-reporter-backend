@@ -17,7 +17,7 @@ func SetupSentry() {
 		Release:          Version(),
 		Environment:      env.Name(),
 	}); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Sentry initialization failed", slog.Any("error", err))
 	}
 }

@@ -9,7 +9,6 @@ import (
 	_ "time/tzdata"
 
 	"alfredoramos.mx/csp-reporter/internal/env"
-	"github.com/getsentry/sentry-go"
 )
 
 const (
@@ -72,7 +71,7 @@ func DefaultLocation() *time.Location {
 
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Error setting location", slog.String("fallback", loc.String()))
 		return time.Now().Location()
 	}
@@ -100,13 +99,13 @@ func DkimSelector() string {
 	return env.String("EMAIL_DKIM_SELECTOR", "mail")
 }
 
-func CorsOrigins() string {
+func CorsOrigins() []string {
 	origins := []string{env.String("APP_DOMAIN")}
 
 	orStr := strings.TrimSpace(env.String("APP_CORS_ORIGINS"))
 
 	if len(orStr) < 1 {
-		return strings.Join(origins, ",")
+		return origins
 	}
 
 	orList := strings.Split(orStr, ",")
@@ -126,5 +125,5 @@ func CorsOrigins() string {
 
 	origins = CleanStringList(origins)
 
-	return strings.Join(origins, ",")
+	return origins
 }

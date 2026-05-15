@@ -1,14 +1,13 @@
 package jwt
 
 import (
+	"encoding/json"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/go-jose/go-jose/v4"
-	"github.com/goccy/go-json"
 )
 
 var (
@@ -60,7 +59,7 @@ func Signer() jose.Signer {
 			(&jose.SignerOptions{}).WithType("JWT"),
 		)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not create signer", slog.Any("error", err))
 			os.Exit(1)
 		}

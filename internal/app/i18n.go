@@ -11,8 +11,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
 	"github.com/BurntSushi/toml"
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
@@ -33,7 +32,7 @@ func DefaultLanguage() language.Tag {
 		var err error
 		defaultLanguage, err = language.Parse(lang)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			defaultLanguage = language.AmericanEnglish
 			slog.Error(
 				"Could not get tag from default language",
@@ -59,7 +58,7 @@ func AllowedLanguages() []language.Tag {
 				lang = strings.ToLower(strings.TrimSpace(lang))
 				langTag, err := language.Parse(lang)
 				if err != nil {
-					sentry.CaptureException(err)
+					//sentry.CaptureException(err)
 					slog.Error(
 						"Could not get allowed tag from language",
 						slog.String("lang", lang),
@@ -74,7 +73,7 @@ func AllowedLanguages() []language.Tag {
 
 				langFile, err := filepath.Abs(filepath.Clean(filepath.Join("internal", "i18n", fmt.Sprintf("active.%s.toml", baseLang))))
 				if err != nil {
-					sentry.CaptureException(err)
+					//sentry.CaptureException(err)
 					slog.Error(
 						"Could not read translation",
 						slog.String("file", langFile),
@@ -84,7 +83,7 @@ func AllowedLanguages() []language.Tag {
 				}
 
 				if _, err := langBundle.LoadMessageFile(langFile); err != nil {
-					sentry.CaptureException(err)
+					//sentry.CaptureException(err)
 					slog.Error("Could not load translation", slog.Any("error", err))
 					continue
 				}
@@ -124,7 +123,7 @@ func GetLanguages(langList ...string) []language.Tag {
 	for _, lang := range langList {
 		langTag, err := language.Parse(lang)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not get context tag from language",
 				slog.String("lang", lang),
@@ -146,7 +145,7 @@ func GetLanguages(langList ...string) []language.Tag {
 	return langs
 }
 
-func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
+func GetApiLanguages(c fiber.Ctx, langList ...string) []language.Tag {
 	langs := GetLanguages(langList...)
 
 	if c == nil {
@@ -160,7 +159,7 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
 	if len(lang) > 0 {
 		langTag, err := language.Parse(lang)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not get lang API tag from language",
 				slog.String("lang", lang),
@@ -178,7 +177,7 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
 	if len(accept) > 0 {
 		acceptTag, err := language.Parse(accept)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not get Accept-Language API tag from language",
 				slog.String("lang", accept),
@@ -199,7 +198,7 @@ func GetApiLanguages(c *fiber.Ctx, langList ...string) []language.Tag {
 	return langs
 }
 
-func Translate(conf *i18n.LocalizeConfig, c *fiber.Ctx, langs ...string) string {
+func Translate(conf *i18n.LocalizeConfig, c fiber.Ctx, langs ...string) string {
 	langList := make([]string, 0, len(langs))
 
 	for _, tag := range GetApiLanguages(c, langs...) {

@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -19,9 +20,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/goccy/go-json"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/valkey-io/valkey-go"
 	"github.com/wneessen/go-mail"
 	"golang.org/x/text/language"
@@ -108,13 +107,13 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 
 	if !utils.IsValidEmail(emailFrom) {
 		err := errors.New("the from email address is invalid")
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return err
 	}
 
 	if !opts.IsValid() {
 		err := errors.New("missing information to send email")
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return err
 	}
 
@@ -128,14 +127,14 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 	htmlTplFile := filepath.Clean(tplBase + ".html")
 	htmlTpl, err := html_tpl.New(filepath.Base(htmlTplFile)).ParseFiles(htmlTplFile)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return fmt.Errorf("error loading the HTML template: %w", err)
 	}
 
 	textTplFile := filepath.Clean(tplBase + ".txt")
 	textTpl, err := text_tpl.New(filepath.Base(textTplFile)).ParseFiles(textTplFile)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return fmt.Errorf("error loading the TEXT template: %w", err)
 	}
 
@@ -148,13 +147,13 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 	msg.SetGenHeader(mail.HeaderContentLang, lang)
 
 	if err := msg.FromFormat(appName, emailFrom); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return fmt.Errorf("could not set the from email address: %w", err)
 	}
 
 	if !opts.IsInternal && len(utils.SupportEmail()) > 0 {
 		if err := msg.ReplyTo(utils.SupportEmail()); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			return fmt.Errorf("could not set the reply-to email address: %w", err)
 		}
 	}
@@ -171,12 +170,12 @@ func SendEmail(opts *EmailOpts, data map[string]any) error {
 	data["Now"] = time.Now().In(utils.DefaultLocation())
 
 	if err := msg.SetBodyHTMLTemplate(htmlTpl, data); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return fmt.Errorf("error setting HTML template: %w", err)
 	}
 
 	if err := msg.AddAlternativeTextTemplate(textTpl, data); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return fmt.Errorf("error setting TEXT template: %w", err)
 	}
 
@@ -225,7 +224,7 @@ func GetSuperAdminEmails() []string {
 	cacheKey := cache.Key("email:superadmin:list")
 	ce, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Could not get cached superadministrator email list", slog.Any("error", err))
 	}
 
@@ -253,7 +252,7 @@ func GetSuperAdminEmails() []string {
 		}
 
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(string(re)).Ex(15*time.Minute).Build()).Error(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not save superadministrator email list to cache", slog.Any("error", err))
 		}
 	}
@@ -264,7 +263,7 @@ func GetSuperAdminEmails() []string {
 func DefaultLocale() *MessageLocale {
 	loc, err := ParseLocale(utils.ToStringPtr(app.DefaultLanguage().String()))
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}
 	}
@@ -287,7 +286,7 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 
 	tag, err := language.Parse(*locale)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}, err
 	}
@@ -307,7 +306,7 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 	// ! Must not get here
 	if !sl.IsValid() {
 		err := errors.New("could not generate valid message locale")
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse locale", slog.Any("error", err))
 		return &MessageLocale{}, err
 	}
@@ -315,12 +314,12 @@ func ParseLocale(locale *string) (*MessageLocale, error) {
 	return sl, nil
 }
 
-func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
+func ParseApiLocale(c fiber.Ctx) *MessageLocale {
 	defaultLocale := DefaultLocale()
 
 	if c == nil {
 		err := errors.New("invalid context for API locale. Falling back to default locale")
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse API locale", slog.Any("error", err))
 		return defaultLocale
 	}
@@ -329,14 +328,14 @@ func ParseApiLocale(c *fiber.Ctx) *MessageLocale {
 
 	if len(langs) < 1 {
 		err := errors.New("invalid language list from API context. Falling back to default locale")
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not parse API locale", slog.Any("error", err))
 		return defaultLocale
 	}
 
 	loc, err := ParseLocale(utils.ToStringPtr(langs[0].String()))
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error(
 			"Could not parse locale from API context",
 			slog.String("fallback", defaultLocale.String()),

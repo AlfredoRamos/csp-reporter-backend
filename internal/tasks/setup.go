@@ -11,7 +11,6 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"github.com/hibiken/asynq"
 )
 
@@ -87,7 +86,7 @@ func AsynqPeriodicTaskManager() *asynq.PeriodicTaskManager {
 			SyncInterval: 5 * time.Minute,
 		})
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not create periodic task manager", slog.Any("error", err))
 			os.Exit(1)
 		}
@@ -104,7 +103,7 @@ func loggingMiddleware(h asynq.Handler) asynq.Handler {
 		slog.Info("Start processing task", slog.String("type", cache.RemoveKey(t.Type())))
 
 		if err := h.ProcessTask(ctx, t); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error(
 				"Could not process task",
 				slog.String("type", cache.Key(t.Type())),

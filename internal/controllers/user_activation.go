@@ -9,8 +9,7 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/tasks"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gorm.io/gorm"
@@ -29,7 +28,7 @@ type userActivationInput struct {
 // @produce json
 // @success 204 {object} map[string]string
 // @router /activations/users/all [get]
-func GetAllInactiveUsers(c *fiber.Ctx) error {
+func GetAllInactiveUsers(c fiber.Ctx) error {
 	users := []models.UserActivation{}
 	query := app.DB().Model(&models.UserActivation{}).
 		Joins("INNER JOIN users u ON user_activations.user_id = u.id").
@@ -52,7 +51,7 @@ func GetAllInactiveUsers(c *fiber.Ctx) error {
 // @param id path string true "User UUID"
 // @param approved body bool true "Approved status" SchemaExample({\r\n\t"approved": false\r\n})
 // @param reason body string false "Rejection reason" SchemaExample({\r\n\t"reason": "Duplicated account"\r\n})
-func UpdateUserActivation(c *fiber.Ctx) error {
+func UpdateUserActivation(c fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil || !utils.IsValidUuid(id) {
 		slog.Error("Error parsing ID", slog.Any("error", err))
@@ -67,7 +66,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 	}
 
 	input := &userActivationInput{}
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.Bind().Body(&input); err != nil {
 		slog.Error("Error parsing input data", slog.Any("error", err))
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"error": []string{app.Translate(&i18n.LocalizeConfig{
@@ -198,7 +197,7 @@ func UpdateUserActivation(c *fiber.Ctx) error {
 		ToList:       []string{userActivation.User.Email},
 		Locale:       helpers.ParseApiLocale(c),
 	}, data); err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return err
 	}
 

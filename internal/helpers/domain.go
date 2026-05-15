@@ -12,7 +12,6 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"github.com/google/uuid"
 	"github.com/valkey-io/valkey-go"
 )
@@ -20,7 +19,7 @@ import (
 func IsAllowedDomain(d string) bool {
 	domain, err := utils.GetApexDomain(d)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Could not get app domain", slog.Any("error", err))
 		return false
 	}
@@ -28,14 +27,15 @@ func IsAllowedDomain(d string) bool {
 	cacheKey := cache.Key(fmt.Sprintf("domain:%s", domain))
 	cachedDomain, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Could not get cached domain", slog.Any("error", err))
 	}
 
 	if len(cachedDomain) > 0 {
 		siteID, err := uuid.Parse(cachedDomain)
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
+			slog.Warn("Could parse site ID", slog.Any("error", err))
 		}
 
 		if utils.IsValidUuid(siteID) {
@@ -52,7 +52,7 @@ func IsAllowedDomain(d string) bool {
 
 	if utils.IsValidUuid(site.ID) {
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(site.ID.String()).Ex(time.Hour).Build()).Error(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not save user to cache", slog.Any("error", err))
 		}
 

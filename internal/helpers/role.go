@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -12,8 +13,6 @@ import (
 	"alfredoramos.mx/csp-reporter/internal/cache"
 	"alfredoramos.mx/csp-reporter/internal/models"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
-	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"github.com/valkey-io/valkey-go"
 )
@@ -55,13 +54,13 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 	cacheKey := cache.Key(fmt.Sprintf("roles:%s", id.String()))
 	cachedRoles, err := app.Cache().DoCache(context.Background(), app.Cache().B().Get().Key(cacheKey).Cache(), 5*time.Minute).ToString()
 	if err != nil && !errors.Is(err, valkey.Nil) {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Warn("Could not get cached roles", slog.Any("error", err))
 	}
 
 	if len(cachedRoles) > 0 {
 		if err := json.Unmarshal([]byte(cachedRoles), &roles); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not decode cached roles", slog.Any("error", err))
 		}
 
@@ -85,7 +84,7 @@ func GetUserRoles(id uuid.UUID) (userRoleList, error) {
 		}
 
 		if err := app.Cache().Do(context.Background(), app.Cache().B().Set().Key(cacheKey).Value(string(rawRoles)).Ex(24*time.Hour).Build()).Error(); err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			slog.Error("Could not save roles to cache", slog.Any("error", err))
 		}
 	}
@@ -116,7 +115,7 @@ func HasPermission(id uuid.UUID, p string, m string) bool {
 
 	result, err := app.Auth().BatchEnforce(ps)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Enforce error", slog.Any("error", err))
 		return false
 	}

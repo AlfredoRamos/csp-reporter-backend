@@ -8,14 +8,13 @@ import (
 
 	"alfredoramos.mx/csp-reporter/internal/env"
 	"alfredoramos.mx/csp-reporter/internal/utils"
-	"github.com/getsentry/sentry-go"
 	"golang.org/x/crypto/blake2s"
 )
 
 func blake2s128Hash(input string, key []byte) (string, error) {
 	if len(key) < 1 {
 		err := errors.New("invalid key")
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return "", err
 	}
 
@@ -26,7 +25,7 @@ func blake2s128Hash(input string, key []byte) (string, error) {
 
 	hash, err := blake2s.New128(key)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return "", err
 	}
 
@@ -38,7 +37,7 @@ func blake2s128Hash(input string, key []byte) (string, error) {
 func Prefix() (string, error) {
 	prefix, err := blake2s128Hash(env.String("APP_NAME"), utils.AppKey())
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating cache key prefix", slog.Any("error", err))
 		return "", err
 	}
@@ -59,7 +58,7 @@ func Key(key string) string {
 
 	prefix, err := Prefix()
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating cache key prefix", slog.Any("error", err))
 		return key
 	}
@@ -85,7 +84,7 @@ func RemoveKey(key string) string {
 
 	prefix, err := Prefix()
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		slog.Error("Error generating cache key prefix", slog.Any("error", err))
 		return key
 	}

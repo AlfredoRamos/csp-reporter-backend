@@ -1,14 +1,10 @@
 package env
 
 import (
-	"errors"
 	"log/slog"
 	"os"
 	"strconv"
 	"strings"
-
-	csperrors "alfredoramos.mx/csp-reporter/internal/errors"
-	"github.com/getsentry/sentry-go"
 )
 
 const (
@@ -18,14 +14,14 @@ const (
 
 func String(k string, d ...string) string {
 	if len(d) > 1 {
-		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		//sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
 		d = d[:1]
 	}
 
 	k = strings.TrimSpace(k)
 
 	if len(k) < 1 {
-		sentry.CaptureException(errors.New("invalid environment key"))
+		//sentry.CaptureException(errors.New("invalid environment key"))
 
 		if len(d) > 0 {
 			return strings.TrimSpace(d[0])
@@ -45,7 +41,7 @@ func String(k string, d ...string) string {
 
 func Bool(k string, d ...bool) bool {
 	if len(d) > 1 {
-		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		//sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
 		d = d[:1]
 	}
 
@@ -61,7 +57,7 @@ func Bool(k string, d ...bool) bool {
 
 	key, err := strconv.ParseBool(keyStr)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 
 		if len(d) > 0 {
 			return d[0]
@@ -75,7 +71,7 @@ func Bool(k string, d ...bool) bool {
 
 func Float64(k string, d ...float64) float64 {
 	if len(d) > 1 {
-		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		//sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
 		d = d[:1]
 	}
 
@@ -91,7 +87,7 @@ func Float64(k string, d ...float64) float64 {
 
 	key, err := strconv.ParseFloat(keyStr, 64)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 
 		if len(d) > 0 {
 			return d[0]
@@ -105,7 +101,7 @@ func Float64(k string, d ...float64) float64 {
 
 func Int64(k string, d ...int64) int64 {
 	if len(d) > 1 {
-		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		//sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
 		d = d[:1]
 	}
 
@@ -121,7 +117,7 @@ func Int64(k string, d ...int64) int64 {
 
 	key, err := strconv.ParseInt(keyStr, 10, 64)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 
 		if len(d) > 0 {
 			return d[0]
@@ -135,7 +131,7 @@ func Int64(k string, d ...int64) int64 {
 
 func Int(k string, d ...int) int {
 	if len(d) > 1 {
-		sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
+		//sentry.CaptureException(csperrors.ErrTooManyDefaultValues)
 		d = d[:1]
 	}
 
@@ -151,7 +147,7 @@ func Int(k string, d ...int) int {
 
 	key, err := strconv.Atoi(keyStr)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 
 		if len(d) > 0 {
 			return d[0]

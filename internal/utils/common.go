@@ -10,8 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 	"golang.org/x/net/idna"
 	"golang.org/x/net/publicsuffix"
 )
@@ -44,7 +43,7 @@ func RandomString(n int) (string, error) {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 
 		if err != nil {
-			sentry.CaptureException(err)
+			//sentry.CaptureException(err)
 			return "", err
 		}
 
@@ -67,7 +66,7 @@ func GetDomainHostname(d string) (string, error) {
 
 	u, err := url.Parse(d)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return "", fmt.Errorf("could not parse URL: %w", err)
 	}
 
@@ -97,13 +96,13 @@ func GetApexDomain(d string) (string, error) {
 
 	h, err := GetDomainHostname(d)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return "", err
 	}
 
 	h, err = CleanDomain(h)
 	if err != nil {
-		sentry.CaptureException(err)
+		//sentry.CaptureException(err)
 		return "", err
 	}
 
