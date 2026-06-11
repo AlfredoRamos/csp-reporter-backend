@@ -18,7 +18,7 @@ require (
 	github.com/wneessen/go-mail-middleware v0.1.1
 	github.com/zeebo/xxh3 v1.1.0
 	golang.org/x/crypto v0.53.0
-	golang.org/x/net v0.55.0
+	golang.org/x/net v0.56.0
 	golang.org/x/text v0.38.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
