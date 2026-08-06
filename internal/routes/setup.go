@@ -120,6 +120,9 @@ func SetupRoutes(app *fiber.App) {
 	// System
 	RegisterSystemRoutes(v1.Group("/system"))
 
+	// Dashboard
+	RegisterDashboardRoutes(v1.Group("/dashboard"))
+
 	// Auth
 	RegisterAuthRoutes(v1.Group("/auth"))
 

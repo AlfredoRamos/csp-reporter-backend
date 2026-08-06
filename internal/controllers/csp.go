@@ -114,7 +114,7 @@ func PostCSPReport(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(&fiber.Map{"error": []string{app.Translate(&i18n.LocalizeConfig{
 			DefaultMessage: &i18n.Message{
 				ID:    "ErrorCSPReportCreation",
-				Other: "Could not regisger CSP report.",
+				Other: "Could not register CSP report.",
 			},
 		}, c)}})
 	}

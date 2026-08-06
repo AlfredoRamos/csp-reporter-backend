@@ -8,6 +8,7 @@ p, admin, /api/v1/sites/all, GET, allow
 p, admin, /api/v1/sites/add, POST, allow
 
 # Viewer
+p, viewer, /api/v1/dashboard/reports/effective-directive, GET, allow
 p, viewer, /api/v1/csp/reports/all, GET, allow
 p, viewer, /api/v1/csp/reports/get/:id, GET, allow
 
